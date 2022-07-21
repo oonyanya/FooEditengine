@@ -1,0 +1,44 @@
+﻿<Project Sdk="MSBuild.Sdk.Extras/3.0.23">
+
+  <PropertyGroup>
+    <TargetFramework>uap10.0.18362</TargetFramework>
+    <AssemblyName>FooEditEngnine.UWP</AssemblyName>
+    <RootNamespace>FooEditEngnine.UWP</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>FooEditEngnine.UWP</PackageId>
+    <Version>1.1.3.39</Version>
+    <Authors>Foo Project</Authors>
+    <Company>Foo Project</Company>
+    <projectUrl>https://ja.osdn.net/projects/fooeditengine/</projectUrl>
+    <description>Textbox with Hilight and Regex and Folding</description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|uap10.0.18362|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;NETFX_CORE;WINDOWS_UWP;ENABLE_AUTMATION</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|uap10.0.18362|AnyCPU'">
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP;ENABLE_AUTMATION</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Include="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <PRIResource Include="strings\en-US\Resources.resw" />
+    <PRIResource Include="strings\ja-JP\Resources.resw" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nito.AsyncEx" Version="5.1.0" />
+    <PackageReference Include="Win2D.uwp" Version="1.26.0" />
+  </ItemGroup>
+	
+  <Import Project="..\..\Core\Core.projitems" Label="Shared" />
+
+</Project>

@@ -1,0 +1,50 @@
+﻿<Window x:Class="Test.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:MyNamespace="clr-namespace:FooEditEngine.WPF;assembly=FooTextBox"
+        xmlns:local="clr-namespace:Test"
+        Title="MainWindow" Height="350" Width="525">
+    <Window.Resources>
+        <local:TextRangeConveter x:Key="TextRangeConverter"/>
+        <local:FlowDirectionConveter x:Key="FlowDirectionConveter"/>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="24"/>
+            <RowDefinition/>
+            <RowDefinition Height="24"/>
+        </Grid.RowDefinitions>
+        <Menu Grid.Row="0">
+            <MenuItem Header="Test">
+                <MenuItem Header="Load" Click="MenuItem_Click_3"/>
+                <MenuItem Header="Save" Click="MenuItem_Click_10"/>
+                <MenuItem Header="Enable" IsChecked="{Binding IsEnabled,ElementName=fooTextBox,Mode=TwoWay}" IsCheckable="True"/>
+                <MenuItem Header="ShowLineMarker" IsChecked="{Binding DrawCaretLine,ElementName=fooTextBox,Mode=TwoWay}" IsCheckable="True"/>
+                <MenuItem Header="ShowLineNumber" IsChecked="{Binding DrawLineNumber,ElementName=fooTextBox,Mode=TwoWay}" IsCheckable="True"/>
+                <MenuItem Header="ShowRuler" IsChecked="{Binding DrawRuler,ElementName=fooTextBox,Mode=TwoWay}" IsCheckable="True"/>
+                <MenuItem Header="WordRap By 10 chars" Click="MenuItem_Click_16"/>
+                <MenuItem Header="WordRap By Window" Click="MenuItem_Click_17"/>
+                <MenuItem Header="Not Wordrap" Click="MenuItem_Click_18"/>
+                <MenuItem Header="Print" Click="MenuItem_Click_2"/>
+                <MenuItem Header="Marker" Click="MenuItem_Click_5"/>
+                <MenuItem Header="RTL" IsChecked="{Binding FlowDirection,ElementName=fooTextBox,Mode=TwoWay,Converter={StaticResource FlowDirectionConveter}}" IsCheckable="True"/>
+                <MenuItem Header="XML Hilight" Click="MenuItem_Click_7"/>
+                <MenuItem Header="Clear Hilight" Click="MenuItem_Click_8"/>
+                <MenuItem Header="URL Mark" IsChecked="{Binding MarkURL,ElementName=fooTextBox,Mode=TwoWay}" IsCheckable="True"/>
+                <MenuItem Header="GenerateFolding" Click="MenuItem_Click_9"/>
+                <MenuItem Header="Set Padding" Click="MenuItem_Click_11"/>
+                <MenuItem Header="Toggle Indent Mode" Click="MenuItem_Click12"/>
+            </MenuItem>
+        </Menu>
+        <MyNamespace:FooTextBox x:Name="fooTextBox" Grid.Row="1"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal">
+            <TextBlock Text="{Binding Selection,ElementName=fooTextBox,Converter={StaticResource TextRangeConverter}}" Margin="10,0,0,0"/>
+            <TextBlock Text="Find" Margin="10,0,0,0"/>
+            <TextBox Name="FindPattern" TextChanged="FindPattern_TextChanged" Width="100"/>
+            <TextBlock Text="Replace" Margin="10,0,0,0"/>
+            <TextBox Name="ReplacePattern" Width="100"/>
+            <Button Name="Find" Content="Find" Click="Find_Click" Margin="10,0,0,0"/>
+            <Button Name="ReplaceAll" Content="ReplaceAll" Click="ReplaceAll_Click" Margin="10,0,0,0"/>
+        </StackPanel>
+    </Grid>
+</Window>

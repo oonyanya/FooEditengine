@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>c244f4e5-45d2-4c1f-bd2a-a5cc90d9421b</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>Core</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AutoCompleteBoxBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Automation\FooTextBoxAutomationPeer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Automation\FooTextBoxRangeProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CacheManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollectionDebugView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CompleteCollection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CompleteCollectionHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Controller.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Direct2D\CustomTextRenderer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Direct2D\D2DRenderCommon.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Direct2D\DrawingEffect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Direct2D\D2DMarkerFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Direct2D\MyTextLayout.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Document.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DummyRender.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)EditView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FoldingCollection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FoldingGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GapBuffer+Enumerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GapBuffer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GripperView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IFoldingStrategy.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IHilighter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ITextRender.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LineToIndex.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)MarkerCollection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)MarkerFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PrintableView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Range.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RangeCollection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RangeTree.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RangeTreeNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ResourceManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SelectCollection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)StringBuffer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SyntaxHilightGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Test\CharFoldingMethod.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Test\XmlHilighter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TextPoint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TextServiceFramework\TextStoreHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UndoCommands.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UndoManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Util.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)WatchDogPattern.cs" />
+  </ItemGroup>
+</Project>
