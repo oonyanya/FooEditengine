@@ -125,8 +125,14 @@ namespace FooEditEngine.WinUI
             this.RegisterPropertyChangedCallback(Control.BackgroundProperty, InheritanceDependecyPropertyCallback);
 
             this.CharacterReceived += (s, e) => {
-                this.Controller.DoInputChar(e.Character);
-                this.Refresh();
+                if (e.Handled)
+                    return;
+                var c = e.Character;
+                if(!Char.IsControl(c))
+                {
+                    this.Controller.DoInputChar(c);
+                    this.Refresh();
+                }
             };
         }
 
