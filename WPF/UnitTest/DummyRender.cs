@@ -142,6 +142,10 @@ namespace UnitTest
         {
             return new DummyTextLayout();
         }
+
+        public void DrawCachedBitmap(Rectangle dstRect, Rectangle srcRect)
+        {
+        }
     }
     class DummyTextLayout : ITextLayout
     {
