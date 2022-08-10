@@ -14,10 +14,10 @@
             <RowDefinition/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <muxc:TabView TabItemsSource="{Binding DocumentList}" Grid.Row="0" SelectedItem="{Binding CurrentDocument,Mode=TwoWay}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <muxc:TabView TabItemsSource="{Binding DocumentList}" Grid.Row="0" SelectedItem="{Binding CurrentDocument,Mode=TwoWay}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" AddTabButtonClick="TabView_AddTabButtonClick">
             <muxc:TabView.TabItemTemplate>
                 <DataTemplate>
-                    <muxc:TabViewItem Header="{Binding Title}">
+                    <muxc:TabViewItem Header="{Binding Title}" CloseRequested="TabViewItem_CloseRequested">
                         <muxc:TabViewItem.Content>
                             <foo:FooTextBox x:Name="fooTextBox" FontFamily="Calibri" Document="{Binding }" AllowFocusOnInteraction="True"></foo:FooTextBox>
                         </muxc:TabViewItem.Content>

@@ -115,5 +115,15 @@ namespace Test
         {
             this.vm.AddDocument();
         }
+
+        private void TabViewItem_CloseRequested(TabViewItem sender, TabViewTabCloseRequestedEventArgs args)
+        {
+            this.vm.RemoveDocument((FooEditEngine.Document)args.Item);
+        }
+
+        private void TabView_AddTabButtonClick(TabView sender, object args)
+        {
+            this.vm.AddDocument();
+        }
     }
 }

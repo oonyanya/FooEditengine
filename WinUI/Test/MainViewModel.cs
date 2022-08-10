@@ -105,6 +105,13 @@ namespace Test
             this.CurrentDocument = _list.Last();
         }
 
+        public void RemoveDocument(Document doc = null)
+        {
+            if(_list.Count > 1)
+                _list.Remove(doc != null ? doc : this.CurrentDocument);
+            this.CurrentDocument = _list[0];
+        }
+
         public async Task AddDocumentFromFile(IStorageFile file)
         {
             if (file != null)
