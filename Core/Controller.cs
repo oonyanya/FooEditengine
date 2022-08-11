@@ -874,7 +874,7 @@ namespace FooEditEngine
             return false;
         }
 
-        public void MoveSelectBefore(TextPoint tp)
+        void MoveSelectBefore(TextPoint tp)
         {
             int NewAnchorIndex;
             int SelectionLength;
@@ -900,7 +900,7 @@ namespace FooEditEngine
         /// <param name="current">現在のキャレット位置</param>
         /// <param name="move_pargraph">パラグラフ単位で移動するなら真</param>
         /// <returns>移動後のキャレット位置</returns>
-        public TextPoint GetTextPointAfterMoveLine(int count, TextPoint current, bool move_pargraph = false)
+        TextPoint GetTextPointAfterMoveLine(int count, TextPoint current, bool move_pargraph = false)
         {
             if(this.Document.LineBreak == LineBreakMethod.None || move_pargraph == true)
             {
@@ -929,15 +929,6 @@ namespace FooEditEngine
                 return new_tp;
 
             }
-        }
-
-
-        /// <summary>
-        /// キャレット位置を既定の位置に戻す
-        /// </summary>
-        public void ResetCaretPostion()
-        {
-            this.JumpCaret(0);
         }
 
         /// <summary>
