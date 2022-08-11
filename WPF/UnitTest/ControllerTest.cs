@@ -62,6 +62,174 @@ namespace UnitTest
             Assert.IsTrue(doc.ToString(0) == "U30 ");
         }
 
+        [TestMethod()]
+        public void DeSelectAllTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            EditView view = new EditView(doc, render);
+            Controller ctrl = new Controller(doc, view);
+            doc.Clear();
+            doc.Append("0");
+            doc.Select(0, 1);
+            ctrl.DeSelectAll();
+            Assert.IsTrue(doc.Selections.Count == 0);
+        }
+
+        [TestMethod()]
+        public void IsMarkerTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            EditView view = new EditView(doc, render);
+            Controller ctrl = new Controller(doc, view);
+            doc.Append("this is a pen");
+            doc.SetMarker(MarkerIDs.Defalut, Marker.Create(0, 4, HilightType.Sold));
+            Assert.IsTrue(ctrl.IsMarker(new TextPoint(0, 0), HilightType.Sold) == true);
+            Assert.IsTrue(ctrl.IsMarker(0, HilightType.Sold) == true);
+            Assert.IsTrue(ctrl.IsMarker(new TextPoint(0, 5), HilightType.Sold) == false);
+            Assert.IsTrue(ctrl.IsMarker(5, HilightType.Sold) == false);
+        }
+
+        [TestMethod()]
+        public void AdjustCaretTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            EditView view = new EditView(doc, render);
+            Controller ctrl = new Controller(doc, view);
+            doc.Append("this is a pen");
+            doc.Select(0, 1);
+            int old_sel_start = ctrl.SelectionStart;
+            int old_sel_length = ctrl.SelectionLength;
+            TextPoint old_caret = doc.CaretPostion;
+            ctrl.AdjustCaret();
+            Assert.IsTrue(old_sel_start == ctrl.SelectionStart);
+            Assert.IsTrue(old_sel_length == ctrl.SelectionLength);
+            Assert.IsTrue(old_caret == doc.CaretPostion);
+        }
+
+        [TestMethod()]
+        public void JumpCaretTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            EditView view = new EditView(doc, render);
+            Controller ctrl = new Controller(doc, view);
+            doc.Append("1\n2\n3\n4");
+            doc.LayoutLines.FoldingCollection.Add(new FoldingItem(2, 6, false));
+            ctrl.JumpCaret(4);
+            Assert.IsTrue(doc.CaretPostion == new TextPoint(2, 0));
+            var folding = doc.LayoutLines.FoldingCollection.Get(2, 6);
+            Assert.IsTrue(folding.Expand == true);
+            folding.Expand = false;
+            ctrl.JumpCaret(0);
+            ctrl.JumpCaret(4,false);
+            Assert.IsTrue(folding.Expand == false);
+        }
+
+        [TestMethod()]
+        [Ignore]
+        public void ScrollByPixelTest()
+        {
+            Assert.Fail("目視で確認すること");
+        }
+
+        [TestMethod()]
+        [Ignore]
+        public void ScrollTest()
+        {
+            Assert.Fail("目視で確認すること");
+        }
+
+        [TestMethod()]
+        public void GetNextCaretTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            EditView view = new EditView(doc, render);
+            Controller ctrl = new Controller(doc, view);
+            doc.Append("1234\n1234");
+            ctrl.JumpCaret(0);
+            TextPoint nextCaret;
+            int moved;
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Character, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 1);
+            Assert.IsTrue(moved == 1);
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Word, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 4);
+            Assert.IsTrue(moved == 1);
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Paragraph, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Line, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+        }
+
+        [TestMethod()]
+        public void DoDeleteActionTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            EditView view = new EditView(doc, render);
+            Controller ctrl = new Controller(doc, view);
+            doc.Append("1234");
+            ctrl.JumpCaret(0);
+            ctrl.DoDeleteAction();
+            Assert.IsTrue(doc[0] == '2');
+            doc.Select(0, 1);
+            ctrl.DoDeleteAction();
+            Assert.IsTrue(doc[0] == '3');
+        }
+
+        [TestMethod()]
+        public void DoEnterActionTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            EditView view = new EditView(doc, render);
+            Controller ctrl = new Controller(doc, view);
+            doc.Append("1234");
+            ctrl.JumpCaret(1);
+            ctrl.DoEnterAction();
+            Assert.IsTrue(doc[1] == '\n');
+        }
+
+        [TestMethod()]
+        public void MoveCaretAndSelectTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            EditView view = new EditView(doc, render);
+            Controller ctrl = new Controller(doc, view);
+            doc.Clear();
+            doc.Append("abc def\nef");
+            ctrl.JumpCaret(0);
+            ctrl.MoveCaretAndSelect(new TextPoint(0, 1));
+            Assert.IsTrue(ctrl.SelectionStart == 0 && ctrl.SelectionLength == 1);
+            Assert.IsTrue(doc.CaretPostion.row == 0 && doc.CaretPostion.col == 1);
+            ctrl.JumpCaret(0);
+            ctrl.MoveCaretAndSelect(new TextPoint(0, 1),true);
+            Assert.IsTrue(ctrl.SelectionStart == 0 && ctrl.SelectionLength == 3);
+            Assert.IsTrue(doc.CaretPostion.row == 0 && doc.CaretPostion.col == 3);
+        }
+
+        [TestMethod()]
+        [Ignore]
+        public void MoveCaretAndGripperTest()
+        {
+            Assert.Fail("目視で確認すること");
+        }
+
         [TestMethod]
         public void CaretTest()
         {
@@ -220,6 +388,7 @@ namespace UnitTest
             doc.Clear();
             doc.Append("a\nb\nc");
             doc.Select(0, 4);
+            Assert.IsTrue(ctrl.IsRectInsertMode() == true);
             ctrl.DoInputString("x");
             Assert.IsTrue(
                 view.LayoutLines[0] == "xa\n" &&
