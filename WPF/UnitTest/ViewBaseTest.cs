@@ -72,5 +72,26 @@ namespace UnitTest
             Assert.AreEqual(doc.Src.Row, 0);
             Assert.AreEqual(result, false);
         }
+
+        [TestMethod]
+        public void GetNearstRowAndOffsetYTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            DummyView view = new DummyView(doc, render);
+            view.PageBound = new Rectangle(0, 0, 100, 30);
+            doc.Clear();
+            doc.Append("a\nb\nc\nd");
+            var r = view.GetNearstRowAndOffsetY(0, 30);
+            Assert.AreEqual(r.Row, 1);
+            Assert.AreEqual(r.OffsetY, 10);
+            r = view.GetNearstRowAndOffsetY(1, -30);
+            Assert.AreEqual(r.Row, 0);
+            Assert.AreEqual(r.OffsetY, 0);
+            r = view.GetNearstRowAndOffsetY(2, -30);
+            Assert.AreEqual(r.Row, 0);
+            Assert.AreEqual(r.OffsetY, 10);
+        }
     }
 }
