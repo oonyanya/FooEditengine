@@ -42,6 +42,16 @@ namespace UnitTest
                 set;
             }
         }
+
+        [TestMethod]
+        public void AddTest()
+        {
+            RangeCollection<MyRangeItem> collection = new RangeCollection<MyRangeItem>();
+            collection.Add(new MyRangeItem(10, 10));
+            collection.Add(new MyRangeItem(1, 10));
+            Assert.IsTrue(collection[0].start == 1 && collection[1].start == 10);
+        }
+
         [TestMethod]
         public void QueryRangeItemTest()
         {
@@ -66,7 +76,7 @@ namespace UnitTest
             collection.Add(new MyRangeItem(1, 10));
             collection.Add(new MyRangeItem(20, 10));
 
-            collection.RemoveNearest(0, 15);
+            collection.Remove(0, 15);
             
             var result = collection.ToList();
             Assert.IsTrue(result[0].start == 20 && result[0].length == 10);

@@ -4,28 +4,31 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Slusser.Collections.Generic;
 
 namespace FooEditEngine
 {
     /// <summary>
     /// マーカーを表す
     /// </summary>
-    internal interface IRange
+    public interface IRange
     {
         /// <summary>
-        /// マーカーの開始位置。-1を設定した場合、そのマーカーはレタリングされません
+        /// マーカーの開始位置。-1を設定した場合、そのマーカーはレタリングされません。正しい先頭位置を取得するにはGetLineHeadIndex()を使用してください
         /// </summary>
-        int start { get; set; }
+        public int start { get; set; }
         /// <summary>
         /// マーカーの長さ。0を設定した場合、そのマーカーはレタリングされません
         /// </summary>
-        int length { get; set; }
+        public int length { get; set; }
     }
 
-    internal sealed class RangeCollection<T> : IEnumerable<T>
+    public class RangeCollection<T> : IEnumerable<T>
         where T : IRange
     {
-        List<T> collection;
+        private protected GapBuffer<T> collection;
+        protected int stepRow = -1, stepLength = 0;
+        protected const int STEP_ROW_IS_NONE = -1;
 
         public RangeCollection()
             : this(null)
@@ -34,10 +37,9 @@ namespace FooEditEngine
 
         public RangeCollection(IEnumerable<T> collection)
         {
-            if (collection == null)
-                this.collection = new List<T>();
-            else
-                this.collection = new List<T>(collection);
+            this.collection = new GapBuffer<T>();
+            if (collection != null)
+                this.collection.AddRange(collection);
         }
 
         public T this[int i]
@@ -62,6 +64,7 @@ namespace FooEditEngine
 
         public void Add(T item)
         {
+            this.CommiteChange();
             this.collection.Add(item);
             for (int i = this.collection.Count - 1; i >= 0; i--)
             {
@@ -78,62 +81,75 @@ namespace FooEditEngine
             }
         }
 
+        internal void ReplaceRange(int startRow, IList<T> new_collection, int removeCount, int deltaLength)
+        {
+            this.collection.RemoveRange(startRow, removeCount);
+
+            if(new_collection != null)
+            {
+                int newCount = new_collection.Count;
+                if (this.stepRow > startRow && newCount > 0 && newCount != removeCount)
+                {
+                    //stepRowは1か2のうち、大きな方になる
+                    // 1.stepRow - (削除された行数 - 挿入された行数)
+                    // 2.行の挿入箇所
+                    //行が削除や置換された場合、1の処理をしないと正しいIndexが求められない
+                    this.stepRow = Math.Max(this.stepRow - (removeCount - newCount), startRow);
+#if DEBUG
+                    if (this.stepRow < 0 || this.stepRow > this.collection.Count + newCount)
+                    {
+                        System.Diagnostics.Debug.WriteLine("step row < 0 or step row >= lines.count");
+                        System.Diagnostics.Debugger.Break();
+                    }
+#endif
+                }
+
+                //startRowが挿入した行の開始位置なのであらかじめ引いておく
+                for (int i = 1; i < new_collection.Count; i++)
+                {
+                    if (this.stepRow != STEP_ROW_IS_NONE && startRow + i > this.stepRow)
+                        new_collection[i].start -= deltaLength + this.stepLength;
+                    else
+                        new_collection[i].start -= deltaLength;
+                }
+                this.collection.InsertRange(startRow, new_collection);
+            }
+        }
+
         public void Remove(int start, int length)
         {
             if (this.collection.Count == 0)
                 return;
 
             int at = this.IndexOf(start);
-
             int endAt = this.IndexOf(start + length - 1);
+
+            int startRow = 0;
+            int removeCount = 0;
 
             if(at != -1 && endAt != -1)
             {
-                for (int i = endAt; i >= at; i--)
-                {
-                    this.collection.RemoveAt(i);
-                }
+                startRow = at;
+                removeCount = endAt - at + 1;
             }
             else if (at != -1)
             {
-                this.collection.RemoveAt(at);
+                startRow = at;
+                removeCount = 1;
             }
             else if(endAt != -1)
             {
-                this.collection.RemoveAt(endAt);
+                startRow = endAt;
+                removeCount = 1;
             }
+            this.ReplaceRange(startRow, null, removeCount, 0);
+            this.UpdateStartIndex(0,startRow);
         }
 
-        public void RemoveNearest(int start, int length)
+        public void RemoveAt(int startRow)
         {
-            if (this.collection.Count == 0)
-                return;
-            
-            int nearAt;
-            int at = this.IndexOfNearest(start, out nearAt);
-            if (at == -1)
-                at = nearAt;
-            
-            int nearEndAt;
-            int endAt = this.IndexOfNearest(start + length - 1, out nearEndAt);
-            if (endAt == -1)
-                endAt = nearEndAt;
-            
-            int end = start + length - 1; 
-            for (int i = endAt; i >= at; i--)
-            {
-                int markerEnd = this.collection[i].start + this.collection[i].length - 1;
-                if (this.collection[i].start >= start && markerEnd <= end ||
-                    markerEnd >= start && markerEnd <= end ||
-                    this.collection[i].start >= start && this.collection[i].start <= end ||
-                    this.collection[i].start < start && markerEnd > end)
-                    this.collection.RemoveAt(i);
-            }
-        }
-
-        public void RemoveAt(int index)
-        {
-            this.collection.RemoveAt(index);
+            this.ReplaceRange(startRow, null, 1, 0);
+            this.UpdateStartIndex(0, startRow);
         }
 
         public int IndexOf(int start)
@@ -142,19 +158,42 @@ namespace FooEditEngine
             return this.IndexOfNearest(start, out dummy);
         }
 
+        int lastLineNumber;
         int IndexOfNearest(int start,out int nearIndex)
         {
+            if (start < 0)
+                throw new ArgumentOutOfRangeException("indexに負の値を設定することはできません");
+
             nearIndex = -1;
+            if (this.collection.Count == 0)
+                return -1;
+
+            if (start == 0 && this.collection.Count > 0)
+                return 0;
+
+            T line;
+            int lineHeadIndex;
+
+            if (lastLineNumber < this.collection.Count - 1)
+            {
+                line = this.collection[lastLineNumber];
+                lineHeadIndex = this.GetLineHeadIndex(lastLineNumber);
+                if (start >= lineHeadIndex && start < lineHeadIndex + line.length)
+                    return lastLineNumber;
+            }
+
             int left = 0, right = this.collection.Count - 1, mid;
             while (left <= right)
             {
                 mid = (left + right) / 2;
-                T item = this.collection[mid];
-                if (start >= item.start && start < item.start + item.length)
+                line = this.collection[mid];
+                lineHeadIndex = this.GetLineHeadIndex(mid);
+                if (start >= lineHeadIndex && start < lineHeadIndex + line.length)
                 {
+                    lastLineNumber = mid;
                     return mid;
                 }
-                if (start < item.start)
+                if (start < lineHeadIndex)
                 {
                     right = mid - 1;
                 }
@@ -163,10 +202,21 @@ namespace FooEditEngine
                     left = mid + 1;
                 }
             }
+
+            int lastRow = this.collection.Count - 1;
+            line = this.collection[lastRow];
+            lineHeadIndex = this.GetLineHeadIndex(lastRow);
+            if (start >= lineHeadIndex && start <= lineHeadIndex + line.length)   //最終行長+1までキャレットが移動する可能性があるので
+            {
+                lastLineNumber = this.collection.Count - 1;
+                return lastLineNumber;
+            }
+
             System.Diagnostics.Debug.Assert(left >= 0 || right >= 0);
             nearIndex = left >= 0 ? left : right;
             if (nearIndex > this.collection.Count - 1)
                 nearIndex = right;
+
             return -1;
         }
 
@@ -202,9 +252,66 @@ namespace FooEditEngine
             }
         }
 
-        public void Clear()
+        public virtual void Clear()
         {
             this.collection.Clear();
+            this.stepRow = STEP_ROW_IS_NONE;
+            this.stepLength = 0;
+            System.Diagnostics.Debug.WriteLine("Clear");
+        }
+
+        public void UpdateStartIndex(int deltaLength, int startRow)
+        {
+            if (this.collection.Count == 0)
+            {
+                this.stepRow = STEP_ROW_IS_NONE;
+                this.stepLength = 0;
+                return;
+            }
+
+            if (this.stepRow == STEP_ROW_IS_NONE)
+            {
+                this.stepRow = startRow;
+                this.stepLength = deltaLength;
+                return;
+            }
+
+
+            if (startRow < this.stepRow)
+            {
+                //ドキュメントの後半部分をごっそり削除した場合、this.stepRow >= this.Lines.Countになる可能性がある
+                if (this.stepRow >= this.collection.Count)
+                    this.stepRow = this.collection.Count - 1;
+                for (int i = this.stepRow; i > startRow; i--)
+                    this.collection[i].start -= this.stepLength;
+            }
+            else if (startRow > this.stepRow)
+            {
+                for (int i = this.stepRow + 1; i < startRow; i++)
+                    this.collection[i].start += this.stepLength;
+            }
+
+            this.stepRow = startRow;
+            this.stepLength += deltaLength;
+        }
+
+        public void CommiteChange()
+        {
+            for (int i = this.stepRow + 1; i < this.collection.Count; i++)
+                this.collection[i].start += this.stepLength;
+
+            this.stepRow = STEP_ROW_IS_NONE;
+            this.stepLength = 0;
+        }
+
+        protected int GetLineHeadIndex(int row)
+        {
+            if (this.collection.Count == 0)
+                return 0;
+            if (this.stepRow != STEP_ROW_IS_NONE && row > this.stepRow)
+                return this.collection[row].start + this.stepLength;
+            else
+                return this.collection[row].start;
         }
 
         public IEnumerator<T> GetEnumerator()

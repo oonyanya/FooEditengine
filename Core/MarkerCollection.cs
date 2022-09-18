@@ -312,19 +312,9 @@ namespace FooEditEngine
             int deltaLength = insertLength - removeLength;
             foreach (RangeCollection<Marker> markers in this.collection.Values)
             {
-                for (int i = 0; i < markers.Count; i++)
-                {
-                    Marker m = markers[i];
-                    if (m.start + m.length - 1 < startIndex)
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        m.start += deltaLength;
-                    }
-                    markers[i] = m;
-                }
+                int updateStartRow = markers.IndexOf(startIndex);
+                if(updateStartRow != -1)
+                    markers.UpdateStartIndex(deltaLength, updateStartRow);
             }
         }
 
