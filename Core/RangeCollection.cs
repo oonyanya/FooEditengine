@@ -81,39 +81,60 @@ namespace FooEditEngine
             }
         }
 
-        internal void ReplaceRange(int startRow, IList<T> new_collection, int removeCount, int deltaLength)
+        public void ReplaceRange(int startRow, IList<T> new_collection, int removeCount, int deltaLength)
         {
-            this.collection.RemoveRange(startRow, removeCount);
-
-            if(new_collection != null)
+            //消すべき行が複数ある場合は消すが、そうでない場合は最適化のため長さを変えるだけにとどめておく
+            if (removeCount == 1 && new_collection != null && new_collection.Count == 1)
             {
-                int newCount = new_collection.Count;
-                if (this.stepRow > startRow && newCount > 0 && newCount != removeCount)
+                this.collection[startRow] = new_collection.First();
+            }
+            else
+            {
+                if(typeof(T) == typeof(IDisposable))
                 {
-                    //stepRowは1か2のうち、大きな方になる
-                    // 1.stepRow - (削除された行数 - 挿入された行数)
-                    // 2.行の挿入箇所
-                    //行が削除や置換された場合、1の処理をしないと正しいIndexが求められない
-                    this.stepRow = Math.Max(this.stepRow - (removeCount - newCount), startRow);
-#if DEBUG
-                    if (this.stepRow < 0 || this.stepRow > this.collection.Count + newCount)
+                    for (int i = startRow; i < startRow + removeCount; i++)
                     {
-                        System.Diagnostics.Debug.WriteLine("step row < 0 or step row >= lines.count");
-                        System.Diagnostics.Debugger.Break();
+                        IDisposable item = (IDisposable)this.collection[i];
+                        item.Dispose();
                     }
-#endif
                 }
 
-                //startRowが挿入した行の開始位置なのであらかじめ引いておく
-                for (int i = 1; i < new_collection.Count; i++)
+                //行を挿入する
+                this.collection.RemoveRange(startRow, removeCount);
+
+                if (new_collection != null)
                 {
-                    if (this.stepRow != STEP_ROW_IS_NONE && startRow + i > this.stepRow)
-                        new_collection[i].start -= deltaLength + this.stepLength;
-                    else
-                        new_collection[i].start -= deltaLength;
+                    int newCount = new_collection.Count;
+                    if (this.stepRow > startRow && newCount > 0 && newCount != removeCount)
+                    {
+                        //stepRowは1か2のうち、大きな方になる
+                        // 1.stepRow - (削除された行数 - 挿入された行数)
+                        // 2.行の挿入箇所
+                        //行が削除や置換された場合、1の処理をしないと正しいIndexが求められない
+                        this.stepRow = Math.Max(this.stepRow - (removeCount - newCount), startRow);
+#if DEBUG
+                        if (this.stepRow < 0 || this.stepRow > this.collection.Count + newCount)
+                        {
+                            System.Diagnostics.Debug.WriteLine("step row < 0 or step row >= lines.count");
+                            System.Diagnostics.Debugger.Break();
+                        }
+#endif
+                    }
+
+                    //startRowが挿入した行の開始位置なのであらかじめ引いておく
+                    for (int i = 1; i < new_collection.Count; i++)
+                    {
+                        if (this.stepRow != STEP_ROW_IS_NONE && startRow + i > this.stepRow)
+                            new_collection[i].start -= deltaLength + this.stepLength;
+                        else
+                            new_collection[i].start -= deltaLength;
+                    }
+                    this.collection.InsertRange(startRow, new_collection);
                 }
-                this.collection.InsertRange(startRow, new_collection);
             }
+
+            //行テーブルを更新する
+            this.UpdateStartIndex(deltaLength, startRow);
         }
 
         public void Remove(int start, int length)
@@ -222,6 +243,7 @@ namespace FooEditEngine
 
         public IEnumerable<T> Get(int index)
         {
+            //TODO:インデックスがおかしくなってる可能性がある
             int at = this.IndexOf(index);
             if (at == -1)
                 yield break;
@@ -230,6 +252,7 @@ namespace FooEditEngine
 
         public IEnumerable<T> Get(int start, int length)
         {
+            //TODO:インデックスがおかしくなってる可能性がある
             int nearAt;
             int at = this.IndexOfNearest(start,out nearAt);
             if (at == -1)
@@ -304,7 +327,7 @@ namespace FooEditEngine
             this.stepLength = 0;
         }
 
-        protected int GetLineHeadIndex(int row)
+        public int GetLineHeadIndex(int row)
         {
             if (this.collection.Count == 0)
                 return 0;

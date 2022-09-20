@@ -431,23 +431,8 @@ namespace FooEditEngine
             SpilitStringEventArgs e = new SpilitStringEventArgs(this.Document, HeadIndex, analyzeLength, startRow);
             IList<LineToIndexTableData> newLines = this.CreateLineList(e.index, e.length, Document.MaximumLineLength);
 
-            //消すべき行が複数ある場合は消すが、そうでない場合は最適化のため長さを変えるだけにとどめておく
             int removeCount = endRow - startRow + 1;
-            if (removeCount == 1 && newLines.Count == 1)
-            {
-                this.Lines[startRow] = newLines.First();
-            }
-            else
-            {
-                for (int i = startRow; i < startRow + removeCount; i++)
-                    this.Lines[i].Dispose();
-
-                //行を挿入する
-                this.ReplaceRange(startRow, newLines, removeCount, deltaLength);
-            }
-
-            //行テーブルを更新する
-            this.UpdateStartIndex(deltaLength, startRow);
+            this.ReplaceRange(startRow, newLines, removeCount, deltaLength);
 
             this.AddDummyLine();
 
