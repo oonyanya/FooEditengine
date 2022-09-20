@@ -53,6 +53,34 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void ReplaceTest()
+        {
+            RangeCollection<MyRangeItem> collection = new RangeCollection<MyRangeItem>();
+            collection.Add(new MyRangeItem(10, 10));
+            collection.Add(new MyRangeItem(0, 10));
+            var new_collection = new List<MyRangeItem>();
+            new_collection.Add(new MyRangeItem(10, 10));
+            new_collection.Add(new MyRangeItem(20, 10));
+            collection.ReplaceRange(1, new_collection, 0, 20);
+            Assert.IsTrue(
+                collection.GetLineHeadIndex(0) == 0 &&
+                collection.GetLineHeadIndex(1) == 10 &&
+                collection.GetLineHeadIndex(2) == 20 &&
+                collection.GetLineHeadIndex(3) == 30
+                );
+            new_collection = new List<MyRangeItem>();
+            new_collection.Add(new MyRangeItem(10, 5));
+            new_collection.Add(new MyRangeItem(15, 5));
+            collection.ReplaceRange(1, new_collection, 2, -10);
+            Assert.IsTrue(
+                collection.GetLineHeadIndex(0) == 0 &&
+                collection.GetLineHeadIndex(1) == 10 &&
+                collection.GetLineHeadIndex(2) == 15 &&
+                collection.GetLineHeadIndex(3) == 20
+                );
+        }
+
+        [TestMethod]
         public void QueryRangeItemTest()
         {
             RangeCollection<MyRangeItem> collection = new RangeCollection<MyRangeItem>();
