@@ -907,7 +907,7 @@ namespace FooEditEngine.WinUI
 
             //コントロールの範囲を取得する
             var controlTopLeft = new Point(0, 0);
-            var controlBottomRight = new Point(this.RenderSize.Width, this.RenderSize.Height);
+            var controlBottomRight = new Point(this.ActualWidth, this.ActualHeight);
 
             //Core.Textはスクリーン座標に変換してくれないので自前で変換する（しかも、デバイス依存の座標で返さないといけない）
             screenStartPos = Util.GetScreentPoint(controlTopLeft, this).Scale(scale);
