@@ -644,20 +644,8 @@ namespace FooEditEngine
         public bool AdjustSrc(int index)
         {
             TextPoint startTextPoint = this.GetLayoutLineFromIndex(index);
-            Point relP = this.LayoutLines.GetLayout(startTextPoint.row).GetPostionFromIndex(startTextPoint.col);
-            if (relP.X < this.Src.X ||
-                relP.X > this.Src.X + this.PageBound.Width)
-            {
-                this.TryScroll(relP.X, this.Src.Row);
-                return true;
-            }
-            if (startTextPoint.row < this.Src.Row ||
-                startTextPoint.row > this.Src.Row + this.LineCountOnScreenWithInVisible)
-            {
-                this.TryScroll(this.Src.X, startTextPoint.row, relP.Y);
-                return true;
-            }
-            return false;
+            var result = this.AdjustSrc(startTextPoint, AdjustFlow.Row);
+            return result.Item1;
         }
 
         /// <summary>
