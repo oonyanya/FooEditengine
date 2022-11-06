@@ -844,7 +844,8 @@ namespace FooEditEngine.WinUI
 
             if (args.Reason == CoreTextFormatUpdatingReason.CompositionTargetConverted)
             {
-                this._View.AdjustSrc(args.Range.StartCaretPosition);
+                var tp = this.Document.LayoutLines.GetTextPointFromIndex(args.Range.StartCaretPosition);
+                this._View.AdjustSrc(tp, AdjustFlow.Both);
             }
             this.Refresh();
 
