@@ -6,7 +6,7 @@
     <RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
     <UseWinUI>true</UseWinUI>
     <AssemblyName>FooEditEngine.WinUI</AssemblyName>
-    <Version>1.0.6$(VersionPrefix)</Version>
+    <Version>1.0.7$(VersionPrefix)</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>WINUI;ENABLE_AUTMATION</DefineConstants>
