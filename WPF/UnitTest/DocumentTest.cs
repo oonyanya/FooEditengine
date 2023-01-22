@@ -418,6 +418,26 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void MultiMakerTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            doc.Append("this");
+            doc.SetMarker(MarkerIDs.Defalut, Marker.Create(0, 2, HilightType.Sold));
+            doc.SetMarker(MarkerIDs.Defalut, Marker.Create(2, 2, HilightType.Dash));
+            var markers = doc.Markers.Get(MarkerIDs.Defalut).ToArray();
+            Assert.IsTrue(markers[0].start == 0 && markers[0].length == 2 && markers[0].hilight == HilightType.Sold);
+            Assert.IsTrue(markers[1].start == 2 && markers[1].length == 2 && markers[1].hilight == HilightType.Dash);
+
+            doc.SetMarker(MarkerIDs.Defalut, Marker.Create(0, 2, HilightType.Dash));
+            doc.SetMarker(MarkerIDs.Defalut, Marker.Create(2, 2, HilightType.Sold));
+            markers = doc.Markers.Get(MarkerIDs.Defalut).ToArray();
+            Assert.IsTrue(markers[0].start == 0 && markers[0].length == 2 && markers[0].hilight == HilightType.Dash);
+            Assert.IsTrue(markers[1].start == 2 && markers[1].length == 2 && markers[1].hilight == HilightType.Sold);
+        }
+
+        [TestMethod]
         public void WatchDogTest()
         {
             RegexMarkerPattern dog = new RegexMarkerPattern(new Regex("h[a-z]+"), HilightType.Url,new Color(0,0,0,255));
