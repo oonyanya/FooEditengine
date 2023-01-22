@@ -16,11 +16,11 @@ namespace FooEditEngine
         /// <summary>
         /// マーカーの開始位置。-1を設定した場合、そのマーカーはレタリングされません。正しい先頭位置を取得するにはGetLineHeadIndex()を使用してください
         /// </summary>
-        public int start { get; set; }
+        int start { get; set; }
         /// <summary>
         /// マーカーの長さ。0を設定した場合、そのマーカーはレタリングされません
         /// </summary>
-        public int length { get; set; }
+        int length { get; set; }
     }
 
     public class RangeCollection<T> : IEnumerable<T>
