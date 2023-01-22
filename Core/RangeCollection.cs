@@ -163,6 +163,10 @@ namespace FooEditEngine
                 startRow = endAt;
                 removeCount = 1;
             }
+            else
+            {
+                return;
+            }
             this.ReplaceRange(startRow, null, removeCount, 0);
             this.UpdateStartIndex(0,startRow);
         }
@@ -177,6 +181,24 @@ namespace FooEditEngine
         {
             int dummy;
             return this.IndexOfNearest(start, out dummy);
+        }
+
+        public int IndexOfLoose(int start)
+        {
+            int dummy;
+            int result = this.IndexOfNearest(start, out dummy);
+            if(result == -1)
+            {
+                int lastRow = this.collection.Count - 1;
+                var line = this.collection[lastRow];
+                var lineHeadIndex = this.GetLineHeadIndex(lastRow);
+                if (start >= lineHeadIndex && start <= lineHeadIndex + line.length)   //最終行長+1までキャレットが移動する可能性があるので
+                {
+                    lastLineNumber = this.collection.Count - 1;
+                    return lastLineNumber;
+                }
+            }
+            return result;
         }
 
         int lastLineNumber;
@@ -222,15 +244,6 @@ namespace FooEditEngine
                 {
                     left = mid + 1;
                 }
-            }
-
-            int lastRow = this.collection.Count - 1;
-            line = this.collection[lastRow];
-            lineHeadIndex = this.GetLineHeadIndex(lastRow);
-            if (start >= lineHeadIndex && start <= lineHeadIndex + line.length)   //最終行長+1までキャレットが移動する可能性があるので
-            {
-                lastLineNumber = this.collection.Count - 1;
-                return lastLineNumber;
             }
 
             System.Diagnostics.Debug.Assert(left >= 0 || right >= 0);

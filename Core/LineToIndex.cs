@@ -654,7 +654,7 @@ namespace FooEditEngine
         /// <returns>行番号を返します</returns>
         public int GetLineNumberFromIndex(int index)
         {
-            var result = this.IndexOf(index);
+            var result = this.IndexOfLoose(index);
 
             if(result == -1)
                 throw new ArgumentOutOfRangeException("該当する行が見つかりませんでした");
