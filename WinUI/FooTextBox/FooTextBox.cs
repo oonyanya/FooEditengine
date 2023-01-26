@@ -896,8 +896,8 @@ namespace FooEditEngine.WinUI
                 TextStoreHelper.GetStringExtent(this.Document, this._View, i_startIndex, i_endIndex, out startPos, out endPos);
 
                 //Core.Textはスクリーン座標に変換してくれないので自前で変換する（しかも、デバイス依存の座標で返さないといけない）
-                screenStartPos = Util.GetScreentPoint(startPos, this).Scale(scale);
-                screenEndPos = Util.GetScreentPoint(endPos, this).Scale(scale);
+                screenStartPos = Util.GetScreentPoint(startPos.Scale(scale), this);
+                screenEndPos = Util.GetScreentPoint(endPos.Scale(scale), this);
                 args.Request.LayoutBounds.TextBounds = new Rect(
                     screenStartPos.X,
                     screenStartPos.Y,
@@ -911,8 +911,8 @@ namespace FooEditEngine.WinUI
             var controlBottomRight = new Point(this.ActualWidth, this.ActualHeight);
 
             //Core.Textはスクリーン座標に変換してくれないので自前で変換する（しかも、デバイス依存の座標で返さないといけない）
-            screenStartPos = Util.GetScreentPoint(controlTopLeft, this).Scale(scale);
-            screenEndPos = Util.GetScreentPoint(controlBottomRight, this).Scale(scale);
+            screenStartPos = Util.GetScreentPoint(controlTopLeft.Scale(scale), this);
+            screenEndPos = Util.GetScreentPoint(controlBottomRight.Scale(scale), this);
 
             args.Request.LayoutBounds.ControlBounds = new Rect(
                 screenStartPos.X,
