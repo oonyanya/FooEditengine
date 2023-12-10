@@ -1377,7 +1377,7 @@ namespace FooEditEngine.WinUI
         void FooTextBox_Loaded(object sender, RoutedEventArgs e)
         {
             Util.SetDpi((float)(this.XamlRoot.RasterizationScale * 96.0f));
-            this.View.CaretWidthOnInsertMode *= this.XamlRoot.RasterizationScale;
+            this.View.CaretWidthOnInsertMode *= Math.Ceiling(this.XamlRoot.RasterizationScale);
             this.Render.CreateSurface(this.rectangle, 100, 100);
             this.Focus(FocusState.Programmatic);
         }
