@@ -32,13 +32,6 @@ namespace FooEditEngine.UWP
             }
         }
 
-        static double GetFontSizeDIP(double fontSize)
-        {
-            float dpix, dpiy;
-            Util.GetDpi(out dpix, out dpiy);
-            return fontSize * (dpix / 72.0f);
-        }
-
         double _FontSize;
         public double FontSize
         {
@@ -49,7 +42,7 @@ namespace FooEditEngine.UWP
             set
             {
                 this._FontSize = value;
-                this._format.FontSize = (float)GetFontSizeDIP(value);
+                this._format.FontSize = (float)value;
                 this.CaclulateTextMetrics();
                 this.ChangedRenderResource(this, new ChangedRenderRsourceEventArgs(ResourceType.Font));
             }
@@ -353,7 +346,7 @@ namespace FooEditEngine.UWP
         {
             _format = new CanvasTextFormat();
             _format.FontFamily = fontName;
-            _format.FontSize = (float)GetFontSizeDIP(fontSize);
+            _format.FontSize = (float)fontSize;
             _format.WordWrapping = CanvasWordWrapping.NoWrap;
             _format.Direction = GetDWRightDirection(this.RightToLeft);
             this.CaclulateTextMetrics();
