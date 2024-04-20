@@ -904,8 +904,8 @@ namespace FooEditEngine.UWP
                 double scale = Util.GetScale();
 
                 //Core.Textはスクリーン座標に変換してくれないので自前で変換する（しかも、デバイス依存の座標で返さないといけない）
-                var screenStartPos = Util.GetScreentPoint(startPos, this).Scale(scale);
-                var screenEndPos = Util.GetScreentPoint(endPos, this).Scale(scale);
+                var screenStartPos = Util.GetScreentPoint(startPos, this);
+                var screenEndPos = Util.GetScreentPoint(endPos, this);
                 args.Request.LayoutBounds.TextBounds = new Rect(
                     screenStartPos.X,
                     screenStartPos.Y,

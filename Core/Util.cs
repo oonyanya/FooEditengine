@@ -132,8 +132,10 @@ namespace FooEditEngine
 
         public static Point GetScreentPoint(Point client, Microsoft.UI.Xaml.UIElement element)
         {
+            double scale = GetScale();
             var gt = element.TransformToVisual(element.XamlRoot.Content);
             Point p = gt.TransformPoint(client);
+            p = p.Scale(scale); //XamlRootの(0,0)からクライアント座標までは自前でスケーリングしないといけない
 
             //Windows10以降では補正する必要がある
             var appWnd = GetAppWindow(element);
