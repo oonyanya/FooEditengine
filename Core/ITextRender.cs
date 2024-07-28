@@ -580,6 +580,11 @@ namespace FooEditEngine
         Size emSize { get; }
 
         /// <summary>
+        /// 行の高さ。単位はem。
+        /// </summary>
+        double LineEmHeight { get { return 1.0; } set { } }
+
+        /// <summary>
         /// 保持しているリソースに変化があったことを通知する
         /// </summary>
         event ChangedRenderResourceEventHandler ChangedRenderResource;

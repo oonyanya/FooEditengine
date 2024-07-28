@@ -333,6 +333,21 @@ namespace FooEditEngine.WinUI
             private set;
         }
 
+        double _LineEmHeight = 1.5;
+        public double LineEmHeight
+        {
+            get
+            {
+                return _LineEmHeight;
+            }
+            set
+            {
+                _LineEmHeight = value;
+                //フォントが変わった扱いにしないと反映されない
+                this.ChangedRenderResource(this, new ChangedRenderRsourceEventArgs(ResourceType.Font));
+            }
+        }
+
         public event ChangedRenderResourceEventHandler ChangedRenderResource;
         public event EventHandler ChangedRightToLeft;
 
@@ -452,7 +467,7 @@ namespace FooEditEngine.WinUI
             }
 
             bool hasNewLine = str.Length > 0 && str[str.Length - 1] == Document.NewLine;
-            Win2DTextLayout newLayout = new Win2DTextLayout(this._factory, str, this._format, layoutWidth, this.TextArea.Height, dpiy, hasNewLine && this.ShowLineBreak, this.emSize.Height);
+            Win2DTextLayout newLayout = new Win2DTextLayout(this._factory, str, this._format, layoutWidth, this.TextArea.Height, dpiy, hasNewLine && this.ShowLineBreak, this.emSize.Height * this.LineEmHeight);
 
             if (syntaxCollection != null)
             {
@@ -600,20 +615,20 @@ namespace FooEditEngine.WinUI
             }
             float dpix, dpiy;
             Util.GetDpi(out dpix, out dpiy);
-            var layout = this._factory.CreateTextLayout(str, this._format, (float)layoutRect.Width, (float)layoutRect.Height, dpix, false);
+            var layout = new Win2DTextLayout(this._factory, str, this._format, layoutRect.Width, layoutRect.Height, dpiy, false, this.emSize.Height * this.LineEmHeight);
             switch (align)
             {
                 case StringAlignment.Left:
-                    layout.HorizontalAlignment = CanvasHorizontalAlignment.Left;
+                    layout.RawLayout.HorizontalAlignment = CanvasHorizontalAlignment.Left;
                     break;
                 case StringAlignment.Center:
-                    layout.HorizontalAlignment = CanvasHorizontalAlignment.Center;
+                    layout.RawLayout.HorizontalAlignment = CanvasHorizontalAlignment.Center;
                     break;
                 case StringAlignment.Right:
-                    layout.HorizontalAlignment = CanvasHorizontalAlignment.Right;
+                    layout.RawLayout.HorizontalAlignment = CanvasHorizontalAlignment.Right;
                     break;
             }
-            this.offScreenSession.DrawTextLayout(layout, (float)x, (float)y, brush);
+            this.offScreenSession.DrawTextLayout(layout.RawLayout, (float)x, (float)y, brush);
         }
 
         public void EndClipRect()

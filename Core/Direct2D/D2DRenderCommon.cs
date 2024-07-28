@@ -279,7 +279,7 @@ namespace FooEditEngine
             float dpix, dpiy;
             this.GetDpi(out dpix, out dpiy);
 
-            this.format = this._factory.GetTextFormat(fontName, fontSize, fontWeigth, fontStyle);
+            this.format = this._factory.GetTextFormat(fontName, fontSize*dpix/72.0f, fontWeigth, fontStyle);
             this.format.WordWrapping = DW.WordWrapping.NoWrap;
             this.format.ReadingDirection = GetDWRightDirect(_RightToLeft);
 

@@ -122,15 +122,16 @@ namespace FooEditEngine.WinUI
 
         public Point GetPostionFromIndex(int index)
         {
-            var v = this._layout.GetCaretPosition(index, false);
+            var chr_regions = this._layout.GetCharacterRegions(index, 1);
+            var v = chr_regions[0].LayoutBounds;
             return new Point(v.X, v.Y);
         }
 
         public double GetWidthFromIndex(int index)
         {
-            CanvasTextLayoutRegion r;
-            this._layout.GetCaretPosition(index, false, out r);
-            return r.LayoutBounds.Width ;
+            var chr_regions = this._layout.GetCharacterRegions(index, 1);
+            var r = chr_regions[0].LayoutBounds;
+            return r.Width ;
         }
         public void SetLineBreakBrush(Windows.UI.Color ctrlColor)
         {

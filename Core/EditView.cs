@@ -359,16 +359,17 @@ namespace FooEditEngine
 
             Point pos, from, to;
             Size emSize = render.emSize;
+            double lineHeight = emSize.Height * render.LineEmHeight;
             Rectangle clipRect = this.render.TextArea;
             int count = 0;
-            double markerHeight = emSize.Height / 2;
+            double markerHeight = lineHeight / 2;
             if (this.Document.RightToLeft)
             {
-                pos = new Point(clipRect.TopRight.X, clipRect.TopRight.Y - emSize.Height - LineMarkerThickness);
+                pos = new Point(clipRect.TopRight.X, clipRect.TopRight.Y - lineHeight - LineMarkerThickness);
                 for (; pos.X >= clipRect.TopLeft.X; pos.X -= emSize.Width, count++)
                 {
                     from = pos;
-                    to = new Point(pos.X, pos.Y + emSize.Height);
+                    to = new Point(pos.X, pos.Y + lineHeight);
                     int mod = count % 10;
                     if (mod == 0)
                     {
@@ -377,9 +378,9 @@ namespace FooEditEngine
                         this.render.DrawString(countStr, pos.X - counterWidth, pos.Y, StringAlignment.Right, new Size(counterWidth, double.MaxValue));
                     }
                     else if (mod == 5)
-                        from.Y = from.Y + emSize.Height / 2;
+                        from.Y = from.Y + lineHeight / 2;
                     else
-                        from.Y = from.Y + emSize.Height * 3 / 4;
+                        from.Y = from.Y + lineHeight * 3 / 4;
                     render.DrawLine(from, to);
                     if (this.CaretLocation.X >= pos.X && this.CaretLocation.X < pos.X + emSize.Width)
                         render.FillRectangle(new Rectangle(pos.X, pos.Y + markerHeight, emSize.Width, markerHeight), FillRectType.OverwriteCaret);
@@ -387,18 +388,18 @@ namespace FooEditEngine
             }
             else
             {
-                pos = new Point(clipRect.TopLeft.X, clipRect.TopLeft.Y - emSize.Height - LineMarkerThickness);
+                pos = new Point(clipRect.TopLeft.X, clipRect.TopLeft.Y - lineHeight - LineMarkerThickness);
                 for (; pos.X < clipRect.TopRight.X; pos.X += emSize.Width, count++)
                 {
                     from = pos;
-                    to = new Point(pos.X, pos.Y + emSize.Height);
+                    to = new Point(pos.X, pos.Y + lineHeight);
                     int mod = count % 10;
                     if (mod == 0)
                         this.render.DrawString((count / 10).ToString(), pos.X, pos.Y, StringAlignment.Left, new Size(double.MaxValue, double.MaxValue));
                     else if (mod == 5)
-                        from.Y = from.Y + emSize.Height / 2;
+                        from.Y = from.Y + lineHeight / 2;
                     else
-                        from.Y = from.Y + emSize.Height * 3 / 4;
+                        from.Y = from.Y + lineHeight * 3 / 4;
                     render.DrawLine(from, to);
                     if (this.CaretLocation.X >= pos.X && this.CaretLocation.X < pos.X + emSize.Width)
                         render.FillRectangle(new Rectangle(pos.X, pos.Y + markerHeight, emSize.Width, markerHeight), FillRectType.OverwriteCaret);
@@ -423,7 +424,7 @@ namespace FooEditEngine
                 {
                     TextPoint tp = this.GetLayoutLineFromIndex(sel.start);
                     Point left = this.GetPostionFromTextPoint(tp);
-                    double lineHeight = render.emSize.Height;
+                    double lineHeight = render.emSize.Height * render.LineEmHeight;
                     Rectangle InsertRect = new Rectangle(left.X,
                         left.Y,
                         CaretWidthOnInsertMode,
@@ -450,7 +451,7 @@ namespace FooEditEngine
 
             int row = this.Document.CaretPostion.row;
             ITextLayout layout = this.LayoutLines.GetLayout(row);
-            double lineHeight = render.emSize.Height;
+            double lineHeight = render.emSize.Height * render.LineEmHeight;
             double charWidth = layout.GetWidthFromIndex(this.Document.CaretPostion.col);
 
             if (this.InsertMode || charWidth == 0)
@@ -730,13 +731,14 @@ namespace FooEditEngine
 
             if (flow == AdjustFlow.Row || flow == AdjustFlow.Both)
             {
-                int PhyLineCountOnScreen = (int)(this.render.TextArea.Height / this.render.emSize.Height);
+                double lineHeight = this.render.emSize.Height * this.render.LineEmHeight;
+
+                int PhyLineCountOnScreen = (int)(this.render.TextArea.Height / lineHeight);
                 //計算量を減らすため
                 if (tp.row < this.Src.Row || this.Src.Row + PhyLineCountOnScreen * 2 < tp.row)
                     this.Document.Src = new SrcPoint(this.Src.X, tp.row, -relPoint.Y);
 
                 //キャレットのY座標を求める
-                double lineHeight = this.render.emSize.Height;
                 double caret_y = this.Src.OffsetY;  //src.rowからキャレット位置
                 double alignedHeight = PhyLineCountOnScreen * lineHeight - lineHeight;
                 for (int i = this.Src.Row; i < tp.row; i++)
@@ -900,7 +902,7 @@ namespace FooEditEngine
 
             if (this.Document.HideRuler == false)
             {
-                double rulerHeight = this.render.emSize.Height + LineMarkerThickness;
+                double rulerHeight = this.render.emSize.Height * this.render.LineEmHeight + LineMarkerThickness;
                 y += rulerHeight;
                 height -= rulerHeight;
             }

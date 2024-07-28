@@ -1595,6 +1595,8 @@ namespace FooEditEngine.WinUI
                 source.Render.UpdateArea = source.UpdateArea.Color;
             if (e.Property.Equals(LineNumberProperty))
                 source.Render.LineNumber = source.LineNumber.Color;
+            if (e.Property.Equals(LineEmHeightProperty))
+                source.Render.LineEmHeight = source.LineEmHeight;
 #endif
         }
 
@@ -2057,6 +2059,20 @@ namespace FooEditEngine.WinUI
         /// </summary>
         public static readonly DependencyProperty LineBreakProperty =
             DependencyProperty.Register("LineBreakMethod", typeof(LineBreakMethod), typeof(FooTextBox), new PropertyMetadata(LineBreakMethod.None, OnPropertyChanged));
+
+        /// <summary>
+        /// 行の高さをem単位で指定します
+        /// </summary>
+        public double LineEmHeight
+        {
+            get { return (double)GetValue(LineEmHeightProperty); }
+            set { SetValue(LineEmHeightProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for BaseLineRaito.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty LineEmHeightProperty =
+            DependencyProperty.Register("BaseLineRate", typeof(double), typeof(FooTextBox), new PropertyMetadata(1.6 ,OnPropertyChanged));
+
 
 
         /// <summary>
