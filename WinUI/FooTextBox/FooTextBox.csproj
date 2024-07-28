@@ -6,7 +6,7 @@
     <RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
     <UseWinUI>true</UseWinUI>
     <AssemblyName>FooEditEngine.WinUI</AssemblyName>
-    <Version>1.0.12$(VersionPrefix)</Version>
+    <Version>1.0.13$(VersionPrefix)</Version>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>

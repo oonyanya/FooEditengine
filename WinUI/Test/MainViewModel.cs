@@ -63,6 +63,17 @@ namespace Test
             }
         }
 
+        double _FontSize = 12;
+        public double FontSize
+        {
+            get { return this._FontSize; }
+            set
+            {
+                this._FontSize = value;
+                this.OnPropertyChanged(this);
+            }
+        }
+
         public event EventHandler CurrentDocumentChanged;
         
         public event PropertyChangedEventHandler PropertyChanged;

@@ -358,16 +358,12 @@ namespace FooEditEngine.WinUI
 
         private float GetDipFontSize(float fontSize)
         {
-            float dpix, dpiy;
-            Util.GetDpi(out dpix, out dpiy);
-
-            return (float)fontSize * dpix / 72.0f;  //Win2Dだけ適切なフォントサイズを計算しないといけない
+            return (float)fontSize * 96.0f / 72.0f; 
         }
 
         CanvasTextFormat _format;
         public void InitTextFormat(string fontName, float fontSize)
         {
-
             _format = new CanvasTextFormat();
             _format.FontFamily = fontName;
             _format.FontSize = GetDipFontSize(fontSize);

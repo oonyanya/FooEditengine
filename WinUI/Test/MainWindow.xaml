@@ -19,7 +19,7 @@
                 <DataTemplate>
                     <muxc:TabViewItem Header="{Binding Title}" CloseRequested="TabViewItem_CloseRequested">
                         <muxc:TabViewItem.Content>
-                            <foo:FooTextBox x:Name="fooTextBox" FontFamily="MS Gothic" Document="{Binding }" AllowFocusOnInteraction="True"></foo:FooTextBox>
+                            <foo:FooTextBox x:Name="fooTextBox" FontFamily="MS Gothic" FontSize="{Binding DataContext.FontSize,ElementName=Root,Mode=TwoWay}" LineEmHeight="1.5" Document="{Binding }" AllowFocusOnInteraction="True"></foo:FooTextBox>
                         </muxc:TabViewItem.Content>
                     </muxc:TabViewItem>
                 </DataTemplate>
@@ -29,6 +29,8 @@
             <Button Content="Load" Click="Button_Click"/>
             <Button Content="Print" Click="Print_Button_Click"/>
             <Button Content="New" Click="Button_Click_New"/>
+            <TextBlock>FontSize</TextBlock>
+            <TextBox Text="{Binding FontSize,Mode=TwoWay}"></TextBox>
         </StackPanel>
     </Grid>
 </Window>
