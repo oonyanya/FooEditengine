@@ -344,9 +344,12 @@ namespace FooEditEngine.WinUI
         CanvasTextFormat _format;
         public void InitTextFormat(string fontName, float fontSize)
         {
+            float dpix, dpiy;
+            Util.GetDpi(out dpix, out dpiy);
+
             _format = new CanvasTextFormat();
             _format.FontFamily = fontName;
-            _format.FontSize = (float)fontSize;
+            _format.FontSize = (float)fontSize * dpix / 72.0f;  //Win2Dだけ適切なフォントサイズを計算しないといけない
             _format.WordWrapping = CanvasWordWrapping.NoWrap;
             _format.Direction = GetDWRightDirection(this.RightToLeft);
             this.CaclulateTextMetrics();

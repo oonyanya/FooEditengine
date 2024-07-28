@@ -19,7 +19,7 @@
                 <DataTemplate>
                     <muxc:TabViewItem Header="{Binding Title}" CloseRequested="TabViewItem_CloseRequested">
                         <muxc:TabViewItem.Content>
-                            <foo:FooTextBox x:Name="fooTextBox" FontFamily="Calibri" Document="{Binding }" AllowFocusOnInteraction="True"></foo:FooTextBox>
+                            <foo:FooTextBox x:Name="fooTextBox" FontFamily="MS Gothic" Document="{Binding }" AllowFocusOnInteraction="True"></foo:FooTextBox>
                         </muxc:TabViewItem.Content>
                     </muxc:TabViewItem>
                 </DataTemplate>
