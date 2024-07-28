@@ -42,7 +42,7 @@ namespace FooEditEngine.WinUI
             set
             {
                 this._FontSize = value;
-                this._format.FontSize = (float)value;
+                this._format.FontSize = GetDipFontSize((float)value);
                 this.CaclulateTextMetrics();
                 this.ChangedRenderResource(this, new ChangedRenderRsourceEventArgs(ResourceType.Font));
             }
@@ -341,15 +341,21 @@ namespace FooEditEngine.WinUI
             return value ? CanvasTextDirection.RightToLeftThenBottomToTop : CanvasTextDirection.LeftToRightThenTopToBottom;
         }
 
-        CanvasTextFormat _format;
-        public void InitTextFormat(string fontName, float fontSize)
+        private float GetDipFontSize(float fontSize)
         {
             float dpix, dpiy;
             Util.GetDpi(out dpix, out dpiy);
 
+            return (float)fontSize * dpix / 72.0f;  //Win2Dだけ適切なフォントサイズを計算しないといけない
+        }
+
+        CanvasTextFormat _format;
+        public void InitTextFormat(string fontName, float fontSize)
+        {
+
             _format = new CanvasTextFormat();
             _format.FontFamily = fontName;
-            _format.FontSize = (float)fontSize * dpix / 72.0f;  //Win2Dだけ適切なフォントサイズを計算しないといけない
+            _format.FontSize = GetDipFontSize(fontSize);
             _format.WordWrapping = CanvasWordWrapping.NoWrap;
             _format.Direction = GetDWRightDirection(this.RightToLeft);
             this.CaclulateTextMetrics();
