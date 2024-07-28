@@ -2071,7 +2071,7 @@ namespace FooEditEngine.WinUI
 
         // Using a DependencyProperty as the backing store for BaseLineRaito.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty LineEmHeightProperty =
-            DependencyProperty.Register("BaseLineRate", typeof(double), typeof(FooTextBox), new PropertyMetadata(1.6 ,OnPropertyChanged));
+            DependencyProperty.Register("LineEmHeight", typeof(double), typeof(FooTextBox), new PropertyMetadata(1.6 ,OnPropertyChanged));
 
 
 
