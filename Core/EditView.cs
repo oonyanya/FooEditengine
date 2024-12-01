@@ -542,7 +542,7 @@ namespace FooEditEngine
                     return tp;
             }
 
-            relX = p.X - this.render.TextArea.X;
+            relX = p.X - this.render.TextArea.X + this.Document.Src.X;
             tp.col = this.LayoutLines.GetLayout(tp.row).GetIndexFromPostion(relX,relY);
 
             int lineLength = this.LayoutLines.GetLengthFromLineNumber(tp.row);
