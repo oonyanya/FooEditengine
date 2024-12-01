@@ -462,6 +462,10 @@ namespace FooEditEngine
                 this.Document.SelectGrippers.BottomLeft.MoveByIndex(this.View, this.SelectionStart);
                 this.Document.SelectGrippers.BottomRight.MoveByIndex(this.View, this.SelectionStart + this.SelectionLength);
             }
+            else
+            {
+                this.View.HideCaret = true;
+            }
         }
 
         /// <summary>
@@ -517,6 +521,7 @@ namespace FooEditEngine
             }
             else
             {
+                this.View.HideCaret = true;
                 this.View.Scroll(toX, toRow);
             }
 

@@ -1229,6 +1229,7 @@ namespace FooEditEngine.WinUI
             {
                 this._Controller.JumpCaret(tp.row, tp.col, false);
             }
+            this._View.HideCaret = false;
             this._View.IsFocused = true;
             this.Focus(FocusState.Programmatic);
             this.Refresh();
