@@ -582,7 +582,11 @@ namespace FooEditEngine
         /// <summary>
         /// 行の高さ。単位はem。
         /// </summary>
+#if WINDOWS_UWP
+        double LineEmHeight { get;set; }
+#else
         double LineEmHeight { get { return 1.0; } set { } }
+#endif
 
         /// <summary>
         /// 保持しているリソースに変化があったことを通知する

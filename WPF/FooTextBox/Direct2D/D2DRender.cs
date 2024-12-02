@@ -74,7 +74,9 @@ namespace FooEditEngine.WPF
             this.ConstructRenderAndResource(width, height);
             this.InitTextFormat(this.fontFamily.Source, (float)this.fontSize, this.GetDWFontWeigth(this.fontWeigth), this.GetDWFontStyle(this.fontStyle));
 
-            this.imageSource = new D3DImage();
+            float dpiX, dpiY;
+            this.GetDpi(out dpiX, out dpiY);
+            this.imageSource = new D3DImage(dpiX,dpiY);
             this.imageSource.Lock();
             this.imageSource.SetBackBuffer(D3DResourceType.IDirect3DSurface9, this.surface9.NativePointer);  //設定しないとロード時に例外が発生する
             this.imageSource.Unlock();

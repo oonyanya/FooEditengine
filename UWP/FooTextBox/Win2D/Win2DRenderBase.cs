@@ -32,6 +32,9 @@ namespace FooEditEngine.UWP
             }
         }
 
+        double _LineEmHeight;
+        public double LineEmHeight { get => 1.0f; set => _LineEmHeight = value; }
+
         double _FontSize;
         public double FontSize
         {
@@ -42,7 +45,7 @@ namespace FooEditEngine.UWP
             set
             {
                 this._FontSize = value;
-                this._format.FontSize = (float)value;
+                this._format.FontSize = (float)value *  96.0f  / 72.0f;
                 this.CaclulateTextMetrics();
                 this.ChangedRenderResource(this, new ChangedRenderRsourceEventArgs(ResourceType.Font));
             }
@@ -346,7 +349,7 @@ namespace FooEditEngine.UWP
         {
             _format = new CanvasTextFormat();
             _format.FontFamily = fontName;
-            _format.FontSize = (float)fontSize;
+            _format.FontSize = (float)fontSize * 96.0f / 72.0f;
             _format.WordWrapping = CanvasWordWrapping.NoWrap;
             _format.Direction = GetDWRightDirection(this.RightToLeft);
             this.CaclulateTextMetrics();

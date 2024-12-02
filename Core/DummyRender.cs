@@ -163,6 +163,9 @@ namespace FooEditEngine
             get;
             set;
         }
+        double _LineEmHeight;
+        public double LineEmHeight { get => 1.0f; set => _LineEmHeight = value; }
+
         public void SetImeConvationInfo(Windows.UI.Text.Core.CoreTextFormatUpdatingEventArgs arg)
         {
         }
