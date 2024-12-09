@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>FooEditEngine.WPF</PackageId>
-    <Version>1.203.13.21</Version>
+    <Version>1.203.13.22</Version>
     <Authors>FooProject</Authors>
     <Company>FooProject</Company>
     <projectUrl>https://ja.osdn.net/projects/fooeditengine/</projectUrl>
