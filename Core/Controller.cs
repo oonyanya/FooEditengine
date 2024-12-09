@@ -430,6 +430,7 @@ namespace FooEditEngine
         /// <param name="delta">ピクセル単位の値でスクロール量を指定する</param>
         /// <param name="isSelected">選択状態にするなら真</param>
         /// <param name="withCaret">同時にキャレットを移動させるなら真</param>
+        double totalDelta = 0;
         public void ScrollByPixel(ScrollDirection dir,double delta, bool isSelected, bool withCaret)
         {
             if (this.Document.FireUpdateEvent == false)
@@ -437,34 +438,19 @@ namespace FooEditEngine
 
             if (dir == ScrollDirection.Left || dir == ScrollDirection.Right)
             {
-                this.View.TryScroll(delta, 0);
+                this.Scroll(dir ,(int)delta, isSelected, withCaret);
                 return;
             }
-
-            if(dir == ScrollDirection.Up)
+            
+            if(totalDelta > this.View.render.LineEmHeight)
             {
-                this.View.TryScroll(0, -delta);
-            }
-            else if (dir == ScrollDirection.Down)
-            {
-                this.View.TryScroll(0, delta);
-            }
-
-            if (withCaret)
-            {
-                //カーソルを適切な位置に移動させる必要がある
-                TextPoint tp = this.View.GetTextPointFromPostion(this.View.CaretLocation);
-                if (tp == TextPoint.Null)
-                    tp = new TextPoint(this.View.Src.Row, 0);
-                this.View.JumpCaret(tp.row, tp.col);
-                this.View.AdjustCaretAndSrc();
-                this.SelectWithMoveCaret(isSelected);
-                this.Document.SelectGrippers.BottomLeft.MoveByIndex(this.View, this.SelectionStart);
-                this.Document.SelectGrippers.BottomRight.MoveByIndex(this.View, this.SelectionStart + this.SelectionLength);
+                int numRow = (int)(totalDelta / this.View.render.LineEmHeight) ;
+                this.Scroll(dir, numRow, isSelected, withCaret);
+                totalDelta = 0;
             }
             else
             {
-                this.View.HideCaret = true;
+                totalDelta += delta;
             }
         }
 
