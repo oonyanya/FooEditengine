@@ -86,6 +86,10 @@ namespace FooEditEngine
         /// レイアウトが再構築されたことを表す
         /// </summary>
         RebuildLayout,
+        /// <summary>
+        /// レイアウトの構築が必要なことを示す
+        /// </summary>
+        BuildLayout,
     }
 
     /// <summary>
@@ -148,6 +152,7 @@ namespace FooEditEngine
     /// <remarks>この型のすべてのメソッド・プロパティはスレッドセーフです</remarks>
     public sealed class Document : IEnumerable<char>, IRandomEnumrator<char>, IDisposable
     {
+
         Regex regex;
         Match match;
         StringBuffer buffer;
@@ -162,6 +167,11 @@ namespace FooEditEngine
         /// 一行当たりの最大文字数
         /// </summary>
         public const int MaximumLineLength = 1000;
+        /// <summary>
+        /// 事前読み込みを行う長さ
+        /// </summary>
+        /// <remarks>値を反映させるためにはレイアウト行すべてを削除する必要があります</remarks>
+        public static int PreloadLength = 1024 * 1024 * 5;
 
         /// <summary>
         /// コンストラクター
@@ -460,6 +470,9 @@ namespace FooEditEngine
         /// <summary>
         /// レイアウト行のどこにキャレットがあるかを表す
         /// </summary>
+        /// <remarks>
+        /// 存在しない行を指定した場合、一番最後の行の0桁目になります。
+        /// </remarks>
         public TextPoint CaretPostion
         {
             get
@@ -470,10 +483,22 @@ namespace FooEditEngine
             {
                 if(this._CaretPostion != value)
                 {
-                    this._CaretPostion = value;
+                    if (value.row > this.LayoutLines.Count - 1)
+                        this._CaretPostion = new TextPoint(this.LayoutLines.Count - 1, 0);
+                    else
+                        this._CaretPostion = value;
                     this.RaiseCaretPostionChanged();
                 }
             }
+        }
+
+        /// <summary>
+        /// ドキュメントの行数
+        /// </summary>
+        public int TotalLineCount
+        {
+            get;
+            private set;
         }
 
         public void RaiseCaretPostionChanged()
@@ -482,10 +507,28 @@ namespace FooEditEngine
                 this.CaretChanged(this, null);
         }
 
-        internal void SetCaretPostionWithoutEvent(TextPoint value)
+        /// <summary>
+        /// キャレットを指定した位置に移動させる
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="col"></param>
+        /// <param name="autoExpand">折り畳みを展開するなら真</param>
+        internal void SetCaretPostionWithoutEvent(int row, int col, bool autoExpand = true)
         {
-            if (this._CaretPostion != value)
-                this._CaretPostion = value;
+            if (autoExpand)
+            {
+                int lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
+                int lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
+                FoldingItem foldingData = this.LayoutLines.FoldingCollection.Get(lineHeadIndex, lineLength);
+                if (foldingData != null)
+                {
+                    if (this.LayoutLines.FoldingCollection.IsParentHidden(foldingData) || !foldingData.IsFirstLine(this.LayoutLines, row))
+                    {
+                        this.LayoutLines.FoldingCollection.Expand(foldingData);
+                    }
+                }
+            }
+            this._CaretPostion = new TextPoint(row, col);
         }
 
         /// <summary>
@@ -663,6 +706,14 @@ namespace FooEditEngine
             }
         }
 
+        public int Count
+        {
+            get
+            {
+                return this.buffer.Length;
+            }
+        }
+
         /// <summary>
         /// 変更のたびにUpdateイベントを発生させるかどうか
         /// </summary>
@@ -723,7 +774,7 @@ namespace FooEditEngine
         }
 
         /// <summary>
-        /// レイアウト行が再構成されたときに発生するイベント
+        /// レイアウト行が構築されたときに発生するイベント
         /// </summary>
         public event EventHandler PerformLayouted;
         /// <summary>
@@ -1010,7 +1061,10 @@ namespace FooEditEngine
         /// <returns>Stringオブジェクト</returns>
         public string ToString(int index, int length)
         {
-            return this.buffer.ToString(index, length);
+            using(this.buffer.GetReaderLock())
+            {
+                return this.buffer.ToString(index, length);
+            }
         }
 
         /// <summary>
@@ -1123,6 +1177,7 @@ namespace FooEditEngine
         {
             this.buffer.Clear();
             this.Dirty = false;
+            this.buffer.OnDocumentUpdate(new DocumentUpdateEventArgs(UpdateType.Clear, 0, this.buffer.Count, 0));
         }
 
         /// <summary>
@@ -1146,10 +1201,8 @@ namespace FooEditEngine
 
             try
             {
-                this.Clear();
-                if (file_size > 0)
-                    this.buffer.Allocate(file_size);
-                await this.buffer.LoadAsync(fs, tokenSource);
+                //UIスレッドのやつを呼ぶ可能性がある
+                await LoadAsyncCore(fs, tokenSource);
             }
             finally
             {
@@ -1157,6 +1210,44 @@ namespace FooEditEngine
                 if (this.LoadProgress != null)
                     this.LoadProgress(this, new ProgressEventArgs(ProgressState.Complete));
             }
+        }
+
+        async Task LoadAsyncCore(TextReader fs, CancellationTokenSource tokenSource = null, int file_size = -1)
+        {
+            this.Clear();
+            if (file_size > 0)
+                this.buffer.Allocate(file_size);
+            char[] str = new char[1024 * 1024];
+            int readCount;
+            int totalLineCount = 0;
+            do
+            {
+                readCount = await fs.ReadAsync(str, 0, str.Length).ConfigureAwait(false);
+
+                //内部形式に変換する
+                var internal_str = str.Where((s) =>
+                {
+                    if (s == '\n')
+                        totalLineCount++;
+                    return s != '\r' && s != '\0';
+                });
+
+                using (await this.buffer.GetWriterLockAsync())
+                {
+                    //str.lengthは事前に確保しておくために使用するので影響はない
+                    this.buffer.AddRange(internal_str);
+                }
+
+                if (tokenSource != null)
+                    tokenSource.Token.ThrowIfCancellationRequested();
+#if TEST_ASYNC
+                DebugLog.WriteLine("waiting now");
+                await Task.Delay(100).ConfigureAwait(false);
+#endif
+                Array.Clear(str, 0, str.Length);
+            } while (readCount > 0);
+
+            this.TotalLineCount = totalLineCount;
         }
 
         /// <summary>
@@ -1168,7 +1259,32 @@ namespace FooEditEngine
         /// <remarks>非同期操作中はこのメソッドを実行することはできません</remarks>
         public async Task SaveAsync(TextWriter fs, CancellationTokenSource tokenSource = null)
         {
-            await this.buffer.SaveAsync(fs, tokenSource);
+            await this.SaveAsyncCore(fs, tokenSource);
+        }
+
+        async Task SaveAsyncCore(TextWriter fs, CancellationTokenSource tokenSource = null)
+        {
+            using (await this.buffer.GetReaderLockAsync())
+            {
+                StringBuilder line = new StringBuilder();
+                for (int i = 0; i < this.Length; i++)
+                {
+                    char c = this[i];
+                    line.Append(c);
+                    if (c == Document.NewLine || i == this.Length - 1)
+                    {
+                        string str = line.ToString();
+                        str = str.Replace(Document.NewLine.ToString(), fs.NewLine);
+                        await fs.WriteAsync(str).ConfigureAwait(false);
+                        line.Clear();
+                        if (tokenSource != null)
+                            tokenSource.Token.ThrowIfCancellationRequested();
+#if TEST_ASYNC
+                        System.Threading.Thread.Sleep(10);
+#endif
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -1311,20 +1427,40 @@ namespace FooEditEngine
         }
 
         #endregion
-
         void buffer_Update(object sender, DocumentUpdateEventArgs e)
         {
             switch (e.type)
             {
                 case UpdateType.RebuildLayout:
-                    this._LayoutLines.Clear();
-                    this._LayoutLines.UpdateAsReplace(0, 0, this.Length);
-                    break;
+                    {
+                        this._LayoutLines.Clear();
+                        int analyzeLength = PreloadLength;
+                        if (analyzeLength > this.Length)
+                            analyzeLength = this.Length;
+
+                        this._LayoutLines.UpdateLayoutLine(0, 0, analyzeLength);
+                        int fetchedLength = this._LayoutLines.FetchLineWithoutEvent(CaretPostion.row);
+
+                        int totalLineCount = this._LayoutLines.Count - 1;
+                        foreach(var c in this.buffer.GetEnumerator(analyzeLength, this.Length - analyzeLength - fetchedLength))
+                        {
+                            if (c == Document.NewLine)
+                                totalLineCount++;
+                        };
+                        this.TotalLineCount = totalLineCount;
+
+                        break;
+                    }
+                case UpdateType.BuildLayout:
+                    {
+                        break;
+                    }
                 case UpdateType.Replace:
                     if (e.row == null)
                     {
-                        this._LayoutLines.UpdateAsReplace(e.startIndex, e.removeLength, e.insertLength);
+                        var updateLineCount = this._LayoutLines.UpdateLayoutLine(e.startIndex, e.removeLength, e.insertLength);
                         this.Markers.UpdateMarkers(e.startIndex, e.insertLength, e.removeLength);
+                        this.TotalLineCount += updateLineCount;
                     }
                     else
                     {
@@ -1334,6 +1470,7 @@ namespace FooEditEngine
                     this.Dirty = true;
                     break;
                 case UpdateType.Clear:
+                    this.TotalLineCount = 0;
                     this._LayoutLines.Clear();
                     this.Dirty = true;
                     break;

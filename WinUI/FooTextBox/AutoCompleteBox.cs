@@ -73,7 +73,7 @@ namespace FooEditEngine.WinUI
             this.listBox1.SelectedIndex = ev.foundIndex;
             this.listBox1.ScrollIntoView(this.listBox1.SelectedItem);
 
-            this.flyout.ShowAt(owner, new FlyoutShowOptions() { Position = ev.CaretPostion,ShowMode = FlyoutShowMode.Standard});
+            this.flyout.ShowAt(owner, new FlyoutShowOptions() { Position = ev.CaretPostion,ShowMode = FlyoutShowMode.Standard, Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft});
         }
 
         protected override void RequestCloseCompleteBox()

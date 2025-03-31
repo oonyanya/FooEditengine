@@ -17,6 +17,24 @@ using Windows.UI.Xaml.Shapes;
 
 namespace FooEditEngine
 {
+    class DummyDisposer : IDisposable
+    {
+        Action disposeAction;
+        public DummyDisposer() { }
+        public DummyDisposer(Action dipose)
+        {
+            disposeAction = dipose;
+        }
+        public void Dispose() 
+        {
+            if (disposeAction != null)
+            {
+                disposeAction();
+            }
+            disposeAction = null;
+        }
+    }
+
     class DummyRender : IEditorRender,IDisposable
     {
         public DummyRender()
@@ -145,8 +163,9 @@ namespace FooEditEngine
             throw new NotImplementedException();
         }
 
-        public void BeginClipRect(Rectangle rect)
+        public IDisposable BeginClipRect(Rectangle rect)
         {
+            return new DummyDisposer();
         }
 
         public void EndClipRect()

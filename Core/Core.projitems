@@ -13,7 +13,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Automation\FooTextBoxAutomationPeer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Automation\FooTextBoxRangeProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CacheManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)CollectionDebugView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CompleteCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CompleteCollectionHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Controller.cs" />
@@ -27,8 +26,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)EditView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)FoldingCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)FoldingGenerator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GapBuffer+Enumerator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GapBuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GripperView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IFoldingStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IHilighter.cs" />
@@ -48,6 +45,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Test\CharFoldingMethod.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Test\XmlHilighter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TextPoint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TextSearch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TextServiceFramework\TextStoreHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UndoCommands.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UndoManager.cs" />

@@ -9,9 +9,10 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
-using Slusser.Collections.Generic;
+using FooProject.Collection;
 
 namespace FooEditEngine
 {
@@ -19,16 +20,17 @@ namespace FooEditEngine
     {
         StringBuffer Buffer;
         TextRange ReplacementRange, ReplacedRange;
-        GapBuffer<char> replacement, replaced;   //置き換え後の文字列、置き換え前の文字列
+
+        StringBuffer replacement, replaced;   //置き換え後の文字列、置き換え前の文字列
 
         public ReplaceCommand(StringBuffer buf, int start, int length, string str)
         {
             this.Buffer = buf;
             this.ReplacementRange = new TextRange(start,str.Length);
-            this.replacement = new GapBuffer<char>();
+            this.replacement = new StringBuffer();
             this.replacement.AddRange(str);
             this.ReplacedRange = new TextRange(start,length);
-            this.replaced = new GapBuffer<char>();
+            this.replaced = new StringBuffer();
             this.replaced.AddRange(this.Buffer.GetEnumerator(start, length));
         }
 
@@ -36,12 +38,23 @@ namespace FooEditEngine
 
         public void undo()
         {
-            this.Buffer.Replace(this.ReplacementRange.Index, this.replacement.Count,this.replaced,this.replaced.Count);
+            this.ReplaceCore(this.ReplacementRange.Index, this.replacement.Count,this.replaced,this.replaced.Count);
         }
 
         public void redo()
         {
-            this.Buffer.Replace(this.ReplacedRange.Index, this.replaced.Count, this.replacement, this.replacement.Count);
+            this.ReplaceCore(this.ReplacedRange.Index, this.replaced.Count, this.replacement, this.replacement.Count);
+        }
+
+        void ReplaceCore(int index, int length, IEnumerable<char> chars, int count)
+        {
+            using (this.Buffer.GetWriterLock())
+            {
+                if (length > 0)
+                    this.Buffer.RemoveRange(index, length);
+                this.Buffer.InsertRange(index, chars);
+            }
+            this.Buffer.OnDocumentUpdate(new DocumentUpdateEventArgs(UpdateType.Replace, index, length, count));
         }
 
         public bool marge(ICommand a)
@@ -100,13 +113,49 @@ namespace FooEditEngine
 
         public void undo()
         {
-            this.buffer.Replace(this.oldBuffer);
+            ReplaceBuffer(this.oldBuffer);
+        }
+
+        internal void ReplaceBuffer(StringBuffer buf)
+        {
+            using (this.buffer.GetWriterLock())
+            {
+                this.buffer.Replace(buf);
+            }
+
+            this.buffer.OnDocumentUpdate(new DocumentUpdateEventArgs(UpdateType.RebuildLayout, -1, -1, -1));
         }
 
         public void redo()
         {
             this.oldBuffer = new StringBuffer(this.buffer);
-            this.buffer.ReplaceRegexAll(this.layoutLines, this.regex, this.replacePattern, this.groupReplace);
+            this.replaceCore(this.layoutLines, this.regex, this.replacePattern, this.groupReplace);
+        }
+
+        void replaceCore(LineToIndexTable layoutlines, Regex regex, string pattern, bool groupReplace)
+        {
+            for (int i = 0; i < layoutlines.Count; i++)
+            {
+                int lineHeadIndex = layoutlines.GetIndexFromLineNumber(i), lineLength = layoutlines.GetLengthFromLineNumber(i);
+                int left = lineHeadIndex, right = lineHeadIndex;
+                string output;
+
+                output = regex.Replace(layoutlines[i], (m) => {
+                    if (groupReplace)
+                        return m.Result(pattern);
+                    else
+                        return pattern;
+                });
+
+                using (this.buffer.GetWriterLock())
+                {
+                    //空行は削除する必要はない
+                    if (lineHeadIndex < this.buffer.Length)
+                        this.buffer.RemoveRange(lineHeadIndex, lineLength);
+                    this.buffer.InsertRange(lineHeadIndex, output);
+                }
+                this.buffer.OnDocumentUpdate(new DocumentUpdateEventArgs(UpdateType.Replace, lineHeadIndex, lineLength, output.Length, i));
+            }
         }
 
         public bool marge(ICommand a)
@@ -138,13 +187,35 @@ namespace FooEditEngine
 
         public void undo()
         {
-            this.buffer.Replace(this.oldBuffer);
+            using (this.buffer.GetWriterLock())
+            {
+                this.buffer.Replace(oldBuffer);
+            }
+
+            this.buffer.OnDocumentUpdate(new DocumentUpdateEventArgs(UpdateType.RebuildLayout, -1, -1, -1));
         }
 
         public void redo()
         {
             this.oldBuffer = new StringBuffer(this.buffer);
-            this.buffer.ReplaceAll(this.layoutLines, this.targetPattern, this.replacePattern,this.caseInsensitve);
+            this.ReplaceAllCore(this.layoutLines, this.targetPattern, this.replacePattern,this.caseInsensitve);
+        }
+
+        private void ReplaceAllCore(LineToIndexTable layoutlines, string target, string pattern, bool ci = false)
+        {
+            TextSearch ts = new TextSearch(target, ci);
+            char[] pattern_chars = pattern.ToCharArray();
+            int left = 0,right;
+            while ((right = ts.IndexOf(this.buffer, left, this.buffer.Count)) != -1)
+            {
+                using (this.buffer.GetWriterLock())
+                {
+                    this.buffer.RemoveRange(right, target.Length);
+                    this.buffer.InsertRange(right, pattern_chars);
+                }
+                left = right + pattern.Length;
+            }
+            this.buffer.OnDocumentUpdate(new DocumentUpdateEventArgs(UpdateType.RebuildLayout, -1, -1, -1));
         }
 
         public bool marge(ICommand a)

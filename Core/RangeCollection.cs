@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Slusser.Collections.Generic;
+using FooProject.Collection;
 
 namespace FooEditEngine
 {
@@ -26,7 +26,7 @@ namespace FooEditEngine
     public class RangeCollection<T> : IEnumerable<T>
         where T : IRange
     {
-        private protected GapBuffer<T> collection;
+        private protected BigList<T> collection;
         protected int stepRow = -1, stepLength = 0;
         protected const int STEP_ROW_IS_NONE = -1;
 
@@ -37,7 +37,7 @@ namespace FooEditEngine
 
         public RangeCollection(IEnumerable<T> collection)
         {
-            this.collection = new GapBuffer<T>();
+            this.collection = new BigList<T>();
             if (collection != null)
                 this.collection.AddRange(collection);
         }
@@ -115,7 +115,7 @@ namespace FooEditEngine
 #if DEBUG
                         if (this.stepRow < 0 || this.stepRow > this.collection.Count + newCount)
                         {
-                            System.Diagnostics.Debug.WriteLine("step row < 0 or step row >= lines.count");
+                            DebugLog.WriteLine(DebugLogLevel.Important,"step row < 0 or step row >= lines.count");
                             System.Diagnostics.Debugger.Break();
                         }
 #endif
@@ -293,7 +293,7 @@ namespace FooEditEngine
             this.collection.Clear();
             this.stepRow = STEP_ROW_IS_NONE;
             this.stepLength = 0;
-            System.Diagnostics.Debug.WriteLine("Clear");
+            DebugLog.WriteLine("Clear");
         }
 
         public void UpdateStartIndex(int deltaLength, int startRow)
@@ -331,6 +331,9 @@ namespace FooEditEngine
             this.stepLength += deltaLength;
         }
 
+        /// <summary>
+        /// 今までの変更をすべて反映させる
+        /// </summary>
         public void CommiteChange()
         {
             for (int i = this.stepRow + 1; i < this.collection.Count; i++)
@@ -340,6 +343,11 @@ namespace FooEditEngine
             this.stepLength = 0;
         }
 
+        /// <summary>
+        /// 当該行の先頭インデックスを取得する
+        /// </summary>
+        /// <param name="row"></param>
+        /// <returns></returns>
         public int GetLineHeadIndex(int row)
         {
             if (this.collection.Count == 0)

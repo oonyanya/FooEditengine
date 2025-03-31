@@ -56,11 +56,20 @@ namespace Test
             }
             set
             {
+                if(_currentDocument != null)
+                    _currentDocument.Update -= _currentDocument_Update;
                 this._currentDocument = value;
+                if(this._currentDocument != null)
+                    this._currentDocument.Update += _currentDocument_Update;
                 this.OnPropertyChanged(this);
-                if(this.CurrentDocumentChanged != null)
+                if (this.CurrentDocumentChanged != null)
                     this.CurrentDocumentChanged(this, null);
             }
+        }
+
+        private void _currentDocument_Update(object sender, DocumentUpdateEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("TotalLine:" + this.CurrentDocument.TotalLineCount);
         }
 
         double _FontSize = 12;
@@ -72,6 +81,27 @@ namespace Test
                 this._FontSize = value;
                 this.OnPropertyChanged(this);
             }
+        }
+
+        int _GoToRow;
+        public int GoToRow
+        {
+            get { return _GoToRow; }
+            set
+            {
+                this._GoToRow = value;
+                this.OnPropertyChanged(this);
+                JumpToRow(value);
+            }
+        }
+
+        void JumpToRow(int row)
+        {
+            if (row > this.CurrentDocument.TotalLineCount)
+                return;
+            this.CurrentDocument.LayoutLines.FetchLine(row);
+            this.CurrentDocument.CaretPostion = new TextPoint(row, 0);
+            this.CurrentDocument.RequestRedraw();
         }
 
         public event EventHandler CurrentDocumentChanged;
@@ -140,6 +170,7 @@ namespace Test
                 doc.RequestRedraw();
                 _list.Add(doc);
                 this.CurrentDocument = _list.Last();
+                System.Diagnostics.Debug.WriteLine("Loaded TotalLine:" + this.CurrentDocument.TotalLineCount);
             }
         }
 

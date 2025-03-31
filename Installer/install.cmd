@@ -34,6 +34,12 @@ copy bin\%BUILD_TYPE%\*.nupkg "%BATCH_FILE_FOLDER%dist"
 copy bin\%BUILD_TYPE%\*.snupkg "%BATCH_FILE_FOLDER%dist"
 popd
 
+pushd ..\FooList\List
+"%BUILD_PATH%\msbuild" -t:pack -p:Configuration=%BUILD_TYPE%"
+copy bin\%BUILD_TYPE%\*.nupkg "%BATCH_FILE_FOLDER%dist"
+copy bin\%BUILD_TYPE%\*.snupkg "%BATCH_FILE_FOLDER%dist"
+popd
+
 :copy_dist
 md dist
 copy ..\Help\Help\Documentation.chm dist

@@ -14,6 +14,8 @@ using System.Text;
 using System.Linq;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Runtime.CompilerServices;
+using System.Reflection;
 #if WINFORM
 using System.Drawing;
 #endif
@@ -97,6 +99,7 @@ namespace FooEditEngine
                     this._Document.SelectionChanged -= Document_SelectionChanged;
                     this._Document.PerformLayouted -= View_LineBreakChanged;
                     this._Document.CaretChanged -= _Document_CaretChanged;
+                    this._Document.ChangeFireUpdateEvent -= _Document_ChangeFireUpdateEvent;
                 }
 
                 this._Document = value;
@@ -106,6 +109,15 @@ namespace FooEditEngine
                 this._Document.SelectionChanged += Document_SelectionChanged;
                 this._Document.PerformLayouted += View_LineBreakChanged;
                 this._Document.CaretChanged += _Document_CaretChanged;
+                this._Document.ChangeFireUpdateEvent += _Document_ChangeFireUpdateEvent;
+            }
+        }
+
+        private void _Document_ChangeFireUpdateEvent(object sender, EventArgs e)
+        {
+            if(this._Document.FireUpdateEvent == true)
+            {
+                this.SelectWithMoveCaret(false);
             }
         }
 
@@ -209,7 +221,9 @@ namespace FooEditEngine
                     throw new InvalidOperationException("");
                 if (value == null)
                     return;
-                this.RepleaceSelectionArea(this.View.Selections, value.Replace(Environment.NewLine,Document.NewLine.ToString()));
+                //\r,\n,\r\nのパターンがあるので、最初に\r\nをマッチさせる
+                var pasteText = Regex.Replace(value, "(\r\n|\r|\n)", Document.NewLine.ToString());
+                this.RepleaceSelectionArea(this.View.Selections, pasteText);
             }
         }
 
@@ -363,7 +377,7 @@ namespace FooEditEngine
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
 
-            this.View.JumpCaret(row, col,autoExpand);
+            this.Document.SetCaretPostionWithoutEvent(row, col,autoExpand);
 
             this.View.AdjustCaretAndSrc();
 
@@ -377,7 +391,7 @@ namespace FooEditEngine
         /// <param name="isSelected">選択状態にするかどうか</param>
         public void JumpToLineHead(int row,bool isSelected)
         {
-            this.View.JumpCaret(row, 0);
+            this.Document.SetCaretPostionWithoutEvent(row, 0);
             this.View.AdjustCaretAndSrc();
             this.SelectWithMoveCaret(isSelected);
         }
@@ -389,7 +403,7 @@ namespace FooEditEngine
         /// <param name="isSelected">選択状態にするかどうか</param>
         public void JumpToLineEnd(int row, bool isSelected)
         {
-            this.View.JumpCaret(row, this.View.LayoutLines[row].Length - 1);
+            this.Document.SetCaretPostionWithoutEvent(row, this.View.LayoutLines[row].Length - 1);
             this.View.AdjustCaretAndSrc();
             this.SelectWithMoveCaret(isSelected);
         }
@@ -402,7 +416,7 @@ namespace FooEditEngine
         {
             if (this.View.TryScroll(0, 0))
                 return;
-            this.View.JumpCaret(0, 0);
+            this.Document.SetCaretPostionWithoutEvent(0, 0);
             this.View.AdjustCaretAndSrc();
             this.SelectWithMoveCaret(isSelected);
         }
@@ -418,7 +432,7 @@ namespace FooEditEngine
                 srcRow = 0;
             if (this.View.TryScroll(0, srcRow))
                 return;
-            this.View.JumpCaret(this.View.LayoutLines.Count - 1, 0);
+            this.Document.SetCaretPostionWithoutEvent(this.View.LayoutLines.Count - 1, 0);
             this.View.AdjustCaretAndSrc();
             this.SelectWithMoveCaret(isSelected);
         }
@@ -441,16 +455,14 @@ namespace FooEditEngine
                 this.Scroll(dir ,(int)delta, isSelected, withCaret);
                 return;
             }
-            
-            if(totalDelta > this.View.render.LineEmHeight)
+
+            totalDelta += delta;
+            if (totalDelta > this.View.ScrollNoti)
             {
-                int numRow = (int)(totalDelta / this.View.render.LineEmHeight) ;
+                double lineHeight = this.View.render.emSize.Height * this.View.render.LineEmHeight;
+                int numRow = (int)(totalDelta / lineHeight) ;
                 this.Scroll(dir, numRow, isSelected, withCaret);
                 totalDelta = 0;
-            }
-            else
-            {
-                totalDelta += delta;
             }
         }
 
@@ -501,7 +513,7 @@ namespace FooEditEngine
             if (withCaret)
             {
                 this.View.Scroll(toX, toRow);
-                this.View.JumpCaret(toRow, 0);
+                this.Document.SetCaretPostionWithoutEvent(toRow, 0);
                 this.View.AdjustCaretAndSrc();
                 this.SelectWithMoveCaret(isSelected);
             }
@@ -527,7 +539,7 @@ namespace FooEditEngine
             TextPoint caret = this.Document.CaretPostion;
             int moved;
             caret = GetNextCaret(caret, realLength, alignWord ? MoveFlow.Word : MoveFlow.Character,out moved);
-            this.View.JumpCaret(caret.row, caret.col, false);
+            this.Document.SetCaretPostionWithoutEvent(caret.row, caret.col, false);
             this.View.AdjustCaretAndSrc(AdjustFlow.Both);
             this.SelectWithMoveCaret(isSelected);
         }
@@ -602,7 +614,7 @@ namespace FooEditEngine
             TextPoint caret = this.Document.CaretPostion;
             int moved;
             caret = this.GetNextCaret(caret, deltarow, MoveFlow.Line,out moved);
-            this.View.JumpCaret(caret.row, caret.col, true);
+            this.Document.SetCaretPostionWithoutEvent(caret.row, caret.col, true);
             this.View.AdjustCaretAndSrc(AdjustFlow.Both);
             this.SelectWithMoveCaret(isSelected);
         }
@@ -787,6 +799,45 @@ namespace FooEditEngine
             }
         }
 
+        //拡大時の変化量の累積。絶対値で格納される。
+        double totalScaleDelta = 0;
+
+        /// <summary>
+        /// 拡大する
+        /// </summary>
+        /// <param name="scale"></param>
+        public bool Scale(double Scale,Action<double> scaleProcessFunc)
+        {
+            if (Scale < 1)
+            {
+                if (totalScaleDelta > this.View.ScaleNoti)
+                {
+                    scaleProcessFunc(Scale);
+                    totalScaleDelta = 0;
+                    return true;
+                }
+                totalScaleDelta += Math.Abs(Scale);
+            }
+
+            if (Scale > 1)
+            {
+                if (totalScaleDelta > this.View.ScaleNoti)
+                {
+                    scaleProcessFunc(Scale);
+                    totalScaleDelta = 0;
+                    return true;
+                }
+                totalScaleDelta += Math.Abs(Scale);
+            }
+
+            if(Scale == 1)
+            {
+                totalScaleDelta = 0;
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// JumpCaretで移動した位置からキャレットを移動し、選択状態にする
         /// </summary>
@@ -807,7 +858,7 @@ namespace FooEditEngine
                 endSelectPostion = this.View.LayoutLines.GetTextPointFromIndex(CaretPostion);
             }
             this.Document.Select(this.Document.AnchorIndex, CaretPostion - this.Document.AnchorIndex);
-            this.View.JumpCaret(endSelectPostion.row, endSelectPostion.col);
+            this.Document.SetCaretPostionWithoutEvent(endSelectPostion.row, endSelectPostion.col);
             this.View.AdjustCaretAndSrc();
         }
 
@@ -896,6 +947,8 @@ namespace FooEditEngine
             if(this.Document.LineBreak == LineBreakMethod.None || move_pargraph == true)
             {
                 int row = current.row + count;
+
+                this.Document.LayoutLines.FetchLine(row);
 
                 if (row < 0)
                     row = 0;
@@ -1106,6 +1159,7 @@ namespace FooEditEngine
                     sel = Util.NormalizeIMaker<Selection>(this.View.Selections.First());
 
                 this.Document.Replace(sel.start, sel.length, value);
+
                 return;
             }
 

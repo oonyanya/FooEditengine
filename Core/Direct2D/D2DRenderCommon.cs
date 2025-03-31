@@ -746,14 +746,20 @@ namespace FooEditEngine
 
         }
 
-        public void BeginClipRect(Rectangle rect)
+        IDisposable layerDisposer;
+        public IDisposable BeginClipRect(Rectangle rect)
         {
             this.render.PushAxisAlignedClip(rect, D2D.AntialiasMode.Aliased);
+            layerDisposer = new DummyDisposer(() =>
+            {
+                this.render.PopAxisAlignedClip();
+            });
+            return layerDisposer;
         }
 
         public void EndClipRect()
         {
-            this.render.PopAxisAlignedClip();
+            layerDisposer.Dispose();
         }
 
         public void SetTextColor(MyTextLayout layout,int start, int length, Color4? color)

@@ -14,7 +14,7 @@ using System.Globalization;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Slusser.Collections.Generic;
+using FooProject.Collection;
 
 namespace FooEditEngine
 {
@@ -145,7 +145,7 @@ namespace FooEditEngine
         bool Generate(Document doc, LineToIndexTable lti, bool force = true);
     }
 
-    public class LineToIndexTableData : IDisposable, IRange
+    public class LineToIndexTableData : IDisposable, FooProject.Collection.IRange
     {
         public int start { get; set; }
 
@@ -196,6 +196,19 @@ namespace FooEditEngine
             if(this.Layout != null)
                 this.Layout.Dispose();
         }
+
+        public FooProject.Collection.IRange DeepCopy()
+        {
+            var result = new LineToIndexTableData();
+            result.start = this.start;
+            result.length = this.length;
+            result.LineEnd = this.LineEnd;
+            result.Syntax = this.Syntax;
+            result.Layout = this.Layout;
+            result.Dirty = this.Dirty;
+            result.EncloserType = this.EncloserType;
+            return result;
+        }
     }
 
     internal delegate IList<LineToIndexTableData> SpilitStringEventHandler(object sender, SpilitStringEventArgs e);
@@ -237,10 +250,11 @@ namespace FooEditEngine
     /// <summary>
     /// 行番号とインデックスを相互変換するためのクラス
     /// </summary>
-    public sealed class LineToIndexTable : RangeCollection<LineToIndexTableData>, IEnumerable<string>
+    public sealed class LineToIndexTable :  IEnumerable<string>
     {
         const int MaxEntries = 100;
-        GapBuffer<LineToIndexTableData> _Lines { get { return this.collection; } }
+        BigRangeList<LineToIndexTableData> collection;
+        BigRangeList<LineToIndexTableData> _Lines { get { return this.collection; } }
         Document Document;
         ITextRender render;
 
@@ -252,6 +266,7 @@ namespace FooEditEngine
         {
             this.Document = buf;
             this.Document.Markers.Updated += Markers_Updated;
+            this.collection = new BigRangeList<LineToIndexTableData>();
             this._generators[FOLDING_INDEX] = new FoldingGenerator();
             this._generators[SYNTAX_HIGLITHER_INDEX] = new SyntaxHilightGenerator();
             this.WrapWidth = NONE_BREAK_LINE;
@@ -375,6 +390,14 @@ namespace FooEditEngine
                 this._Lines[i].Dispose();
         }
 
+        public int Count
+        {
+            get
+            {
+                return this.collection.Count;
+            }
+        }
+
         /// <summary>
         /// 行番号に対応する文字列を返します
         /// </summary>
@@ -400,26 +423,48 @@ namespace FooEditEngine
             set;
         }
 
+        /// <summary>
+        /// 当該行の先頭インデックスを取得する
+        /// </summary>
+        /// <param name="row"></param>
+        /// <returns></returns>
+        public int GetLineHeadIndex(int row)
+        {
+            if (this.collection.Count == 0)
+                return 0;
+            return this.collection.GetIndexIntoRange(row).start;
+        }
+
         internal void UpdateLineAsReplace(int row,int removedLength, int insertedLength)
         {
+            if (row >=  this._Lines.Count)
+                return;
+
             int deltaLength = insertedLength - removedLength;
 
-            this._Lines[row] = new LineToIndexTableData(this.GetLineHeadIndex(row), this.GetLengthFromLineNumber(row) + deltaLength, true, true, null);
+            if(deltaLength != 0)
+            {
+                var newData = new LineToIndexTableData(this.GetLineHeadIndex(row), this.GetLengthFromLineNumber(row) + deltaLength, true, true, null);
 
-            //行テーブルを更新する
-            this.UpdateStartIndex(deltaLength, row);
+                this.collection.RemoveAt(row);
+                this.collection.Insert(row, newData);
+            }
 
-            foreach(var generator in this._generators)
+            foreach (var generator in this._generators)
                 generator.Update(this.Document, this.GetLineHeadIndex(row), insertedLength, removedLength);
         }
 
-        internal void UpdateAsReplace(int index, int removedLength, int insertedLength)
+        internal int UpdateLayoutLine(int index, int removedLength, int insertedLength)
         {
 #if DEBUG
             Debug.WriteLine("Replaced Index:{0} RemoveLength:{1} InsertLength:{2}", index, removedLength, insertedLength);
 #endif
             int startRow, endRow;
             GetRemoveRange(index, removedLength, out startRow, out endRow);
+
+            //行が存在しない場合、後で構築されるので何もしてはならない
+            if (startRow == -1 || endRow == -1)
+                return 0;
 
             int deltaLength = insertedLength - removedLength;
 
@@ -432,12 +477,22 @@ namespace FooEditEngine
             IList<LineToIndexTableData> newLines = this.CreateLineList(e.index, e.length, Document.MaximumLineLength);
 
             int removeCount = endRow - startRow + 1;
-            this.ReplaceRange(startRow, newLines, removeCount, deltaLength);
+            for (int i = startRow; i < startRow + removeCount; i++)
+            {
+                IDisposable item = (IDisposable)this.collection[i];
+                item.Dispose();
+            }
 
-            this.AddDummyLine();
+            //行を挿入する
+            this.collection.RemoveRange(startRow, removeCount);
+            this.collection.InsertRange(startRow, newLines);
+
+            bool addedDummyLine = this.AddDummyLine();
 
             foreach (var generator in this._generators)
                 generator.Update(this.Document, index, insertedLength, removedLength);
+
+            return (addedDummyLine ? 1 : 0) + newLines.Count - removeCount;
         }
 
         internal IEnumerable<Tuple<int, int>> ForEachLines(int startIndex, int endIndex, int maxCharCount = -1)
@@ -492,11 +547,17 @@ namespace FooEditEngine
 
         void GetRemoveRange(int index,int length,out int startRow,out int endRow)
         {
-            startRow = this.GetLineNumberFromIndex(index);
+            if(this.TryGetLineNumberFromIndex(index, out startRow) == false)
+            {
+                startRow = -1;
+                endRow = -1;
+                return;
+            }
             while (startRow > 0 && this._Lines[startRow - 1].LineEnd == false)
                 startRow--;
 
-            endRow = this.GetLineNumberFromIndex(index + length);
+            if (this.TryGetLineNumberFromIndex(index + length, out endRow) == false)
+                endRow = this._Lines.Count - 1;
             while (endRow < this._Lines.Count && this._Lines[endRow].LineEnd == false)
                 endRow++;
             if (endRow >= this._Lines.Count)
@@ -514,17 +575,30 @@ namespace FooEditEngine
             int analyzeLength = fisrtPartLength + secondPartLength + insertedLength;
             Debug.Assert(analyzeLength <= this.Document.Length - 1 - HeadIndex + 1);
 
+            //分析する範囲とドキュメントの長さが一致しているかどうか
+            int IndexAnayzed = HeadIndex + analyzeLength - 1;
+            if (IndexAnayzed < this.Document.Length -1)
+            {
+                int i;
+                for (i = IndexAnayzed; i < this.Document.Length; i++)
+                {
+                    if (this.Document.StringBuffer[i] == Document.NewLine)
+                        break;
+                }
+                analyzeLength = i - HeadIndex + 1;
+            }
+
             return new Tuple<int, int>(HeadIndex, analyzeLength);
         }
 
-        void AddDummyLine()
+        bool AddDummyLine()
         {
             LineToIndexTableData dummyLine = null;
             if (this._Lines.Count == 0)
             {
                 dummyLine = new LineToIndexTableData();
                 this._Lines.Add(dummyLine);
-                return;
+                return true;
             }
 
             int lastLineRow = this._Lines.Count > 0 ? this._Lines.Count - 1 : 0;
@@ -534,11 +608,11 @@ namespace FooEditEngine
             if (lastLineLength != 0 && this.Document[Document.Length - 1] == Document.NewLine)
             {
                 int realIndex = lastLineHeadIndex + lastLineLength;
-                if (lastLineRow >= this.stepRow)
-                    realIndex -= this.stepLength;
                 dummyLine = new LineToIndexTableData(realIndex, 0, true,false, null);
                 this._Lines.Add(dummyLine);
+                return true;
             }
+            return false;
         }
 
         /// <summary>
@@ -549,7 +623,71 @@ namespace FooEditEngine
         /// <remarks>いくつかの値は実態とかけ離れた値を返します。詳しくはLineToIndexTableDataの注意事項を参照すること</remarks>
         internal LineToIndexTableData GetRaw(int row)
         {
-            return this._Lines[row];
+            LineToIndexTableData lineData;
+            if(this.TryGetRaw(row,out lineData))
+            {
+                return lineData;
+            }
+            throw new ArgumentOutOfRangeException();
+        }
+
+        /// <summary>
+        /// 生データを取得します
+        /// </summary>
+        /// <param name="row">行</param>
+        /// <param name="lineData">取得できた行データー。存在しないときはnullが入る。</param>
+        /// <returns>取得できた場合は真を返し、そうでない場合は偽を返す。</returns>
+        /// <remarks>いくつかの値は実態とかけ離れた値を返します。詳しくはLineToIndexTableDataの注意事項を参照すること。</remarks>
+        internal bool TryGetRaw(int row,out LineToIndexTableData lineData)
+        {
+            if(row > this._Lines.Count)
+            {
+                lineData = null;
+                return false;
+            }
+            lineData = this._Lines[row];
+            return true;
+        }
+
+        /// <summary>
+        /// 指定された行までレイアウト行を構築します
+        /// </summary>
+        /// <param name="row">行</param>
+        public void FetchLine(int row)
+        {
+            int startIndex = this.GetIndexFromLineNumber(this.collection.Count - 1);
+            int totalAnayzedLength = FetchLineWithoutEvent(row);
+            this.Document.FireUpdate(
+                new DocumentUpdateEventArgs(UpdateType.BuildLayout,
+                startIndex,
+                0,
+                totalAnayzedLength));
+        }
+
+        internal int FetchLineWithoutEvent(int row)
+        {
+            int totalAnalyzedLength = 0;
+            this.IsFrozneDirtyFlag = true;
+            while (row >= this._Lines.Count - 1)
+            {
+                //直接最終行を取得すると後々おかしくなる
+                int lastRow = this.collection.Count - 1;
+                int LineHeadIndex = this.GetIndexFromLineNumber(lastRow);
+                int Length = this.GetLengthFromLineNumber(lastRow);
+                if (LineHeadIndex + Length >= this.Document.Length)
+                {
+                    return 0;
+                }
+                int analyzeStartIndex = LineHeadIndex + Length;
+                int analyzeLength = Document.PreloadLength;
+                int documentLength = this.Document.Length;
+                if (analyzeStartIndex + analyzeLength > documentLength)
+                    analyzeLength = documentLength - analyzeStartIndex;
+                this.UpdateLayoutLine(analyzeStartIndex, 0, analyzeLength);
+                totalAnalyzedLength += analyzeLength;
+            }
+            this.IsFrozneDirtyFlag = false;
+            return totalAnalyzedLength;
         }
 
         /// <summary>
@@ -573,7 +711,7 @@ namespace FooEditEngine
         {
             if (row < 0 || row > this._Lines.Count)
                 throw new ArgumentOutOfRangeException();
-            return this.GetRaw(row).Length;
+            return this.collection[row].Length;
         }
 
         /// <summary>
@@ -595,7 +733,7 @@ namespace FooEditEngine
         /// <returns>テキストポイントで指定された行の高さを返します</returns>
         public double GetLineHeight(TextPoint tp)
         {
-            return this.render.emSize.Height;
+            return this.render.emSize.Height * this.Render.LineEmHeight;
         }
 
         internal ITextLayout GetLayout(int row)
@@ -648,6 +786,23 @@ namespace FooEditEngine
             return layout;
         }
 
+        public int IndexOfLoose(int start)
+        {
+            int dummy;
+            int result = this.collection.GetIndexFromIndexIntoRange(start);
+            if (result == -1)
+            {
+                int lastRow = this.collection.Count - 1;
+                var line = this.collection[lastRow];
+                var lineHeadIndex = this.GetLineHeadIndex(lastRow);
+                if (start >= lineHeadIndex && start <= lineHeadIndex + line.length)   //最終行長+1までキャレットが移動する可能性があるので
+                {
+                    return this.collection.Count - 1;
+                }
+            }
+            return result;
+        }
+
         /// <summary>
         /// インデックスを行番号に変換します
         /// </summary>
@@ -661,6 +816,23 @@ namespace FooEditEngine
                 throw new ArgumentOutOfRangeException("該当する行が見つかりませんでした");
 
             return result;
+        }
+
+        /// <summary>
+        /// 行番号を返す
+        /// </summary>
+        /// <param name="index">インデックス</param>
+        /// <param name="resultRow">対応する行番号。存在しなければ-1。</param>
+        /// <returns>存在しなければ偽。存在すれば真を返す。</returns>
+        public bool TryGetLineNumberFromIndex(int index,out int resultRow)
+        {
+            resultRow = -1;
+            var result = this.IndexOfLoose(index);
+            if (result == -1)
+                return false;
+
+            resultRow = result;
+            return true;
         }
 
         /// <summary>
@@ -731,9 +903,9 @@ namespace FooEditEngine
         /// <summary>
         /// すべて削除します
         /// </summary>
-        public override void Clear()
+        public void Clear()
         {
-            base.Clear();
+            this.collection.Clear();
             this.ClearLayoutCache();
             this.ClearFolding();
             LineToIndexTableData dummy = new LineToIndexTableData();

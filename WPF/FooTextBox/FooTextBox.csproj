@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-
   <PropertyGroup>
     <PackageId>FooEditEngine.WPF</PackageId>
     <Version>1.203.13.22</Version>
@@ -8,20 +7,16 @@
     <projectUrl>https://ja.osdn.net/projects/fooeditengine/</projectUrl>
     <description>Textbox with Hilight and Regex and Folding</description>
   </PropertyGroup>
-  
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;WPF;ENABLE_AUTMATION</DefineConstants>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>TRACE;WPF;ENABLE_AUTMATION</DefineConstants>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Nito.AsyncEx" Version="5.0.0" />
     <PackageReference Include="SharpDX" Version="4.0.0" />
@@ -31,11 +26,9 @@
     <PackageReference Include="SharpDX.DXGI" Version="4.0.0" />
     <PackageReference Include="SharpDX.Mathematics" Version="4.0.0" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\DotNetTextStore\DotNetTextStore.csproj" />
+    <ProjectReference Include="..\..\FooList\List\FooProject.Collection.csproj" />
   </ItemGroup>
-
   <Import Project="..\..\Core\Core.projitems" Label="Shared" />
-
 </Project>

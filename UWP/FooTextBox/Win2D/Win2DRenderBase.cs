@@ -379,9 +379,15 @@ namespace FooEditEngine.UWP
 
         protected CanvasDrawingSession offScreenSession = null;
         CanvasActiveLayer layer;
-        public void BeginClipRect(Rectangle rect)
+        IDisposable layerDisposer;
+        public IDisposable BeginClipRect(Rectangle rect)
         {
             layer = this.offScreenSession.CreateLayer(1.0f, rect);
+            layerDisposer = new DummyDisposer(() =>
+            {
+                layer.Dispose();
+            });
+            return layerDisposer;
         }
 
         public void DrawMarkerEffect(Win2DTextLayout layout, HilightType type, int start, int length, double x, double y, bool isBold, Windows.UI.Color? effectColor = null)
@@ -612,7 +618,7 @@ namespace FooEditEngine.UWP
 
         public void EndClipRect()
         {
-            layer.Dispose();
+            layerDisposer.Dispose();
         }
 
         public void DrawCachedBitmap(Rectangle dst,Rectangle src)

@@ -31,6 +31,8 @@
             <Button Content="New" Click="Button_Click_New"/>
             <TextBlock>FontSize</TextBlock>
             <TextBox Text="{Binding FontSize,Mode=TwoWay}"></TextBox>
+            <TextBlock>Go To</TextBlock>
+            <TextBox Text="{Binding GoToRow,Mode=TwoWay}"></TextBox>
         </StackPanel>
     </Grid>
 </Window>

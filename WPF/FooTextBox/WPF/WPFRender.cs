@@ -487,14 +487,19 @@ namespace FooEditEngine.WPF
             layout.Draw(this.Context, x, y);
         }
 
-        public void BeginClipRect(Rectangle rect)
+        IDisposable layerDisposer;
+        public IDisposable BeginClipRect(Rectangle rect)
         {
             this.Context.PushClip(new RectangleGeometry(rect));
+            layerDisposer = new DummyDisposer(() => {
+                this.Context.Pop();
+            });
+            return layerDisposer;
         }
 
         public void EndClipRect()
         {
-            this.Context.Pop();
+            layerDisposer.Dispose();
         }
 
         public ITextLayout CreateLaytout(string str, SyntaxInfo[] syntaxCollection, IEnumerable<Marker> MarkerRanges, IEnumerable<Selection> SelectRanges, double wrapwidth)

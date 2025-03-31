@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30804.86
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35728.132 d17.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Core", "..\Core\Core.shproj", "{C244F4E5-45D2-4C1F-BD2A-A5CC90D9421B}"
 EndProject
@@ -9,11 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FooTextBox", "FooTextBox\Fo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{43300EA0-22C5-4396-AF6B-E071E9B70638}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FooProject.Collection", "..\FooList\List\FooProject.Collection.csproj", "{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}"
+EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		..\Core\Core.projitems*{02cd8ce7-70e0-48cc-89a9-8863bf006dc7}*SharedItemsImports = 5
-		..\Core\Core.projitems*{c244f4e5-45d2-4c1f-bd2a-a5cc90d9421b}*SharedItemsImports = 13
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|ARM = Debug|ARM
@@ -69,11 +67,35 @@ Global
 		{43300EA0-22C5-4396-AF6B-E071E9B70638}.Release|x86.ActiveCfg = Release|x86
 		{43300EA0-22C5-4396-AF6B-E071E9B70638}.Release|x86.Build.0 = Release|x86
 		{43300EA0-22C5-4396-AF6B-E071E9B70638}.Release|x86.Deploy.0 = Release|x86
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Debug|ARM.Build.0 = Debug|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Debug|x64.Build.0 = Debug|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Debug|x86.Build.0 = Debug|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Release|ARM.ActiveCfg = Release|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Release|ARM.Build.0 = Release|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Release|ARM64.Build.0 = Release|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Release|x64.ActiveCfg = Release|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Release|x64.Build.0 = Release|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Release|x86.ActiveCfg = Release|Any CPU
+		{58122667-FF4E-43E7-BF4A-EBF9B5B6CDFC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0655289A-64AB-4CE6-970A-D1184FA0BF0F}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		..\Core\Core.projitems*{02cd8ce7-70e0-48cc-89a9-8863bf006dc7}*SharedItemsImports = 5
+		..\Core\Core.projitems*{c244f4e5-45d2-4c1f-bd2a-a5cc90d9421b}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal

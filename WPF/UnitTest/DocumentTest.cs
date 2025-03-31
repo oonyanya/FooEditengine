@@ -310,35 +310,28 @@ namespace UnitTest
         }
 
         [TestMethod]
-        public void IndexOfText()
+        public void FetchLineAndTryGetRaw()
         {
-            StringBuffer buf = new StringBuffer();
-            string str = "this is a pen";
-            buf.Replace(0, 0, str, str.Length);
-            
-            int index = buf.IndexOf("is", 0);
-            Assert.IsTrue(index == 2);
-            
-            index = buf.IndexOf("is", 4);
-            Assert.IsTrue(index == 5);
-            
-            index = buf.IndexOf("xy", 0);
-            Assert.IsTrue(index == -1);
+            DummyRender render = new DummyRender();
+            Document.PreloadLength = 64;
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
 
-            index = buf.IndexOf("Is", 0,true);
-            Assert.IsTrue(index == 2);
+            for (int i = 0; i < 20; i++)
+                doc.Append("01234567890123456789\n");
 
-            str = "xABC";
-            buf.Clear();
-            buf.Replace(0, 0, str, str.Length);
-            index = buf.IndexOf("ABC", 0);
-            Assert.IsTrue(index == 1);
+            //普通に追加すると余計なものがあるので、再構築する
+            doc.PerformLayout(false);
 
-            index = buf.IndexOf("abc", 0,true);
-            Assert.IsTrue(index == 1);
+            LineToIndexTableData lineData;
+            bool result = doc.LayoutLines.TryGetRaw(20, out lineData);
+            Assert.AreEqual(false, result);
+            Assert.AreEqual(null, lineData);
 
-            index = buf.IndexOf("abc", 0);
-            Assert.IsTrue(index == -1);
+            doc.Append("a\nb\nc");
+            doc.LayoutLines.FetchLine(23);
+            Assert.AreEqual("a\n", doc.LayoutLines[20]);
+            Assert.AreEqual("c", doc.LayoutLines[22]);
         }
 
         [TestMethod]
@@ -349,9 +342,12 @@ namespace UnitTest
             doc.LayoutLines.Render = render;
             doc.Append("this is a pen\n");
             doc.Append("this is a pen\n");
+            doc.SetCaretPostionWithoutEvent(1, 0);
             doc.SetFindParam("is", false, RegexOptions.None);
             doc.ReplaceAll("aaa", false);
             Assert.IsTrue(doc.ToString(0) == "thaaa aaa a pen\nthaaa aaa a pen\n");
+            Assert.AreEqual(1, doc.CaretPostion.row);
+            Assert.AreEqual(0, doc.CaretPostion.col);
         }
 
         [TestMethod]
@@ -362,20 +358,53 @@ namespace UnitTest
             doc.LayoutLines.Render = render;
             doc.Append("this is a pen\n");
             doc.Append("this is a pen\n");
+            doc.SetCaretPostionWithoutEvent(1, 0);
             doc.SetFindParam("[a-z]+", true, RegexOptions.None);
             doc.ReplaceAll("aaa", false);
-            Assert.IsTrue(doc.ToString(0) == "aaa aaa aaa aaa\naaa aaa aaa aaa\n");
+            Assert.AreEqual("aaa aaa aaa aaa\naaa aaa aaa aaa\n", doc.ToString(0));
+            Assert.AreEqual(1, doc.CaretPostion.row);
+            Assert.AreEqual(0, doc.CaretPostion.col);
         }
 
         [TestMethod]
-        public void ReplaceAllTest()
+        public void ReplaceAll2Test()
         {
+            const int ADD_COUNT = 3000;
+
             DummyRender render = new DummyRender();
             Document doc = new Document();
             doc.LayoutLines.Render = render;
-            doc.Append("this is a pen");
+            Document.PreloadLength = 64;
+            doc.Append("this is a pen\n");
             doc.ReplaceAll2("is", "aaa");
-            Assert.IsTrue(doc.ToString(0) == "thaaa aaa a pen");
+            Assert.IsTrue(doc.ToString(0) == "thaaa aaa a pen\n");
+
+            doc.Clear();
+
+            for (int i = 0; i < ADD_COUNT; i++)
+            {
+                doc.Append("this is a pen\n");
+            }
+
+            doc.LayoutLines.FetchLine(ADD_COUNT);
+            doc.SetCaretPostionWithoutEvent(ADD_COUNT - 1, 0, false);
+
+            doc.ReplaceAll2("is", "aaa");
+
+            var lines = doc.LayoutLines.ForEachLines(0, doc.Count - 1);
+            foreach(var line in lines)
+            {
+                var actual =  doc.ToString(line.Item1, line.Item2);
+                if(line.Item1 < doc.Count)
+                {
+                    Assert.AreEqual("thaaa aaa a pen\n", actual);
+                }
+            }
+
+            Assert.IsTrue(doc.LayoutLines.Count > ADD_COUNT);
+            Assert.AreEqual(ADD_COUNT, doc.TotalLineCount);
+            Assert.AreEqual(ADD_COUNT - 1, doc.CaretPostion.row);
+            Assert.AreEqual(0, doc.CaretPostion.col);
         }
 
         [TestMethod]

@@ -130,8 +130,9 @@ namespace UnitTest
             throw new NotImplementedException();
         }
 
-        public void BeginClipRect(Rectangle rect)
+        public IDisposable BeginClipRect(Rectangle rect)
         {
+            return new DummyDisposer();
         }
 
         public void EndClipRect()

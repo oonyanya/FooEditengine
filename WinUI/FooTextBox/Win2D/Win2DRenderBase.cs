@@ -480,9 +480,10 @@ namespace FooEditEngine.WinUI
 
         protected CanvasDrawingSession offScreenSession = null;
         CanvasActiveLayer layer;
-        public void BeginClipRect(Rectangle rect)
+        public IDisposable BeginClipRect(Rectangle rect)
         {
             layer = this.offScreenSession.CreateLayer(1.0f, rect);
+            return layer;
         }
 
         public void DrawMarkerEffect(Win2DTextLayout layout, HilightType type, int start, int length, double x, double y, bool isBold, Windows.UI.Color? effectColor = null)
@@ -781,8 +782,12 @@ namespace FooEditEngine.WinUI
 
         public void FillBackground(Rectangle rect)
         {
-            this.offScreenSession.Clear(this.Background);
+            this.FillBackground(rect,this.Background);
         }
 
+        public void FillBackground(Rectangle rect,Windows.UI.Color color)
+        {
+            this.offScreenSession.Clear(color);
+        }
     }
 }

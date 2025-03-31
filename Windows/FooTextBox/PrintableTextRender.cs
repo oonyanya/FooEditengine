@@ -236,14 +236,21 @@ namespace FooEditEngine.Windows
             layout.Draw(g, x, y, this.Foreground);
         }
 
-        public void BeginClipRect(Rectangle rect)
+        DummyDisposer disposer;
+
+        public IDisposable BeginClipRect(Rectangle rect)
         {
             g.Clip = new Region(rect);
+            disposer = new DummyDisposer(() =>
+            {
+                g.Clip = new Region();
+            });
+            return disposer;
         }
 
         public void EndClipRect()
         {
-            g.Clip = new Region();
+            disposer.Dispose();
         }
 
         public void FillRectangle(Rectangle rect, FillRectType type)

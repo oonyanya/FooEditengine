@@ -253,7 +253,7 @@ namespace FooEditEngine.WinUI
                     this._Controller.SelectedText = await dataPackageView.GetTextAsync();
                 }catch(Exception e)
                 {
-                    System.Diagnostics.Debug.WriteLine("past error:" + e.Message);
+                    DebugLog.WriteLine("past error:" + e.Message);
                 }
             }
         }
@@ -482,12 +482,12 @@ namespace FooEditEngine.WinUI
                 this.textServiceManager = null;
             }
 
-            System.Diagnostics.Debug.WriteLine("losing focus");
+            DebugLog.WriteLine("losing focus");
         }
 
         private async void FooTextBox_GettingFocus(UIElement sender, GettingFocusEventArgs args)
         {
-            System.Diagnostics.Debug.WriteLine("getting focus");
+            DebugLog.WriteLine("getting focus");
             if (this.textServiceManager == null)
             {
                 await Task.Delay(500);
@@ -503,7 +503,7 @@ namespace FooEditEngine.WinUI
         {
             base.OnGotFocus(e);
 
-            System.Diagnostics.Debug.WriteLine("got focus");
+            DebugLog.WriteLine("got focus");
 
             this._View.IsFocused = true;
             this.timer.Interval = new TimeSpan(0, 0, 0, 0, Interval);
@@ -512,7 +512,7 @@ namespace FooEditEngine.WinUI
 
         private void TextServiceManager_InputLanguageChanged(CoreTextServicesManager sender, object args)
         {
-            System.Diagnostics.Debug.WriteLine("input language changed input script:"+  this.textServiceManager.InputLanguage.Script);
+            DebugLog.WriteLine("input language changed input script:"+  this.textServiceManager.InputLanguage.Script);
         }
 
 　      /// <inheritdoc/>
@@ -520,7 +520,7 @@ namespace FooEditEngine.WinUI
         {
             base.OnLostFocus(e);
 
-            System.Diagnostics.Debug.WriteLine("lost focus");
+            DebugLog.WriteLine("lost focus");
             
             this._View.IsFocused = false;
             this.Refresh(false);
@@ -577,7 +577,8 @@ namespace FooEditEngine.WinUI
             if (autocomplete != null && autocomplete.ProcessKeyDown(this, e, isControlPressed, isShiftPressed))
                 return;
 
-            double alignedPage = (int)(this.Render.TextArea.Height / this.Render.emSize.Height) * this.Render.emSize.Height;
+            double lineHeight = this.Render.emSize.Height * this.Render.LineEmHeight;
+            double alignedPage = (int)(this.Render.TextArea.Height / lineHeight) * lineHeight;
             switch (e.Key)
             {
                 case VirtualKey.Up:
@@ -729,7 +730,7 @@ namespace FooEditEngine.WinUI
         /// <inheritdoc/>
         protected override void OnPointerPressed(PointerRoutedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("pointer pressed");
+            DebugLog.WriteLine("pointer pressed");
             this.CapturePointer(e.Pointer);
             this.gestureRecongnizer.ProcessDownEvent(e.GetCurrentPoint(this));
             e.Handled = true;
@@ -738,14 +739,14 @@ namespace FooEditEngine.WinUI
         /// <inheritdoc/>
         protected override void OnPointerMoved(PointerRoutedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("pointer moved");
+            DebugLog.WriteLine("pointer moved");
             try
             {
                 this.gestureRecongnizer.ProcessMoveEvents(e.GetIntermediatePoints(this));
             }catch(System.Runtime.InteropServices.COMException ex)
             {
                 //ピンチズームでこの例外が発生するが、回避できない
-                System.Diagnostics.Debug.WriteLine("expection:" + ex);
+                DebugLog.WriteLine("expection:" + ex);
             }
             e.Handled = true;
 
@@ -770,7 +771,7 @@ namespace FooEditEngine.WinUI
         /// <inheritdoc/>
         protected override void OnPointerReleased(PointerRoutedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("pointer released");
+            DebugLog.WriteLine("pointer released");
             this.gestureRecongnizer.ProcessUpEvent(e.GetCurrentPoint(this));
             e.Handled = true;
         }
@@ -778,7 +779,7 @@ namespace FooEditEngine.WinUI
         /// <inheritdoc/>
         protected override void OnPointerCanceled(PointerRoutedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("pointer canceled");
+            DebugLog.WriteLine("pointer canceled");
             this.gestureRecongnizer.CompleteGesture();
             e.Handled = true;
         }
@@ -786,12 +787,20 @@ namespace FooEditEngine.WinUI
         /// <inheritdoc/>
         protected override void OnPointerWheelChanged(PointerRoutedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("pointer wheelchanged");
+            DebugLog.WriteLine("pointer wheelchanged");
             bool shift = (e.KeyModifiers & Windows.System.VirtualKeyModifiers.Shift) ==
                 Windows.System.VirtualKeyModifiers.Shift;
             bool ctrl = (e.KeyModifiers & Windows.System.VirtualKeyModifiers.Control) ==
                 Windows.System.VirtualKeyModifiers.Control;
-            this.gestureRecongnizer.ProcessMouseWheelEvent(e.GetCurrentPoint(this), shift, ctrl);
+            try
+            {
+                this.gestureRecongnizer.ProcessMouseWheelEvent(e.GetCurrentPoint(this), shift, ctrl);
+            }
+            catch (System.Runtime.InteropServices.COMException ex)
+            {
+                //たまにこの例外が発生するが、回避できない
+                DebugLog.WriteLine("expection:" + ex);
+            }
             e.Handled = true;
         }
 
@@ -802,7 +811,7 @@ namespace FooEditEngine.WinUI
                 args.Result = CoreTextFormatUpdatingResult.Failed;
                 return;
             }
-            System.Diagnostics.Debug.WriteLine("core text format updating range({0}-{1}) underline type:{2} underline color:{3} reason:{4} textcolor:{5} background:{6}",
+            DebugLog.WriteLine("core text format updating range({0}-{1}) underline type:{2} underline color:{3} reason:{4} textcolor:{5} background:{6}",
                 args.Range.StartCaretPosition,
                 args.Range.EndCaretPosition,
                 args.UnderlineType,
@@ -868,7 +877,7 @@ namespace FooEditEngine.WinUI
 
             int length = end - start;
 
-            System.Diagnostics.Debug.WriteLine("req text start:{0} length:{1}", start, length);
+            DebugLog.WriteLine("req text start:{0} length:{1}", start, length);
 
             //キャレット位置も含むので+1する必要はない
             req.Text = this.Document.ToString(start,length);
@@ -886,7 +895,7 @@ namespace FooEditEngine.WinUI
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine("core text layoutreq range({0}-{1})",i_startIndex,i_endIndex);
+            DebugLog.WriteLine("core text layoutreq range({0}-{1})",i_startIndex,i_endIndex);
 
             double scale = Util.GetScale();
             Point screenStartPos, screenEndPos;
@@ -935,7 +944,7 @@ namespace FooEditEngine.WinUI
             currentSelectionRange.StartCaretPosition = currentSelection.Index;
             currentSelectionRange.EndCaretPosition = currentSelection.Index + currentSelection.Length;
             args.Request.Selection = currentSelectionRange;
-            System.Diagnostics.Debug.WriteLine("req selection start:{0} end:{1}", currentSelectionRange.StartCaretPosition, currentSelectionRange.EndCaretPosition);
+            DebugLog.WriteLine("req selection start:{0} end:{1}", currentSelectionRange.StartCaretPosition, currentSelectionRange.EndCaretPosition);
         }
 
         private void TextEditContext_SelectionUpdating(CoreTextEditContext sender, CoreTextSelectionUpdatingEventArgs args)
@@ -946,7 +955,7 @@ namespace FooEditEngine.WinUI
                 return;
             }
             CoreTextRange sel = args.Selection;
-            System.Diagnostics.Debug.WriteLine("update selection start:{0} end:{1}", sel.StartCaretPosition, sel.EndCaretPosition);
+            DebugLog.WriteLine("update selection start:{0} end:{1}", sel.StartCaretPosition, sel.EndCaretPosition);
             TextStoreHelper.SetSelectionIndex(this.Controller, this._View, sel.StartCaretPosition, sel.EndCaretPosition);
             args.Result = CoreTextSelectionUpdatingResult.Succeeded;
             this.Refresh();
@@ -956,7 +965,7 @@ namespace FooEditEngine.WinUI
         {
             this.nowCompstion = true;
 
-            System.Diagnostics.Debug.WriteLine("update text (modify start:{0} end:{1}) text:{2} (new sel start:{0} end:{1})",
+            DebugLog.WriteLine("update text (modify start:{0} end:{1}) text:{2} (new sel start:{0} end:{1})",
                 args.Range.StartCaretPosition, 
                 args.Range.EndCaretPosition, 
                 args.Text, 
@@ -974,7 +983,7 @@ namespace FooEditEngine.WinUI
 
         private void TextEditContext_CompositionCompleted(CoreTextEditContext sender, CoreTextCompositionCompletedEventArgs args)
         {
-            System.Diagnostics.Debug.WriteLine("end compostion");
+            DebugLog.WriteLine("end compostion");
             TextStoreHelper.EndCompostion(this.Document);
             this.Document.RemoveAllMarker(MarkerIDs.IME);
             this.Refresh();
@@ -982,18 +991,18 @@ namespace FooEditEngine.WinUI
 
         private void TextEditContext_CompositionStarted(CoreTextEditContext sender, CoreTextCompositionStartedEventArgs args)
         {
-            System.Diagnostics.Debug.WriteLine("start compstion");
+            DebugLog.WriteLine("start compstion");
             TextStoreHelper.StartCompstion(this.Document);
         }
 
         private void TextEditContext_NotifyFocusLeaveCompleted(CoreTextEditContext sender, object args)
         {
-            System.Diagnostics.Debug.WriteLine("notify focus leaved");
+            DebugLog.WriteLine("notify focus leaved");
         }
 
         private void TextEditContext_FocusRemoved(CoreTextEditContext sender, object args)
         {
-            System.Diagnostics.Debug.WriteLine("focus leaved");
+            DebugLog.WriteLine("focus leaved");
         }
 
         void Controller_SelectionChanged(object sender, EventArgs e)
@@ -1017,7 +1026,7 @@ namespace FooEditEngine.WinUI
                 currentSelectionRange.StartCaretPosition = currentSelection.Index;
                 currentSelectionRange.EndCaretPosition = currentSelection.Index + currentSelection.Length;
 
-                System.Diagnostics.Debug.WriteLine("notify selection start:{0} end:{1}", currentSelectionRange.StartCaretPosition, currentSelectionRange.EndCaretPosition);
+                DebugLog.WriteLine("notify selection start:{0} end:{1}", currentSelectionRange.StartCaretPosition, currentSelectionRange.EndCaretPosition);
                 //変換中に呼び出してはいけない
                 if (this.textEditContext != null)
                     this.textEditContext.NotifySelectionChanged(currentSelectionRange);
@@ -1044,27 +1053,27 @@ namespace FooEditEngine.WinUI
 
         void gestureRecongnizer_ManipulationUpdated(GestureRecognizer sender, ManipulationUpdatedEventArgs e)
         {
-            if (e.Delta.Scale < 1)
-            {
-                double newSize = this.Render.FontSize - 1;
-                if (newSize < 1)
-                    newSize = 1;
-                this.Render.FontSize = newSize;
-                this.Refresh();
-                SetValue(MagnificationPowerPropertyKey, this.Render.FontSize / this.FontSize);
-                return;
-            }
+            bool scaleResult = this._Controller.Scale(e.Delta.Scale, (scale) => {
+                if (e.Delta.Scale < 1) {
+                    double newSize = this.Render.FontSize - 1;
+                    if (newSize < 1)
+                        newSize = 1;
+                    this.Render.FontSize = newSize;
+                    this.Refresh();
+                    SetValue(MagnificationPowerPropertyKey, this.Render.FontSize / this.FontSize);
+                }
+                if (e.Delta.Scale > 1) {
+                    double newSize = this.Render.FontSize + 1;
+                    if (newSize > 72)
+                        newSize = 72;
+                    this.Render.FontSize = newSize;
+                    this.Refresh();
+                    SetValue(MagnificationPowerPropertyKey, this.Render.FontSize / this.FontSize);
+                }
+            });
 
-            if (e.Delta.Scale > 1)
-            {
-                double newSize = this.Render.FontSize + 1;
-                if (newSize > 72)
-                    newSize = 72;
-                this.Render.FontSize = newSize;
-                this.Refresh();
-                SetValue(MagnificationPowerPropertyKey, this.Render.FontSize / this.FontSize);
+            if (scaleResult)
                 return;
-            }
 
             if (this._Controller.MoveCaretAndGripper(e.Position, this.hittedGripper))
             {
@@ -1262,9 +1271,19 @@ namespace FooEditEngine.WinUI
 
             this.Render.Draw(this.rectangle, (e) => {
                 if (IsEnabled)
+                {
                     _View.Draw(this._View.PageBound);
+                }
                 else
-                    this.Render.FillBackground(this._View.PageBound);
+                {
+                    SolidColorBrush disabledColorBrush = Application.Current.Resources.ThemeDictionaries["TextBoxDisabledBackgroundThemeBrush"] as SolidColorBrush;
+                    Windows.UI.Color disabledColor;
+                    if (disabledColorBrush == null)
+                        disabledColor = Colors.Gray;
+                    else
+                        disabledColor = disabledColorBrush.Color;
+                    this.Render.FillBackground(this._View.PageBound, disabledColor);
+                }
             });
 
             this.Document.IsRequestRedraw = false;
@@ -1363,7 +1382,7 @@ namespace FooEditEngine.WinUI
                 //（注意：削除された文字数のほうが多い場合は0を指定しないいけない）
                 int newTextLength = e.insertLength;
 
-                System.Diagnostics.Debug.WriteLine("notify text change (modify start:{0} end:{1}) newlength:{2} (new sel start:{3} end:{4})",
+                DebugLog.WriteLine("notify text change (modify start:{0} end:{1}) newlength:{2} (new sel start:{3} end:{4})",
                     oldTextRange.StartCaretPosition, oldTextRange.EndCaretPosition, newTextLength, newSelection.StartCaretPosition, newSelection.EndCaretPosition);
                 //変換中に呼び出してはいけない
                 if(this.textEditContext != null)
@@ -1378,7 +1397,8 @@ namespace FooEditEngine.WinUI
         void FooTextBox_Loaded(object sender, RoutedEventArgs e)
         {
             Util.SetDpi((float)(this.XamlRoot.RasterizationScale * 96.0f));
-            this.View.CaretWidthOnInsertMode *= Math.Ceiling(this.XamlRoot.RasterizationScale);
+            this.View.CaretWidthOnInsertMode = Math.Ceiling(EditView.DefaultCaretWidthInsertMode * this.XamlRoot.RasterizationScale);
+            //適当な値を設定しておかないと落ちるのでひとまずこうしておく
             this.Render.CreateSurface(this.rectangle, 100, 100);
             this.Focus(FocusState.Programmatic);
         }
@@ -1397,7 +1417,7 @@ namespace FooEditEngine.WinUI
             }
             else if(this._View != null && this.Document != null)
             {
-                if (this._View.LayoutLines.HilightAll() || this._View.LayoutLines.GenerateFolding() || this.Document.IsRequestRedraw)
+                if (this._View.LayoutLines.HilightAll() || this._View.LayoutLines.GenerateFolding() || this.Document.IsRequestRedraw || this.Render.IsReqestDraw)
                 {
                     this.Refresh(this._View.PageBound);
                 }
@@ -1427,7 +1447,7 @@ namespace FooEditEngine.WinUI
                 this.RemoveTextContext();
             }
 
-            System.Diagnostics.Debug.WriteLine("document switched");
+            DebugLog.WriteLine("document switched");
 
             this._Document = value;
             this._Document.LayoutLines.Render = this.Render;
@@ -1466,6 +1486,14 @@ namespace FooEditEngine.WinUI
             }
             //TextEditContext作成後に設定しないと落ちることがある
             this._Document.SelectionChanged += Controller_SelectionChanged;
+        }
+
+        private void _Document_Progress(object sender, ProgressEventArgs e)
+        {
+            if(e.state == ProgressState.Start)
+                this.IsEnabled = false;
+            if(e.state == ProgressState.Complete)
+                this.IsEnabled = true;
         }
 
         private void _Document_AutoCompleteChanged(object sender, EventArgs e)

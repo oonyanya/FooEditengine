@@ -11,6 +11,7 @@ You should have received a copy of the GNU General Public License along with thi
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace FooEditEngine
 {
@@ -36,6 +37,7 @@ namespace FooEditEngine
         internal const float LineMarkerThickness = 2;
         long tickCount;
         bool _CaretBlink;
+        internal const int DefaultCaretWidthInsertMode = 1;
         internal const int LineNumberLength = 6;
         const int UpdateAreaPaddingWidth = 2;
         const int UpdateAreaWidth = 4;
@@ -266,34 +268,49 @@ namespace FooEditEngine
                 //画面上では行をずらして表示する
                 pos.Y += this.Src.OffsetY;
 
-                this.render.BeginClipRect(this.render.TextArea);
-
-                for (int i = this.Src.Row; i < this.LayoutLines.Count; i++)
+                using (this.render.BeginClipRect(this.render.TextArea))
                 {
-                    int lineIndex = this.LayoutLines.GetIndexFromLineNumber(i);
-                    int lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
-                    ITextLayout layout = this.LayoutLines.GetLayout(i);
-
-                    if (pos.Y > endposy)
-                        break;
-
-                    FoldingItem foldingData = this.LayoutLines.FoldingCollection.Get(lineIndex, lineLength);
-
-                    if (foldingData != null)
+                    var drawLine = 0;
+                    for (int i = this.Src.Row; i < this.LayoutLines.Count; i++)
                     {
-                        if (this.LayoutLines.FoldingCollection.IsHidden(lineIndex))
-                            continue;
+                        drawLine = i;
+                        int lineIndex = this.LayoutLines.GetIndexFromLineNumber(i);
+                        int lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
+                        ITextLayout layout = this.LayoutLines.GetLayout(i);
+
+                        if (pos.Y > endposy)
+                            break;
+
+                        FoldingItem foldingData = this.LayoutLines.FoldingCollection.Get(lineIndex, lineLength);
+
+                        if (foldingData != null)
+                        {
+                            if (this.LayoutLines.FoldingCollection.IsHidden(lineIndex))
+                                continue;
+                        }
+
+                        if (i == this.Document.CaretPostion.row)
+                            this.DrawLineMarker(pos, layout);
+
+                        this.render.DrawOneLine(this.Document, this.LayoutLines, i, pos.X, pos.Y);
+
+                        pos.Y += layout.Height;
                     }
 
-                    if (i == this.Document.CaretPostion.row)
-                        this.DrawLineMarker(pos, layout);
-
-                    this.render.DrawOneLine(this.Document, this.LayoutLines, i, pos.X, pos.Y);
-
-                    pos.Y += layout.Height;
+                    if (drawLine == this.LayoutLines.Count - 1)
+                    {
+                        var lineHeadIndex = this.LayoutLines.GetLineHeadIndex(drawLine);
+                        var lineLength = this.LayoutLines.GetLengthFromLineNumber(drawLine);
+                        if (lineHeadIndex + lineLength >= this.Document.Length)
+                        {
+                            this.render.DrawString("[EOF]", pos.X, pos.Y, StringAlignment.Left, this.PageBound.Size, StringColorType.LineNumber);
+                        }
+                        else
+                        {
+                            this.render.DrawString("[...]", pos.X, pos.Y, StringAlignment.Left, this.PageBound.Size, StringColorType.LineNumber);
+                        }
+                    }
                 }
-
-                this.render.EndClipRect();
 
                 //リセットしないと行が正しく描けない
                 pos = this.render.TextArea.TopLeft;
@@ -612,32 +629,6 @@ namespace FooEditEngine
         }
 
         /// <summary>
-        /// キャレットを指定した位置に移動させる
-        /// </summary>
-        /// <param name="row"></param>
-        /// <param name="col"></param>
-        /// <param name="autoExpand">折り畳みを展開するなら真</param>
-        public void JumpCaret(int row, int col, bool autoExpand = true)
-        {
-            if (autoExpand)
-            {
-                int lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
-                int lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
-                FoldingItem foldingData = this.LayoutLines.FoldingCollection.Get(lineHeadIndex, lineLength);
-                if(foldingData != null)
-                {
-                    if (this.LayoutLines.FoldingCollection.IsParentHidden(foldingData) || !foldingData.IsFirstLine(this.LayoutLines, row))
-                    {
-                        this.LayoutLines.FoldingCollection.Expand(foldingData);
-                    }
-                }
-            }
-
-            //イベント呼び出しの再入防止のため
-            this.Document.SetCaretPostionWithoutEvent(new TextPoint(row, col));
-        }
-
-        /// <summary>
         /// index上の文字が表示されるようにSrcを調整する
         /// </summary>
         /// <param name="index">インデックス</param>
@@ -735,8 +726,12 @@ namespace FooEditEngine
 
                 int PhyLineCountOnScreen = (int)(this.render.TextArea.Height / lineHeight);
                 //計算量を減らすため
-                if (tp.row < this.Src.Row || this.Src.Row + PhyLineCountOnScreen * 2 < tp.row)
+                if (tp.row < this.Src.Row)
+                {
                     this.Document.Src = new SrcPoint(this.Src.X, tp.row, -relPoint.Y);
+                }else if(tp.row > this.Src.Row + PhyLineCountOnScreen){
+                    this.Document.Src = new SrcPoint(this.Src.X, tp.row - PhyLineCountOnScreen, -relPoint.Y);
+                }
 
                 //キャレットのY座標を求める
                 double caret_y = this.Src.OffsetY;  //src.rowからキャレット位置
@@ -819,8 +814,6 @@ namespace FooEditEngine
             int endRow = this.LayoutLines.Count - 1 - this.LineCountOnScreen;
             if (endRow < 0)
                 endRow = 0;
-            if (row > endRow)
-                row = endRow;
             base.TryScroll(x, row);
         }
 
@@ -934,7 +927,9 @@ namespace FooEditEngine
                 int lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
                 int lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
 
-                if (this.LayoutLines.FoldingCollection.IsHidden(lineHeadIndex) && row < this.LayoutLines.Count - 1)
+                LineToIndexTableData lineData = null;
+                this.LayoutLines.FetchLine(row);
+                if (this.LayoutLines.FoldingCollection.IsHidden(lineHeadIndex) && this.LayoutLines.TryGetRaw(row,out lineData))
                     continue;
 
                 ITextLayout layout = this.LayoutLines.GetLayout(row);

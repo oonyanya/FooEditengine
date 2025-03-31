@@ -1,17 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.UI.Text;
-using Microsoft.UI.Xaml.Hosting;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Composition;
-using Microsoft.Graphics.Canvas;
+﻿using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
-using Microsoft.Graphics.Canvas.UI.Composition;
-using Microsoft.Graphics.Canvas.Text;
-using Microsoft.Graphics.Canvas.Brushes;
-using Microsoft.Graphics.Canvas.Geometry;
-using Windows.Graphics.DirectX;
+using Microsoft.UI.Xaml.Media;
+using System;
 
 namespace FooEditEngine.WinUI
 {
@@ -83,8 +73,24 @@ namespace FooEditEngine.WinUI
                 Size canvasSize = this.CanvasImageSource.Size;
                 if (canvasSize.Width != width || canvasSize.Height != height)
                 {
-                    this.CreateSurface(rect, width, height);
-                    return true;
+                    try
+                    {
+                        this.CreateSurface(rect, width, height);
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (this._factory.ProcessDeviceLost(ex.HResult))
+                        {
+                            this.CreateSurface(rect, width, height);
+                            this.OnChangedRenderResource(this, new ChangedRenderRsourceEventArgs(ResourceType.All));
+                            return true;
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
                 }
             }
             return false;
@@ -100,11 +106,14 @@ namespace FooEditEngine.WinUI
             }
         }
 
+        public bool IsReqestDraw { get; set; }
+
         public void Draw(Microsoft.UI.Xaml.Shapes.Rectangle rectangle, Action<CanvasDrawingSession> action)
         {
             try
             {
                 DrawControl(action);
+                this.IsReqestDraw = false;
             }
             catch (Exception e)
             {
@@ -112,11 +121,11 @@ namespace FooEditEngine.WinUI
                 {
                     this.CanvasImageSource.Recreate(this._factory.Device);
                     this.OnChangedRenderResource(this, new ChangedRenderRsourceEventArgs(ResourceType.All));
-                    DrawControl(action);
+                    this.IsReqestDraw = true;
                 }
                 else
                 {
-                    throw e;
+                    throw;
                 }
             }
 

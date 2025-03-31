@@ -641,7 +641,7 @@ namespace FooEditEngine
         /// クリッピングを開始します
         /// </summary>
         /// <param name="rect">クリッピングする範囲</param>
-        void BeginClipRect(Rectangle rect);
+        IDisposable BeginClipRect(Rectangle rect);
 
         /// <summary>
         /// クリッピングを終了します
