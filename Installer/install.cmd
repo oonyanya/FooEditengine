@@ -8,6 +8,8 @@ set BATCH_FILE_FOLDER=%~dp0
 
 if "%1"=="" set BUILD_TYPE=Release
 
+md dist
+
 pushd ..\Windows\FooTextBox
 "%BUILD_PATH%\msbuild" -t:pack -p:Configuration=%BUILD_TYPE%"
 copy bin\%BUILD_TYPE%\*.nupkg "%BATCH_FILE_FOLDER%dist"
@@ -39,10 +41,6 @@ pushd ..\FooList\List
 copy bin\%BUILD_TYPE%\*.nupkg "%BATCH_FILE_FOLDER%dist"
 copy bin\%BUILD_TYPE%\*.snupkg "%BATCH_FILE_FOLDER%dist"
 popd
-
-:copy_dist
-md dist
-copy ..\Help\Help\Documentation.chm dist
 
 :end
 endlocal
