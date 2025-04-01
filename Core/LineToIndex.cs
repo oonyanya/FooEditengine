@@ -446,8 +446,7 @@ namespace FooEditEngine
             {
                 var newData = new LineToIndexTableData(this.GetLineHeadIndex(row), this.GetLengthFromLineNumber(row) + deltaLength, true, true, null);
 
-                this.collection.RemoveAt(row);
-                this.collection.Insert(row, newData);
+                this.collection[row] = newData;
             }
 
             foreach (var generator in this._generators)
