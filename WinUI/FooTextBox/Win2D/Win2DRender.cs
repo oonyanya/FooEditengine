@@ -89,6 +89,7 @@ namespace FooEditEngine.WinUI
                         {
                             this.CreateSurface(rect, width, height);
                             this.OnChangedRenderResource(this, new ChangedRenderRsourceEventArgs(ResourceType.All));
+                            this.IsReqestDraw = true;
                             return true;
                         }
                         else
