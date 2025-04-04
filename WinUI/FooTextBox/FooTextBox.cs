@@ -26,6 +26,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Windows.UI.Text.Core;
+using Windows.UI.ViewManagement;
 
 // テンプレート コントロールのアイテム テンプレートについては、http://go.microsoft.com/fwlink/?LinkId=234235 を参照してください
 namespace FooEditEngine.WinUI
@@ -58,7 +59,6 @@ namespace FooEditEngine.WinUI
 
         const int Interval = 32;
         const int IntervalWhenLostFocus = 160;
-        const int CaretBlinkTime = 530;
 
         /// <summary>
         /// コンストラクター
@@ -1192,14 +1192,15 @@ namespace FooEditEngine.WinUI
         }
 
         long lastDouleTapTick;
-        const long allowTripleTapTimeSpan = 500;
         void gestureRecongnizer_Tapped(GestureRecognizer sender, TappedEventArgs e)
         {
             bool touched = e.PointerDeviceType == PointerDeviceType.Touch;
             this.Document.SelectGrippers.BottomLeft.Enabled = false;
             this.Document.SelectGrippers.BottomRight.Enabled = touched;
             this.JumpCaret(e.Position);
-            if(e.TapCount == 1 && System.DateTime.Now.Ticks - lastDouleTapTick < allowTripleTapTimeSpan * 10000)    //トリプルタップ
+            var uisetting = new UISettings();
+            //DoubleClickTimeは１回目と２回目のクリックの間隔なので、トリプルタップを実装したい場合はダブルタップ後から時間を測ることで判定する
+            if (e.TapCount == 1 && System.DateTime.Now.Ticks - lastDouleTapTick < uisetting.DoubleClickTime * 10000)
             {
                 //タッチスクリーンで行選択した場合、アンカーインデックスを単語の先頭にしないとバグる
                 this.Document.SelectGrippers.BottomLeft.Enabled = touched;
@@ -1398,11 +1399,14 @@ namespace FooEditEngine.WinUI
 
         void FooTextBox_Loaded(object sender, RoutedEventArgs e)
         {
+            var uisetting = new UISettings();
+
             Util.SetDpi((float)(this.XamlRoot.RasterizationScale * 96.0f));
-            this.View.CaretWidthOnInsertMode = Math.Ceiling(EditView.DefaultCaretWidthInsertMode * this.XamlRoot.RasterizationScale);
+            this.View.CaretWidthOnInsertMode = Math.Ceiling(uisetting.CaretWidth * this.XamlRoot.RasterizationScale);
+
             this.View.CaretBlink = true;
-            //TODO:この値はユーザーが設定できるので、ユーザーの値を反映させるようにする
-            this.View.CaretBlinkTime = CaretBlinkTime * 2;
+            this.View.CaretBlinkTime = (int)uisetting.CaretBlinkRate * 2;
+
             //適当な値を設定しておかないと落ちるのでひとまずこうしておく
             this.Render.CreateSurface(this.rectangle, 100, 100);
             this.Focus(FocusState.Programmatic);
