@@ -53,6 +53,8 @@ namespace FooEditEngine.WinUI
         }
 
         CanvasImageSource CanvasImageSource;
+        CanvasRenderTarget CanvasRenderTarget;
+        bool _cached = false;
         public void CreateSurface(Microsoft.UI.Xaml.Shapes.Rectangle rect, double width, double height)
         {
             if (this.CanvasImageSource != null)
@@ -60,10 +62,13 @@ namespace FooEditEngine.WinUI
             //デバイス依存の座標を渡さないといけない
             float dpix, dpiy;
             Util.GetDpi(out dpix, out dpiy);
+            this.CanvasRenderTarget = new CanvasRenderTarget(this._factory.Device, (float)width, (float)height, dpiy);
+
             this.CanvasImageSource = new CanvasImageSource(this._factory.Device, (float)width, (float)height, dpiy);
             ImageBrush brush = new ImageBrush();
             brush.ImageSource = this.CanvasImageSource;
             rect.Fill = brush;
+            _cached = false;
         }
 
         public bool Resize(Microsoft.UI.Xaml.Shapes.Rectangle rect, double width, double height)
@@ -96,13 +101,37 @@ namespace FooEditEngine.WinUI
             return false;
         }
 
+        public override void DrawCachedBitmap(Rectangle dst, Rectangle src)
+        {
+            using (var session = this.CanvasImageSource.CreateDrawingSession(this.Background))
+            {
+                session.DrawImage(this.CanvasRenderTarget,dst,src);
+            }
+        }
+
+        public override void CacheContent()
+        {
+            //DrawControlでキャッシュしてるので何もしない
+        }
+
+        public override bool IsVaildCache()
+        {
+            return _cached;
+        }
+
         void DrawControl(Action<CanvasDrawingSession> action)
         {
-            using (offScreenSession = this.CanvasImageSource.CreateDrawingSession(this.Background))
+            using (offScreenSession = this.CanvasRenderTarget.CreateDrawingSession())
             {
+                offScreenSession.Clear(this.Background);
                 offScreenSession.Antialiasing = CanvasAntialiasing.Aliased;
                 action(offScreenSession);
                 offScreenSession.Antialiasing = CanvasAntialiasing.Antialiased;
+            }
+            _cached = true;
+            using (var session = this.CanvasImageSource.CreateDrawingSession(this.Background))
+            {
+                session.DrawImage(this.CanvasRenderTarget);
             }
         }
 
@@ -119,7 +148,7 @@ namespace FooEditEngine.WinUI
             {
                 if (this._factory.ProcessDeviceLost(e.HResult))
                 {
-                    this.CanvasImageSource.Recreate(this._factory.Device);
+                    this.CreateSurface(rectangle, rectangle.ActualWidth, rectangle.ActualHeight);
                     this.OnChangedRenderResource(this, new ChangedRenderRsourceEventArgs(ResourceType.All));
                     this.IsReqestDraw = true;
                 }

@@ -140,7 +140,7 @@ namespace FooEditEngine
             {
                 this._CaretBlink = value;
                 if (value)
-                    this.tickCount = DateTime.Now.Ticks + this.To100nsTime(this.CaretBlinkTime);
+                    this.ResetCaretBlinkTimer();
             }
         }
 
@@ -168,6 +168,18 @@ namespace FooEditEngine
         {
             get;
             private set;
+        }
+
+        /// <summary>
+        /// キャレットの点滅タイマーをリセットする
+        /// </summary>
+        /// <param name="extend">延長させたい時間を指定する。(単位：ms)</param>
+        public void ResetCaretBlinkTimer(int extend = -1)
+        {
+            if (extend == -1)
+                this.tickCount = DateTime.Now.Ticks + this.To100nsTime(this.CaretBlinkTime);
+            else
+                this.tickCount = DateTime.Now.Ticks + this.To100nsTime(extend);
         }
 
         /// <summary>

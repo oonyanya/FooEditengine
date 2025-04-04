@@ -718,7 +718,7 @@ namespace FooEditEngine.WinUI
             layer.Dispose();
         }
 
-        public void DrawCachedBitmap(Rectangle dst,Rectangle src)
+        public virtual void DrawCachedBitmap(Rectangle dst,Rectangle src)
         {
         }
 
@@ -733,11 +733,11 @@ namespace FooEditEngine.WinUI
             this.offScreenSession.DrawLine(v1, v2, new CanvasSolidColorBrush(this.offScreenSession, this.Foreground));
         }
 
-        public void CacheContent()
+        public virtual void CacheContent()
         {
         }
 
-        public bool IsVaildCache()
+        public virtual bool IsVaildCache()
         {
             return false;
         }

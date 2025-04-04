@@ -58,6 +58,7 @@ namespace FooEditEngine.WinUI
 
         const int Interval = 32;
         const int IntervalWhenLostFocus = 160;
+        const int CaretBlinkTime = 530;
 
         /// <summary>
         /// コンストラクター
@@ -344,9 +345,10 @@ namespace FooEditEngine.WinUI
         internal void Refresh(bool immidately=true)
         {
             if(immidately)
-                this.Refresh(this._View.PageBound);
+                this.RefreshCore(this._View.PageBound);
             else
                 this.Document.RequestRedraw();
+            this.View.ResetCaretBlinkTimer();
         }
 
         /// <summary>
@@ -1264,7 +1266,7 @@ namespace FooEditEngine.WinUI
             CoreVirtualKeyStates state = InputKeyboardSource.GetKeyStateForCurrentThread(key);
             return (state & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
         }
-        void Refresh(Rectangle updateRect)
+        void RefreshCore(Rectangle updateRect)
         {
             if (this.rectangle.ActualWidth == 0 || this.rectangle.ActualHeight == 0 || this.Visibility == Microsoft.UI.Xaml.Visibility.Collapsed)
                 return;
@@ -1398,6 +1400,9 @@ namespace FooEditEngine.WinUI
         {
             Util.SetDpi((float)(this.XamlRoot.RasterizationScale * 96.0f));
             this.View.CaretWidthOnInsertMode = Math.Ceiling(EditView.DefaultCaretWidthInsertMode * this.XamlRoot.RasterizationScale);
+            this.View.CaretBlink = true;
+            //TODO:この値はユーザーが設定できるので、ユーザーの値を反映させるようにする
+            this.View.CaretBlinkTime = CaretBlinkTime * 2;
             //適当な値を設定しておかないと落ちるのでひとまずこうしておく
             this.Render.CreateSurface(this.rectangle, 100, 100);
             this.Focus(FocusState.Programmatic);
@@ -1411,15 +1416,22 @@ namespace FooEditEngine.WinUI
                 if (this.Resize(this.rectangle.ActualWidth, this.rectangle.ActualHeight))
                 {
                     //普通に再描写するとちらつく
-                    this.Refresh(this._View.PageBound);
+                    this.RefreshCore(this._View.PageBound);
                 }
                 this.requestSizeChange = false;
             }
             else if(this._View != null && this.Document != null)
             {
-                if (this._View.LayoutLines.HilightAll() || this._View.LayoutLines.GenerateFolding() || this.Document.IsRequestRedraw || this.Render.IsReqestDraw)
+                var allPaint = this._View.LayoutLines.HilightAll() || this._View.LayoutLines.GenerateFolding() || this.Document.IsRequestRedraw || this.Render.IsReqestDraw;
+                if (allPaint)
                 {
-                    this.Refresh(this._View.PageBound);
+                    this.RefreshCore(this._View.PageBound);
+                }
+                else
+                {
+                    var location = this.View.CaretLocation;
+                    var size = this.View.GetCurrentCaretRect().Size;
+                    this.RefreshCore(new Rectangle(location.X,location.Y,size.Width,size.Height));
                 }
             }
             this.timer.Start();
