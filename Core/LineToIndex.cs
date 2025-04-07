@@ -147,18 +147,18 @@ namespace FooEditEngine
 
     public class LineToIndexTableData : IDisposable, FooProject.Collection.IRange
     {
-        public int start { get; set; }
+        public long start { get; set; }
 
-        public int length { get; set; }
+        public long length { get; set; }
 
         /// <summary>
         /// マーカーの開始位置。-1を設定した場合、そのマーカーはレタリングされません。正しい先頭位置を取得するにはGetLineHeadIndex()を使用してください
         /// </summary>
-        public int Index { get { return this.start; } set { this.start = value; } }
+        public int Index { get { return (int)this.start; } set { this.start = value; } }  // 2^31-1のみ扱える
 
         public int Length
         {
-            get { return this.length; }
+            get { return (int)this.length; }  // 2^31-1のみ扱える
             set { this.length = Length; }
         }
 
@@ -432,7 +432,7 @@ namespace FooEditEngine
         {
             if (this.collection.Count == 0)
                 return 0;
-            return this.collection.GetIndexIntoRange(row).start;
+            return this.collection.GetIndexIntoRange(row).Index;
         }
 
         internal void UpdateLineAsReplace(int row,int removedLength, int insertedLength)
@@ -788,7 +788,7 @@ namespace FooEditEngine
         public int IndexOfLoose(int start)
         {
             int dummy;
-            int result = this.collection.GetIndexFromIndexIntoRange(start);
+            int result = (int)this.collection.GetIndexFromIndexIntoRange(start); //2^31-1までしか扱えない
             if (result == -1)
             {
                 int lastRow = this.collection.Count - 1;
