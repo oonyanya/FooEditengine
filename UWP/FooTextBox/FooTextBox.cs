@@ -973,7 +973,7 @@ namespace FooEditEngine.UWP
             bool isTip = args.InputLanguage.Script == "Latan";
             CoreTextRange sel = args.Range;
             TextStoreHelper.SetSelectionIndex(this.Controller, this._View, sel.StartCaretPosition, sel.EndCaretPosition);
-            TextStoreHelper.InsertTextAtSelection(this._Controller, args.Text, isTip);
+            TextStoreHelper.InsertTextAtSelection(this._Controller, args.Text, args.Range.StartCaretPosition, args.Range.EndCaretPosition, isTip);
             this.Refresh();
             args.Result = CoreTextTextUpdatingResult.Succeeded;
 

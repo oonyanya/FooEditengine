@@ -110,7 +110,7 @@ namespace FooEditEngine
             }
         }
 
-        public static void InsertTextAtSelection(Controller controller,string i_value, bool fromTIP = true)
+        public static void InsertTextAtSelection(Controller controller,string i_value, int startIndex, int endIndex, bool fromTIP = true)
         {
             controller.DoInputString(i_value, fromTIP);
         }

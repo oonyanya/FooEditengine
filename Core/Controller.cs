@@ -750,7 +750,7 @@ namespace FooEditEngine
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
 
-            int index = this.View.GetIndexFromLayoutLine(this.Document.CaretPostion);
+            int index = this.View.GetIndexFromLayoutLine(CaretPos);
             int length = 0;
             if (this.View.InsertMode == false && index < this.Document.Length && this.Document[index] != Document.NewLine)
             {
