@@ -632,7 +632,7 @@ namespace FooEditEngine.WPF
 
         void _textStore_InsertAtSelection(string i_value, ref int o_startIndex, ref int o_endIndex)
         {
-            TextStoreHelper.InsertTextAtSelection(this._Controller, i_value,o_startIndex, out o_endIndex);
+            TextStoreHelper.InsertTextAtSelection(this._Controller, i_value,o_startIndex, o_endIndex);
             this.Refresh();
         }
 
