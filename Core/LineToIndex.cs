@@ -455,9 +455,8 @@ namespace FooEditEngine
 
         internal int UpdateLayoutLine(int index, int removedLength, int insertedLength)
         {
-#if DEBUG
-            Debug.WriteLine("Replaced Index:{0} RemoveLength:{1} InsertLength:{2}", index, removedLength, insertedLength);
-#endif
+            DebugLog.WriteLine("Replaced Index:{0} RemoveLength:{1} InsertLength:{2}", index, removedLength, insertedLength);
+
             int startRow, endRow;
             GetRemoveRange(index, removedLength, out startRow, out endRow);
 

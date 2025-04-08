@@ -47,14 +47,13 @@ namespace FooEditEngine
                 else
                     System.Diagnostics.Debug.WriteLine(message);
             }
-#elif DEBUG
+#endif
             if (level == DebugLogLevel.Important) {
                 if(args.Length > 0)
                     System.Diagnostics.Debug.WriteLine(message,args);
                 else
                     System.Diagnostics.Debug.WriteLine(message);
             }
-#endif
         }
     }
     class Util

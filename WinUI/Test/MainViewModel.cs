@@ -56,20 +56,11 @@ namespace Test
             }
             set
             {
-                if(_currentDocument != null)
-                    _currentDocument.Update -= _currentDocument_Update;
                 this._currentDocument = value;
-                if(this._currentDocument != null)
-                    this._currentDocument.Update += _currentDocument_Update;
                 this.OnPropertyChanged(this);
                 if (this.CurrentDocumentChanged != null)
                     this.CurrentDocumentChanged(this, null);
             }
-        }
-
-        private void _currentDocument_Update(object sender, DocumentUpdateEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine("TotalLine:" + this.CurrentDocument.TotalLineCount);
         }
 
         double _FontSize = 12;
