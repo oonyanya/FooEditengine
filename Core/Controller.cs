@@ -1298,10 +1298,7 @@ namespace FooEditEngine
         {
             if (this.Document.LineBreak == LineBreakMethod.PageBound && this.View.PageBound.Width - this.View.LineBreakingMarginWidth > 0)
                 this.Document.PerformLayout();
-            //AnchorIndexが初期化されるので保存しておく
-            int anchorIndex = this.Document.AnchorIndex;
             this.AdjustCaret();
-            this.Document.AnchorIndex = anchorIndex;
         }
 
         void Document_Update(object sender, DocumentUpdateEventArgs e)
