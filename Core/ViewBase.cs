@@ -103,7 +103,7 @@ namespace FooEditEngine
                 {
                     this._Document.Update -= new DocumentUpdateEventHandler(doc_Update);
                     this._Document.LineBreakChanged -= Document_LineBreakChanged;
-                    this._Document.StatusUpdate -= Document_StatusUpdate;
+                    this._Document.PropertyChanged -= Document_StatusUpdate;
                     this._Document.PerformLayouted -= _Document_PerformLayouted;
                 }
 
@@ -111,7 +111,7 @@ namespace FooEditEngine
 
                 this._Document.Update += new DocumentUpdateEventHandler(doc_Update);
                 this._Document.LineBreakChanged += Document_LineBreakChanged;
-                this._Document.StatusUpdate += Document_StatusUpdate;
+                this._Document.PropertyChanged += Document_StatusUpdate;
                 this._Document.PerformLayouted += _Document_PerformLayouted;
 
                 this.Document_LineBreakChanged(this, null);
@@ -475,7 +475,7 @@ namespace FooEditEngine
             {
                 this._Document.Update -= new DocumentUpdateEventHandler(this.doc_Update);    //これをしないと複数のビューを作成した時に妙なエラーが発生する
                 this._Document.LineBreakChanged -= Document_LineBreakChanged;
-                this._Document.StatusUpdate -= Document_StatusUpdate;
+                this._Document.PropertyChanged -= Document_StatusUpdate;
                 this._Document.PerformLayouted -= _Document_PerformLayouted;
             }
             this._LayoutLines.Clear();

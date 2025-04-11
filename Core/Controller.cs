@@ -95,7 +95,7 @@ namespace FooEditEngine
                 if (this._Document != null)
                 {
                     this._Document.Update -= Document_Update;
-                    this._Document.StatusUpdate -= Document_StatusChanged;
+                    this._Document.PropertyChanged -= Document_StatusChanged;
                     this._Document.SelectionChanged -= Document_SelectionChanged;
                     this._Document.PerformLayouted -= View_LineBreakChanged;
                     this._Document.CaretChanged -= _Document_CaretChanged;
@@ -105,7 +105,7 @@ namespace FooEditEngine
                 this._Document = value;
 
                 this._Document.Update += new DocumentUpdateEventHandler(Document_Update);
-                this._Document.StatusUpdate += Document_StatusChanged;
+                this._Document.PropertyChanged += Document_StatusChanged;
                 this._Document.SelectionChanged += Document_SelectionChanged;
                 this._Document.PerformLayouted += View_LineBreakChanged;
                 this._Document.CaretChanged += _Document_CaretChanged;
@@ -334,7 +334,7 @@ namespace FooEditEngine
         /// </summary>
         public void AdjustCaret()
         {
-            if (this.View.render == null)
+            if (this.View.render == null || this.Document.FireUpdateEvent == false)
                 return;
             int row = this.Document.CaretPostion.row;
             if (row > this.View.LayoutLines.Count - 1)
@@ -349,7 +349,8 @@ namespace FooEditEngine
 
             this.JumpCaret(row, col);
 
-            this.Document.Select(sel_start, sel_length);
+            if(sel_start + sel_length < Document.Length)
+                this.Document.Select(sel_start, sel_length);
         }
 
         /// <summary>

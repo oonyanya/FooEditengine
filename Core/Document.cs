@@ -150,7 +150,7 @@ namespace FooEditEngine
     /// ドキュメントの管理を行う
     /// </summary>
     /// <remarks>この型のすべてのメソッド・プロパティはスレッドセーフです</remarks>
-    public sealed class Document : IEnumerable<char>, IRandomEnumrator<char>, IDisposable
+    public class Document : IEnumerable<char>, IRandomEnumrator<char>, IDisposable, INotifyPropertyChanged
     {
 
         Regex regex;
@@ -195,7 +195,7 @@ namespace FooEditEngine
             this.buffer.Update = new DocumentUpdateEventHandler(buffer_Update);
             this.Update += new DocumentUpdateEventHandler((s, e) => { });
             this.ChangeFireUpdateEvent += new EventHandler((s, e) => { });
-            this.StatusUpdate += new EventHandler((s, e) => { });
+            this.PropertyChanged += new PropertyChangedEventHandler((s, e) => { });
             this.Markers = new MarkerCollection();
             this.UndoManager = new UndoManager();
             this._LayoutLines = new LineToIndexTable(this);
@@ -218,13 +218,21 @@ namespace FooEditEngine
             this._LayoutLines.ClearLayoutCache();
         }
 
+        bool _Dirty;
         /// <summary>
         /// ダーティフラグ。保存されていなければ真、そうでなければ偽。
         /// </summary>
         public bool Dirty
         {
-            get;
-            set;
+            get
+            {
+                return _Dirty;
+            }
+            set
+            {
+                _Dirty = value;
+                this.OnProperyChanged();
+            }
         }
 
         /// <summary>
@@ -245,13 +253,21 @@ namespace FooEditEngine
             set;
         }
 
+        string _Title;
         /// <summary>
         /// ドキュメントのタイトル
         /// </summary>
         public string Title
         {
-            get;
-            set;
+            get
+            {
+                return _Title;
+            }
+            set
+            {
+                _Title = value;
+                this.OnProperyChanged();
+            }
         }
 
         /// <summary>
@@ -285,7 +301,14 @@ namespace FooEditEngine
         /// <summary>
         /// ルーラーやキャレット・行番号などの表示すべきものが変化した場合に呼び出される。ドキュメントの内容が変化した通知を受け取り場合はUpdateを使用してください
         /// </summary>
-        public event EventHandler StatusUpdate;
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        
+        public void OnProperyChanged([CallerMemberName] string  propertyName = "")
+        {
+            if(this.OnProperyChanged != null)
+                this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+        }
 
         /// <summary>
         /// 全角スペースを表示するかどうか
@@ -298,7 +321,7 @@ namespace FooEditEngine
                 if (this._ShowFullSpace == value)
                     return;
                 this._ShowFullSpace = value;
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -313,7 +336,7 @@ namespace FooEditEngine
                 if (this._ShowHalfSpace == value)
                     return;
                 this._ShowHalfSpace = value;
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -328,7 +351,7 @@ namespace FooEditEngine
                 if (this._ShowTab == value)
                     return;
                 this._ShowTab = value;
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -343,7 +366,7 @@ namespace FooEditEngine
                 if (this._ShowLineBreak == value)
                     return;
                 this._ShowLineBreak = value;
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -366,7 +389,7 @@ namespace FooEditEngine
                 if (this._RightToLeft == value)
                     return;
                 this._RightToLeft = value;
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -382,7 +405,7 @@ namespace FooEditEngine
             set
             {
                 this._RectSelection = value;
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -398,7 +421,7 @@ namespace FooEditEngine
             set
             {
                 this._IndentMode = value;
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -414,7 +437,7 @@ namespace FooEditEngine
             set
             {
                 this._HideLineMarker = value;
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -430,7 +453,7 @@ namespace FooEditEngine
             set
             {
                 this._HideCaret = value;
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -446,7 +469,7 @@ namespace FooEditEngine
             set
             {
                 this._InsertMode = value;
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -462,7 +485,7 @@ namespace FooEditEngine
                     return;
                 this._HideRuler = value;
                 this.LayoutLines.ClearLayoutCache();
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -487,6 +510,7 @@ namespace FooEditEngine
                         this._CaretPostion = new TextPoint(this.LayoutLines.Count - 1, 0);
                     else
                         this._CaretPostion = value;
+                    this.OnProperyChanged();
                     this.RaiseCaretPostionChanged();
                 }
             }
@@ -534,6 +558,7 @@ namespace FooEditEngine
         /// <summary>
         /// 選択範囲コレクション
         /// </summary>
+        /// <remarks>PropertyChangedイベントは発生しないので注意</remarks>
         internal SelectCollection Selections
         {
             get;
@@ -552,7 +577,7 @@ namespace FooEditEngine
                     return;
                 this._DrawLineNumber = value;
                 this._LayoutLines.ClearLayoutCache();
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -576,7 +601,7 @@ namespace FooEditEngine
                 {
                     this.MarkerPatternSet.Remove(MarkerIDs.URL);
                 }
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
@@ -637,13 +662,14 @@ namespace FooEditEngine
                 if (this._TabStops == value)
                     return;
                 this._TabStops = value;
-                this.StatusUpdate(this, null);
+                this.OnProperyChanged();
             }
         }
 
         /// <summary>
         /// マーカーパターンセット
         /// </summary>
+        /// <remarks>PropertyChangedイベントは発生しないので注意</remarks>
         public MarkerPatternSet MarkerPatternSet
         {
             get;
@@ -717,6 +743,7 @@ namespace FooEditEngine
         /// <summary>
         /// 変更のたびにUpdateイベントを発生させるかどうか
         /// </summary>
+        /// <remarks>PropertyChangedイベントは発生しないので注意</remarks>
         public bool FireUpdateEvent
         {
             get
@@ -1176,8 +1203,8 @@ namespace FooEditEngine
         public void Clear()
         {
             this.buffer.Clear();
-            this.Dirty = false;
             this.buffer.OnDocumentUpdate(new DocumentUpdateEventArgs(UpdateType.Clear, 0, this.buffer.Count, 0));
+            this.Dirty = false;
         }
 
         /// <summary>
