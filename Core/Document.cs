@@ -494,7 +494,8 @@ namespace FooEditEngine
         /// レイアウト行のどこにキャレットがあるかを表す
         /// </summary>
         /// <remarks>
-        /// 存在しない行を指定した場合、一番最後の行の0桁目になります。
+        /// 存在しない行を指定した場合、一番最後の行の0桁目になる。
+        /// PropertyChangedイベントは発生しないので注意すること。
         /// </remarks>
         public TextPoint CaretPostion
         {
@@ -510,7 +511,6 @@ namespace FooEditEngine
                         this._CaretPostion = new TextPoint(this.LayoutLines.Count - 1, 0);
                     else
                         this._CaretPostion = value;
-                    this.OnProperyChanged();
                     this.RaiseCaretPostionChanged();
                 }
             }
