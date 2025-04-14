@@ -388,8 +388,21 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="srcRow">起点となる行</param>
         /// <param name="rect_hight">Y方向のバウンディングボックス</param>
-        /// <returns>失敗した場合、NULL。成功した場合、行とオフセットY</returns>
+        /// <returns>行とオフセットY</returns>
         public SrcPoint GetNearstRowAndOffsetY(int srcRow, double rect_hight)
+        {
+            bool _;
+            return GetNearstRowAndOffsetY(srcRow, rect_hight, out _);
+        }
+
+        /// <summary>
+        /// srcRowを起点としてrect_heightが収まる行とオフセットYを求めます
+        /// </summary>
+        /// <param name="srcRow">起点となる行</param>
+        /// <param name="rect_hight">Y方向のバウンディングボックス</param>
+        /// <param name="result">失敗した場合、偽。成功した場合、真</param>
+        /// <returns>行とオフセットY</returns>
+        public SrcPoint GetNearstRowAndOffsetY(int srcRow, double rect_hight,out bool result)
         {
             int i;
             if (rect_hight > 0)
@@ -406,15 +419,22 @@ namespace FooEditEngine
                         continue;
 
                     if (rect_hight == 0)
+                    {
+                        result = true;
                         return new SrcPoint(0, i, 0);
+                    }
 
                     if (rect_hight - layoutHeight < 0)
+                    {
+                        result = true;
                         return new SrcPoint(0, i, rect_hight);
+                    }
 
                     rect_hight -= layoutHeight;
                 }
                 if(rect_hight >= 0)
                 {
+                    result = false;
                     return new SrcPoint(0, srcRow, 0);
                 }
             }
@@ -432,15 +452,23 @@ namespace FooEditEngine
                         continue;
 
                     if(rect_hight == 0)
+                    {
+                        result = true;
                         return new SrcPoint(0, i, 0);
+                    }
 
                     if (rect_hight + layoutHeight >= 0)
+                    {
+                        result = true;
                         return new SrcPoint(0, i, layoutHeight + rect_hight);
+                    }
 
                     rect_hight += layoutHeight;
                 }
+                result = false;
                 return new SrcPoint(0, 0, 0);
             }
+            result = false;
             return new SrcPoint(0, srcRow, 0);
         }
 

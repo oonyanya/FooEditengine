@@ -558,7 +558,15 @@ namespace FooEditEngine
             p.Y -= this.render.TextArea.Y;
 
             //p.Y に最も近い行を調べる(OffsetY分引かれてるので、その分足す)
-            SrcPoint t = this.GetNearstRowAndOffsetY(this.Src.Row, p.Y);
+            bool result;
+            SrcPoint t = this.GetNearstRowAndOffsetY(this.Src.Row, p.Y, out result);
+            if (result == false)
+            {
+                if(p.Y > 0)
+                    t.Row = this.LayoutLines.Count - 1;
+                else if(p.Y < 0)
+                    t.Row = 0;
+            }
             t.OffsetY -= this.Src.OffsetY;
 
             double relX = 0, relY;
