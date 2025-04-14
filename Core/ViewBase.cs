@@ -489,7 +489,7 @@ namespace FooEditEngine
 
         protected virtual void OnRenderChanged(EventArgs e)
         {
-            this.ScrollNoti = this.render.emSize.Height * this.render.LineEmHeight;
+            this.ScrollNoti = (int)(this.render.emSize.Height * this.render.LineEmHeight);
             this.ScaleNoti = defaultScaleNoti;
             CalculateClipRect();
             CalculateLineBreak();
