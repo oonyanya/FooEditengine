@@ -187,7 +187,7 @@ namespace FooEditEngine.WPF
                 );
         }
 
-        private void DrawImeConversionLine(MyTextLayout layout, LineToIndexTable lti, int row, double x, double y)
+        private void DrawImeConversionLine(MyTextLayout layout, LineToIndexTable lti, int row, int subLayoutStartIndex, double x, double y)
         {
             if (InputMethod.Current.ImeState != InputMethodState.On)
                 return;
@@ -231,12 +231,12 @@ namespace FooEditEngine.WPF
                         color = this.GetColor4(attr.attribute.crBk);
                     }
 
-                    this.DrawMarkerEffect(layout, type, start, length, x, y, attr.attribute.fBoldLine, color);
+                    this.DrawMarkerEffect(layout, type, start - subLayoutStartIndex, length, x, y, attr.attribute.fBoldLine, color);
 
                     color = this.GetColor4(attr.attribute.crText);
                     if (color != null)
                     {
-                        this.SetTextColor(layout, start, length, color);
+                        this.SetTextColor(layout, start - subLayoutStartIndex, length, color);
                         layout.Invaild = true;
                     }
                 }

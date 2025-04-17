@@ -306,7 +306,7 @@ namespace FooEditEngine
         
         public void OnProperyChanged([CallerMemberName] string  propertyName = "")
         {
-            if(this.OnProperyChanged != null)
+            if(this.PropertyChanged != null)
                 this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
 

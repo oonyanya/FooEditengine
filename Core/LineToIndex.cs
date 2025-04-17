@@ -117,11 +117,12 @@ namespace FooEditEngine
         }
     }
 
-    internal struct SyntaxInfo
+    internal struct SyntaxInfo : IRange
     {
         public TokenType type;
         public int index;
-        public int length;
+        public int start { get { return index; } set { index = value; } }
+        public int length { get; set; }
         public SyntaxInfo(int index, int length, TokenType type)
         {
             this.type = type;
@@ -472,7 +473,7 @@ namespace FooEditEngine
 
             //挿入範囲内のドキュメントから行を生成する
             SpilitStringEventArgs e = new SpilitStringEventArgs(this.Document, HeadIndex, analyzeLength, startRow);
-            IList<LineToIndexTableData> newLines = this.CreateLineList(e.index, e.length, Document.MaximumLineLength);
+            IList<LineToIndexTableData> newLines = this.CreateLineList(e.index, e.length);
 
             int removeCount = endRow - startRow + 1;
             for (int i = startRow; i < startRow + removeCount; i++)
@@ -755,30 +756,46 @@ namespace FooEditEngine
             LineToIndexTableData lineData = this.GetRaw(row);
             if (lineData.Length == 0)
             {
-                layout = this.render.CreateLaytout("", null, null, null,this.WrapWidth);
+                var sublayout = this.render.CreateLaytout("", null, null, null, this.WrapWidth);
+                layout = new CombineTextLayout(new ITextLayout[] {sublayout});
             }
             else
             {
                 int lineHeadIndex = this.GetLineHeadIndex(row);
 
-                string content = this.Document.ToString(lineHeadIndex, lineData.Length);
+                string lineString = this.Document.ToString(lineHeadIndex, (int)lineData.length);
 
                 if (this.CreateingLayout != null)
-                    this.CreateingLayout(this, new CreateLayoutEventArgs(lineHeadIndex, lineData.Length,content));
+                    this.CreateingLayout(this, new CreateLayoutEventArgs(lineHeadIndex, lineData.Length, lineString));
 
-                var userMarkerRange = from id in this.Document.Markers.IDs
-                                  from s in this.Document.Markers.Get(id,lineHeadIndex,lineData.Length)
-                                  let n = Util.ConvertAbsIndexToRelIndex(s, lineHeadIndex, lineData.Length)
-                                  select n;
-                var watchdogMarkerRange = from s in this.Document.MarkerPatternSet.GetMarkers(new CreateLayoutEventArgs(lineHeadIndex, lineData.Length, content))
-                                          let n = Util.ConvertAbsIndexToRelIndex(s, lineHeadIndex, lineData.Length)
+                var watchedMarker = this.Document.MarkerPatternSet.GetMarkers(new CreateLayoutEventArgs(lineHeadIndex, lineData.Length, lineString));
+
+                List<ITextLayout> layouts = new List<ITextLayout>();
+                foreach(var touple in this.ForEachLines(lineHeadIndex, lineHeadIndex + lineData.Length - 1, Document.MaximumLineLength))
+                {
+                    int indexSublayout = touple.Item1;
+                    int lengthSublayout = touple.Item2;
+                    string content = this.Document.ToString(touple.Item1, touple.Item2);
+                    var userMarkerRange = from id in this.Document.Markers.IDs
+                                          from s in this.Document.Markers.Get(id, indexSublayout, lengthSublayout)
+                                          let n = Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout)
                                           select n;
-                var markerRange = watchdogMarkerRange.Concat(userMarkerRange);
-                var selectRange = from s in this.Document.Selections.Get(lineHeadIndex, lineData.Length)
-                                  let n = Util.ConvertAbsIndexToRelIndex(s, lineHeadIndex, lineData.Length)
-                                  select n;
+                    var watchdogMarkerRange = from s in watchedMarker
+                                              let n = Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout)
+                                              select n;
+                    var markerRange = watchdogMarkerRange.Concat(userMarkerRange);
+                    var selectRange = from s in this.Document.Selections.Get(indexSublayout, lengthSublayout)
+                                      let n = Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout)
+                                      select n;
+                    var syntaxRnage = lineData.Syntax == null ? new SyntaxInfo[] { }  : lineData.Syntax.Select((s) =>
+                    {
+                        return Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout);
+                    }).ToArray();
+                    layout = this.render.CreateLaytout(content, syntaxRnage, markerRange, selectRange, this.WrapWidth);
+                    layouts.Add(layout);
+                }
 
-                layout = this.render.CreateLaytout(content, lineData.Syntax, markerRange, selectRange,this.WrapWidth);
+                layout = new CombineTextLayout(layouts);
             }
 
             return layout;

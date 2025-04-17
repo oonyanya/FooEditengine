@@ -43,7 +43,7 @@ namespace UnitTest
 
         public Size emSize
         {
-            get { return new Size(10,10); }
+            get { return new Size(20,20); }
         }
 
         public int TabWidthChar

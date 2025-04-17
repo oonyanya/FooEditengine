@@ -456,35 +456,18 @@ namespace FooEditEngine.WPF
             this.Context.DrawRectangle(this.Brushes[this.Background], null, rect);
         }
 
-        public void DrawOneLine(Document doc, LineToIndexTable lti, int row, double x, double y)
+        public void DrawOneLine(Document doc, LineToIndexTable lti, int row, double mainLayoutx, double mainLayouty)
         {
-            TextLayout layout = (TextLayout)lti.GetLayout(row);
+            CombineTextLayout layout = (CombineTextLayout)lti.GetLayout(row);
 
             if (lti.GetLengthFromLineNumber(row) == 0)
                 return;
 
-            if (this.Printing == false)
+            layout.Draw(mainLayoutx, mainLayouty, (subLayout, startIndexSublayout, x, y) =>
             {
-                int lineIndex = lti.GetIndexFromLineNumber(row);
-                int lineLength = lti.GetLengthFromLineNumber(row);
-                var SelectRanges = from s in doc.Selections.Get(lineIndex, lineLength)
-                                   let n = Util.ConvertAbsIndexToRelIndex(s, lineIndex, lineLength)
-                                   select n;
-
-                foreach (Selection sel in SelectRanges)
-                {
-                    if (sel.length == 0 || sel.start == -1)
-                        continue;
-
-                    foreach (TextBounds bound in layout.GetTextBounds(sel.start, sel.length))
-                    {
-                        Rect rect = new Rect(x, y, bound.Rectangle.Width, bound.Rectangle.Height);
-                        this.Context.DrawRectangle(this.Brushes[this.Hilight], null, rect);
-                    }
-                }
-            }
-
-            layout.Draw(this.Context, x, y);
+                var textLayout = (TextLayout)subLayout;
+                textLayout.Draw(this.Context, x, y);
+            });
         }
 
         IDisposable layerDisposer;
@@ -521,6 +504,8 @@ namespace FooEditEngine.WPF
             {
                 foreach (SyntaxInfo s in syntaxCollection)
                 {
+                    if (s.length == 0 || s.start == -1)
+                        continue;
                     Brush brush = this.Brushes[this.Foreground];
                     switch (s.type)
                     {

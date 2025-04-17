@@ -298,6 +298,7 @@ namespace FooEditEngine.WPF
             documentSnap.DrawLineNumber = this.DrawLineNumber;
             documentSnap.UrlMark = this.MarkURL;
             documentSnap.PerformLayout(false);
+            documentSnap.LayoutLines.HilightAll();
 
             try
             {

@@ -945,7 +945,7 @@ namespace FooEditEngine
         /// <returns>移動後のキャレット位置</returns>
         TextPoint GetTextPointAfterMoveLine(int count, TextPoint current, bool move_pargraph = false)
         {
-            if(this.Document.LineBreak == LineBreakMethod.None || move_pargraph == true)
+            if(move_pargraph == true)
             {
                 int row = current.row + count;
 

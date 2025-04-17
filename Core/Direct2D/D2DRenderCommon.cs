@@ -25,7 +25,7 @@ using System.Runtime.InteropServices;
 
 namespace FooEditEngine
 {
-    delegate void PreDrawOneLineHandler(MyTextLayout layout,LineToIndexTable lti,int row,double x,double y);
+    delegate void PreDrawOneLineHandler(MyTextLayout layout,LineToIndexTable lti,int row,int subLayoutStartIndex,double x,double y);
 
     delegate void GetDpiHandler(out float dpix,out float dpiy);
 
@@ -674,76 +674,84 @@ namespace FooEditEngine
             this.render.Clear(this.Background);
         }
 
-        public void DrawOneLine(Document doc,LineToIndexTable lti, int row, double x, double y, PreDrawOneLineHandler PreDrawOneLine)
+        public void DrawOneLine(Document doc,LineToIndexTable lti, int row, double main_layout_x, double main_layout_y, PreDrawOneLineHandler PreDrawOneLine)
         {
             int lineLength = lti.GetLengthFromLineNumber(row);
 
             if (lineLength == 0 || this.render == null || this.render.IsDisposed)
                 return;
 
-            MyTextLayout layout = (MyTextLayout)lti.GetLayout(row);
+            CombineTextLayout mainLayout = (CombineTextLayout)lti.GetLayout(row);
 
-            if(PreDrawOneLine != null)
-                PreDrawOneLine(layout,lti,row,x,y);
-
-            if (layout.Markers != null)
+            mainLayout.Draw(main_layout_x, main_layout_y, (subLayout, subLayoutStartIndex, x, y) =>
             {
-                foreach (Marker sel in layout.Markers)
-                {
-                    if (sel.length == 0 || sel.start == -1)
-                        continue;
-                    Color4 color = new Color4() { Alpha = sel.color.A, Red = sel.color.R, Blue = sel.color.B, Green = sel.color.G };
-                    if (sel.hilight == HilightType.Url)
-                        color = this.Url;
-                    this.DrawMarkerEffect(layout, sel.hilight, sel.start, sel.length, x, y, sel.isBoldLine, color);
-                }
-            }
-            if (layout.Selects != null)
-            {
-                foreach (Selection sel in layout.Selects)
-                {
-                    if (sel.length == 0 || sel.start == -1)
-                        continue;
+                MyTextLayout layout = (MyTextLayout)subLayout;
 
-                    this.DrawMarkerEffect(layout, HilightType.Select, sel.start, sel.length, x, y, false);
-                }
-            }
+                if (PreDrawOneLine != null)
+                    PreDrawOneLine(layout, lti, row, subLayoutStartIndex, x, y);
 
-            if (this.ShowFullSpace || this.ShowHalfSpace || this.ShowTab)
-            {
-                string str = lti[row];
-                D2D.GeometryRealization geo = null;
-                for (int i = 0; i < lineLength; i++)
+                if (layout.Markers != null)
                 {
-                    Point pos = new Point(0, 0);
-                    if (this.ShowTab && str[i] == '\t')
+                    foreach (Marker sel in layout.Markers)
                     {
-                        pos = layout.GetPostionFromIndex(i);
-                        geo = this._factory.CreateSymbol(ShowSymbol.Tab, this.format);
-                    }
-                    else if (this.ShowFullSpace && str[i] == '　')
-                    {
-                        pos = layout.GetPostionFromIndex(i);
-                        geo = this._factory.CreateSymbol(ShowSymbol.FullSpace, this.format);
-                    }
-                    else if (this.ShowHalfSpace && str[i] == ' ')
-                    {
-                        pos = layout.GetPostionFromIndex(i);
-                        geo = this._factory.CreateSymbol(ShowSymbol.HalfSpace, this.format);
-                    }
-                    if (geo != null)
-                    {
-                        var old_trans = this.render.Transform;
-                        this.render.Transform = SharpDX.Matrix3x2.Translation(new Vector2((float)(pos.X + x), (float)(pos.Y + y)));
-                        this.render.DrawGeometryRealization(geo, this._factory.GetSolidColorBrush(this.ControlChar));
-                        this.render.Transform = old_trans;
-                        geo = null;
+                        if (sel.length == 0 || sel.start == -1)
+                            continue;
+                        Color4 color = new Color4() { Alpha = sel.color.A, Red = sel.color.R, Blue = sel.color.B, Green = sel.color.G };
+                        if (sel.hilight == HilightType.Url)
+                            color = this.Url;
+                        this.DrawMarkerEffect(layout, sel.hilight, sel.start, sel.length, x, y, sel.isBoldLine, color);
                     }
                 }
-            }
+                if (layout.Selects != null)
+                {
+                    foreach (Selection sel in layout.Selects)
+                    {
+                        if (sel.length == 0 || sel.start == -1)
+                            continue;
 
-            layout.Draw(this.render, (float)x, (float)y, this._factory.GetSolidColorBrush(this.Foreground));
+                        this.DrawMarkerEffect(layout, HilightType.Select, sel.start, sel.length, x, y, false);
+                    }
+                }
 
+                if (this.ShowFullSpace || this.ShowHalfSpace || this.ShowTab)
+                {
+                    string str = lti[row];
+                    D2D.GeometryRealization geo = null;
+                    int subLayoutLength = Math.Min(lineLength, Document.MaximumLineLength);
+                    for (int i = 0; i < subLayoutLength; i++)
+                    {
+                        int indexMainLayout = i + subLayoutStartIndex;
+                        if (indexMainLayout >= str.Length)
+                            break;
+                        Point pos = new Point(0, 0);
+                        if (this.ShowTab && str[indexMainLayout] == '\t')
+                        {
+                            pos = layout.GetPostionFromIndex(i);
+                            geo = this._factory.CreateSymbol(ShowSymbol.Tab, this.format);
+                        }
+                        else if (this.ShowFullSpace && str[indexMainLayout] == '　')
+                        {
+                            pos = layout.GetPostionFromIndex(i);
+                            geo = this._factory.CreateSymbol(ShowSymbol.FullSpace, this.format);
+                        }
+                        else if (this.ShowHalfSpace && str[indexMainLayout] == ' ')
+                        {
+                            pos = layout.GetPostionFromIndex(i);
+                            geo = this._factory.CreateSymbol(ShowSymbol.HalfSpace, this.format);
+                        }
+                        if (geo != null)
+                        {
+                            var old_trans = this.render.Transform;
+                            this.render.Transform = SharpDX.Matrix3x2.Translation(new Vector2((float)(pos.X + x), (float)(pos.Y + y)));
+                            this.render.DrawGeometryRealization(geo, this._factory.GetSolidColorBrush(this.ControlChar));
+                            this.render.Transform = old_trans;
+                            geo = null;
+                        }
+                    }
+                }
+
+                layout.Draw(this.render, (float)x, (float)y, this._factory.GetSolidColorBrush(this.Foreground));
+            });
         }
 
         IDisposable layerDisposer;
@@ -764,7 +772,7 @@ namespace FooEditEngine
 
         public void SetTextColor(MyTextLayout layout,int start, int length, Color4? color)
         {
-            if (color == null)
+            if (color == null || start < 0)
                 return;
             layout.SetDrawingEffect(this._factory.GetSolidColorBrush((Color4)color), new DW.TextRange(start, length));
         }
@@ -781,7 +789,7 @@ namespace FooEditEngine
 
         public void DrawMarkerEffect(MyTextLayout layout, HilightType type, int start, int length, double x, double y, bool isBold, Color4? effectColor = null)
         {
-            if (type == HilightType.None)
+            if (type == HilightType.None || start < 0)
                 return;
 
             float thickness = isBold ? BoldThickness : NormalThickness;
@@ -849,6 +857,8 @@ namespace FooEditEngine
             {
                 foreach (SyntaxInfo s in syntaxCollection)
                 {
+                    if (s.length == 0 || s.start == -1)
+                        continue;
                     D2D.SolidColorBrush brush = this._factory.GetSolidColorBrush(this.Foreground);
                     switch (s.type)
                     {
@@ -873,6 +883,8 @@ namespace FooEditEngine
             {
                 foreach (SyntaxInfo s in syntaxCollection)
                 {
+                    if (s.length == 0 || s.start == -1)
+                        continue;
                     D2D.SolidColorBrush brush = null;
                     switch (s.type)
                     {

@@ -230,10 +230,13 @@ namespace FooEditEngine.Windows
             this.sf.Alignment = old;
         }
 
-        public void DrawOneLine(Document doc,LineToIndexTable lti, int row, double x, double y)
+        public void DrawOneLine(Document doc,LineToIndexTable lti, int row, double mainx, double mainy)
         {
-            PrintableTextLayout layout = (PrintableTextLayout)lti.GetLayout(row);
-            layout.Draw(g, x, y, this.Foreground);
+            CombineTextLayout combineTextLayout = (CombineTextLayout)lti.GetLayout(row);
+            combineTextLayout.Draw(mainx, mainy, (subLayout, startIndexSubLayout, x, y) => {
+                PrintableTextLayout layout = (PrintableTextLayout)subLayout;
+                layout.Draw(g, x, y, this.Foreground);
+            });
         }
 
         DummyDisposer disposer;
