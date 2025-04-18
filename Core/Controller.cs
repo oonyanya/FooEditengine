@@ -964,13 +964,26 @@ namespace FooEditEngine
             }
             else
             {
-                Point pos = this.View.GetPostionFromTextPoint(current);
-                pos.Y += this.View.render.emSize.Height * count;
+                Point current_pos = this.View.LayoutLines.GetLayout(current.row).GetPostionFromIndex(current.col);
                 //この値を足さないとうまく動作しない
-                pos.Y += this.View.render.emSize.Height / 2;   
-                var new_tp = this.View.GetTextPointFromPostion(pos,TextPointSearchRange.Full);
-                if (new_tp == TextPoint.Null)
-                    return current;
+                double offset_y = this.View.render.emSize.Height * count + this.View.render.emSize.Height / 2;
+                bool result;
+                SrcPoint newSrc = this.View.GetNearstRowAndOffsetY(current.row, current_pos.Y + offset_y, out result);
+                if (result == false)
+                {
+                    if (offset_y > 0)
+                        newSrc.Row = this.View.LayoutLines.Count - 1;
+                    else if (offset_y < 0)
+                        newSrc.Row = 0;
+                }
+
+                int newcol = this.View.LayoutLines.GetLayout(newSrc.Row).GetIndexFromPostion(current_pos.X, newSrc.OffsetY);
+
+                int lineLength = this.View.LayoutLines.GetLengthFromLineNumber(newSrc.Row);
+                if (newcol > lineLength)
+                    newcol = lineLength;
+
+                var new_tp = new TextPoint(newSrc.Row, newcol);
                 return new_tp;
 
             }
