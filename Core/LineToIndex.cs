@@ -163,10 +163,6 @@ namespace FooEditEngine
             set { this.length = Length; }
         }
 
-        /// <summary>
-        /// 改行マークかEOFなら真を返す
-        /// </summary>
-        public bool LineEnd;
         internal SyntaxInfo[] Syntax;
         internal EncloserType EncloserType;
         internal ITextLayout Layout;
@@ -186,7 +182,6 @@ namespace FooEditEngine
         {
             this.start = index;
             this.length = length;
-            this.LineEnd = lineend;
             this.Syntax = syntax;
             this.EncloserType = EncloserType.None;
             this.Dirty = dirty;
@@ -203,7 +198,6 @@ namespace FooEditEngine
             var result = new LineToIndexTableData();
             result.start = this.start;
             result.length = this.length;
-            result.LineEnd = this.LineEnd;
             result.Syntax = this.Syntax;
             result.Layout = this.Layout;
             result.Dirty = this.Dirty;
@@ -538,9 +532,6 @@ namespace FooEditEngine
                 output.Add(result);
             }
 
-            if (output.Count > 0)
-                output.Last().LineEnd = true;
-
             return output;
         }
 
@@ -552,13 +543,10 @@ namespace FooEditEngine
                 endRow = -1;
                 return;
             }
-            while (startRow > 0 && this._Lines[startRow - 1].LineEnd == false)
-                startRow--;
 
             if (this.TryGetLineNumberFromIndex(index + length, out endRow) == false)
                 endRow = this._Lines.Count - 1;
-            while (endRow < this._Lines.Count && this._Lines[endRow].LineEnd == false)
-                endRow++;
+
             if (endRow >= this._Lines.Count)
                 endRow = this._Lines.Count - 1;
         }
