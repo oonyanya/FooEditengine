@@ -117,8 +117,8 @@ namespace FooEditEngine
             }
             if(layoutNumber >= TextLayouts.Count)
                 layoutNumber = TextLayouts.Count - 1;
-            pos_x = TextLayouts[layoutNumber].GetColPostionFromIndex(relativeIndex);
-            return new Point(pos_x, pos_y);
+            Point relativePointInSublayout = TextLayouts[layoutNumber].GetPostionFromIndex(relativeIndex);
+            return new Point(pos_x + relativePointInSublayout.X, pos_y + relativePointInSublayout.Y);
         }
 
         public double GetWidthFromIndex(int index)
