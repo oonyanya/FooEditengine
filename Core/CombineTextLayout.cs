@@ -16,6 +16,8 @@ namespace FooEditEngine
         {
             this.TextLayouts = new List<ITextLayout>();
             this.TextLayouts.AddRange(textLayouts);
+            this.Width = TextLayouts.Max((layout) => layout.Width);
+            this.Height = TextLayouts.Sum((layout) => layout.Height);
         }
 
         public ITextLayout this[int i]
@@ -28,9 +30,9 @@ namespace FooEditEngine
             get { return TextLayouts.Count; }
         }
 
-        public double Width => TextLayouts.Sum((layout) => layout.Width);
+        public double Width { get; private set; }
 
-        public double Height => TextLayouts.Sum((layout) => layout.Height);
+        public double Height { get; private set; }
 
         public bool Disposed
         {
