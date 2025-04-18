@@ -969,23 +969,24 @@ namespace FooEditEngine
                 double offset_y = this.View.render.emSize.Height * count + this.View.render.emSize.Height / 2;
                 bool result;
                 SrcPoint newSrc = this.View.GetNearstRowAndOffsetY(current.row, current_pos.Y + offset_y, out result);
-                if (result == false)
+                if (result == false)    //そもそも存在しないケースは存在しうるところにする
                 {
                     if (offset_y > 0)
-                        newSrc.Row = this.View.LayoutLines.Count - 1;
+                        return new TextPoint(this.View.LayoutLines.Count - 1, current.col);
                     else if (offset_y < 0)
-                        newSrc.Row = 0;
+                        return new TextPoint(0, current.col);
+                    else
+                        return current;
                 }
-
-                int newcol = this.View.LayoutLines.GetLayout(newSrc.Row).GetIndexFromPostion(current_pos.X, newSrc.OffsetY);
-
-                int lineLength = this.View.LayoutLines.GetLengthFromLineNumber(newSrc.Row);
-                if (newcol > lineLength)
-                    newcol = lineLength;
-
-                var new_tp = new TextPoint(newSrc.Row, newcol);
-                return new_tp;
-
+                else
+                {
+                    int newcol = this.View.LayoutLines.GetLayout(newSrc.Row).GetIndexFromPostion(current_pos.X, newSrc.OffsetY);
+                    int lineLength = this.View.LayoutLines.GetLengthFromLineNumber(newSrc.Row);
+                    if (newcol > lineLength)
+                        newcol = lineLength;
+                    var new_tp = new TextPoint(newSrc.Row, newcol);
+                    return new_tp;
+                }
             }
         }
 
