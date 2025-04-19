@@ -158,7 +158,10 @@ namespace FooEditEngine
                 if (inputingIndex < 0)
                     inputingIndex = 0;
 
-                e.inputedWord = CompleteHelper.GetWord(doc, inputingIndex, box.Operators) + e.KeyChar;
+                if (e.KeyChar.Contains("\b"))   //削除中は表示しない
+                    return;
+
+                    e.inputedWord = CompleteHelper.GetWord(doc, inputingIndex, box.Operators) + e.KeyChar;
 
                 if (e.inputedWord == null)
                     return;
