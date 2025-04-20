@@ -183,7 +183,7 @@ namespace FooEditEngine.WPF
                 row,
                 x,
                 y,
-                this.DrawImeConversionLine
+                doc.CaretPostion.row == row ? this.DrawImeConversionLine : null
                 );
         }
 
@@ -194,14 +194,13 @@ namespace FooEditEngine.WPF
 
             using (Unlocker locker = this.store.LockDocument(false))
             {
-                int lineIndex = lti.GetIndexFromLineNumber(row);
                 int lineLength = lti.GetLengthFromLineNumber(row);
-                foreach (TextDisplayAttribute attr in this.store.EnumAttributes(lineIndex, lineIndex + lineLength))
+                foreach (TextDisplayAttribute attr in this.store.EnumAttributes(0,lineLength))
                 {
                     if (attr.startIndex == attr.endIndex)
                         continue;
                     int length = attr.endIndex - attr.startIndex;
-                    int start = attr.startIndex - lineIndex;
+                    int start = attr.startIndex;
 
                     HilightType type = HilightType.None;
                     Color4? color = null;
