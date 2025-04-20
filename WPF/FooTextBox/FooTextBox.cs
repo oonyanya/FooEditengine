@@ -1161,10 +1161,14 @@ namespace FooEditEngine.WPF
 
             bool updateAll = this._View.LayoutLines.HilightAll() || this._View.LayoutLines.GenerateFolding() || this.Document.IsRequestRedraw;
 
+            this.Refresh(this._View.PageBound);
+            /*
+             * HIGHDPIだとうまく動かない
             if (updateAll)
                 this.Refresh(this._View.PageBound);
             else
                 this.Refresh(this._View.GetCurrentCaretRect());
+            */
         }
 
         void horizontalScrollBar_Scroll(object sender, ScrollEventArgs e)
@@ -1231,9 +1235,7 @@ namespace FooEditEngine.WPF
                 throw new ArgumentOutOfRangeException();
             if (this.Render.Resize(width, height))
             {
-                double scale = this.Render.GetScale();
-                // RenderはレタリングはDIPだが、widthとheightの値はDPI依存なのでDIPに変換する
-                this._View.PageBound = new Rectangle(0, 0, width / scale, height / scale);
+                this._View.PageBound = new Rectangle(0, 0, width, height);
 
                 if (this.horizontalScrollBar != null)
                 {

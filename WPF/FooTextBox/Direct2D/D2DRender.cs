@@ -139,7 +139,7 @@ namespace FooEditEngine.WPF
 
         public bool Resize(double width, double height)
         {
-            if (Math.Floor(width) != Math.Floor(this.imageSource.Width) || Math.Floor(height) != Math.Floor(this.imageSource.Height))
+            if (Math.Floor(width) != Math.Floor(this.renderSize.Width) || Math.Floor(height) != Math.Floor(this.renderSize.Height))
             {
                 this.ReConstructRenderAndResource(width, height);
                 this.imageSource.Lock();
