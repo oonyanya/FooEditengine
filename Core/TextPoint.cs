@@ -35,11 +35,11 @@ namespace FooEditEngine
         /// <summary>
         /// 開始インデックス
         /// </summary>
-        public int Index;
+        public long Index;
         /// <summary>
         /// 長さ
         /// </summary>
-        public int Length;
+        public long Length;
 
         /// <summary>
         /// 空の範囲を表す
@@ -51,8 +51,10 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="index">開始インデックス</param>
         /// <param name="length">長さ</param>
-        public TextRange(int index, int length)
+        public TextRange(long index, long length)
         {
+            if(length > Int32.MaxValue)
+                throw new ArgumentOutOfRangeException("length must be within Int32.MaxValue");
             this.Index = index;
             this.Length = length;
         }

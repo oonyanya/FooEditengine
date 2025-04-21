@@ -248,13 +248,13 @@ namespace FooEditEngine
         }
 #endif
 
-        public static T ConvertAbsIndexToRelIndex<T>(T n, int StartIndex, int Length) where T : IRange
+        public static T ConvertAbsIndexToRelIndex<T>(T n, long StartIndex, long Length) where T : FooProject.Collection.IRange
         {
             n = Util.NormalizeIMaker<T>(n);
 
-            int markerEnd = n.start + n.length - 1;
+            long markerEnd = n.start + n.length - 1;
 
-            int EndIndex = StartIndex + Length;
+            long EndIndex = StartIndex + Length;
 
             if (n.start >= StartIndex && markerEnd <= EndIndex)
                 n.start -= StartIndex;
@@ -310,7 +310,7 @@ namespace FooEditEngine
             return new Rectangle(r.X + s.Width,r.Y + s.Height, r.Width - s.Width, r.Height - s.Height);
         }
 
-        public static T NormalizeIMaker<T>(T m) where T : IRange
+        public static T NormalizeIMaker<T>(T m) where T : FooProject.Collection.IRange
         {
             if (m.length > 0)
                 return m;

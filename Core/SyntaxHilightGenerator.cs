@@ -66,7 +66,7 @@ namespace FooEditEngine
 
         }
 
-        public void Update(Document doc, int startIndex, int insertLength, int removeLength)
+        public void Update(Document doc, long startIndex, long insertLength, long removeLength)
         {
             this.lastUpdateTicks = DateTime.Now.Ticks;
         }

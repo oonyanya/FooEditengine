@@ -35,9 +35,9 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="index">インデックス</param>
         /// <returns>Tを返す</returns>
-        T this[int index] { get; }
+        T this[long index] { get; }
 
-        int Count {  get; }
+        long Count {  get; }
     }
 
     sealed class StringBuffer : IEnumerable<char>, IRandomEnumrator<char>
@@ -64,37 +64,37 @@ namespace FooEditEngine
         }
 
 
-        public char this[int index]
+        public char this[long index]
         {
             get
             {
-                char c = buf[index];
+                char c = buf.Get(index);
                 return c;
             }
         }
 
-        public string ToString(int index, int length)
+        public string ToString(long index, long length)
         {
             StringBuilder temp = new StringBuilder();
             temp.Clear();
-            for (int i = index; i < index + length; i++)
-                temp.Append(buf[i]);
+            for (long i = index; i < index + length; i++)
+                temp.Append(buf.Get(i));
             return temp.ToString();
         }
 
-        public int Length
+        public long Length
         {
             get { return this.buf.Count; }
         }
 
-        public int Count
+        public long Count
         {
             get { return this.buf.Count; }
         }
 
         internal DocumentUpdateEventHandler Update;
 
-        internal void Allocate(int count)
+        internal void Allocate(long count)
         {
         }
 
@@ -109,12 +109,12 @@ namespace FooEditEngine
             this.buf.AddRange(chars);
         }
 
-        internal void InsertRange(int index, IEnumerable<char> chars)
+        internal void InsertRange(long index, IEnumerable<char> chars)
         {
             this.buf.InsertRange(index, chars);
         }
 
-        internal void RemoveRange(int index,int length)
+        internal void RemoveRange(long index, long length)
         {
             this.buf.RemoveRange(index, length);
         }
@@ -152,7 +152,7 @@ namespace FooEditEngine
             this.buf.Clear();
         }
 
-        internal IEnumerable<char> GetEnumerator(int start, int length)
+        internal IEnumerable<char> GetEnumerator(long start, long length)
         {
             return this.buf.GetRangeEnumerable(start, length);
         }
@@ -161,8 +161,8 @@ namespace FooEditEngine
 
         public IEnumerator<char> GetEnumerator()
         {
-            for (int i = 0; i < this.Length; i++)
-                yield return this.buf[i];
+            for (long i = 0; i < this.Length; i++)
+                yield return this.buf.Get(i);
         }
 
         #endregion
@@ -171,8 +171,8 @@ namespace FooEditEngine
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
-            for (int i = 0; i < this.Length; i++)
-                yield return this.buf[i];
+            for (long i = 0; i < this.Length; i++)
+                yield return this.buf.Get(i);
         }
 
         #endregion

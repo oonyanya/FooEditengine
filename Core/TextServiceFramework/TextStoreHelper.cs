@@ -36,13 +36,14 @@ namespace FooEditEngine
         {
             if (textStore.IsLocked() == false)
                 return false;
+            long inputImeStartIndex = view.Document.LayoutLines.GetLineHeadIndex(view.Document.CaretPostion.row);
             using (Unlocker locker = textStore.LockDocument(false))
             {
                 foreach (TextDisplayAttribute attr in textStore.EnumAttributes(start, end))
                 {
                     if (attr.attribute.bAttr == TF_DA_ATTR_INFO.TF_ATTR_TARGET_CONVERTED)
                     {
-                        if (view.AdjustSrc(attr.startIndex))
+                        if (view.AdjustSrc(attr.startIndex + inputImeStartIndex))
                         {
                             return true;
                         }
@@ -53,7 +54,7 @@ namespace FooEditEngine
         }
 #endif
 
-        public static void GetStringExtent(Document document,EditView view,int i_startIndex,int i_endIndex,out Point startPos,out Point endPos)
+        public static void GetStringExtent(Document document,EditView view,long i_startIndex, long i_endIndex,out Point startPos,out Point endPos)
         {
             TextPoint startTextPoint = view.LayoutLines.GetTextPointFromIndex(i_startIndex);
             if (i_startIndex == i_endIndex)
@@ -91,7 +92,7 @@ namespace FooEditEngine
             }
         }
 
-        public static void SetSelectionIndex(Controller controller,EditView view,int i_startIndex,int i_endIndex)
+        public static void SetSelectionIndex(Controller controller,EditView view, long i_startIndex, long i_endIndex)
         {
             if (controller.IsRectInsertMode())
             {
@@ -110,13 +111,13 @@ namespace FooEditEngine
             }
         }
 
-        public static void InsertTextAtSelection(Controller controller,string i_value, int startIndex, int endIndex, bool fromTIP = true)
+        public static void InsertTextAtSelection(Controller controller,string i_value, long startIndex, long endIndex, bool fromTIP = true)
         {
             controller.DoInputString(i_value, fromTIP);
         }
 
 #if METRO || WPF
-        public static void NotifyTextChanged(TextStoreBase textStore, int startIndex,int removeLength,int insertLength)
+        public static void NotifyTextChanged(TextStoreBase textStore, long startIndex, long removeLength, long insertLength)
         {
 #if METRO
             //Windows8.1では同じ値にしないと日本語入力ができなくなってしまう
@@ -126,10 +127,10 @@ namespace FooEditEngine
             //TS_TEXTCHANGE structure's remark
             //１文字削除した場合はoldendに削除前の位置を設定し、newendとstartIndexに現在位置を設定し、
             //１文字追加した場合はoldendに追加前の位置を設定し、newendとstartIndexに現在位置を設定する
-            int oldend = startIndex + removeLength,
+            long oldend = startIndex + removeLength,
                 newend = startIndex + insertLength;
 #endif
-            textStore.NotifyTextChanged(startIndex, oldend, newend);
+            textStore.NotifyTextChanged((int)startIndex, (int)oldend, (int)newend);
         }
 #endif
     }

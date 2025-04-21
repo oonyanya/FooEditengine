@@ -53,7 +53,7 @@ namespace FooEditEngine
             this.HitArea = view.GetRectFromTextPoint(tp, Gripper.HitAreaWidth, Gripper.HitAreaWidth);
         }
 
-        public void MoveByIndex(EditView view, int index)
+        public void MoveByIndex(EditView view, long index)
         {
             this.Rectangle = view.GetRectFromIndex(index, Gripper.GripperWidth, Gripper.GripperWidth);
             this.HitArea = view.GetRectFromIndex(index, Gripper.HitAreaWidth, Gripper.HitAreaWidth);

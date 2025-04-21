@@ -699,7 +699,7 @@ namespace FooEditEngine
                         Color4 color = new Color4() { Alpha = sel.color.A, Red = sel.color.R, Blue = sel.color.B, Green = sel.color.G };
                         if (sel.hilight == HilightType.Url)
                             color = this.Url;
-                        this.DrawMarkerEffect(layout, sel.hilight, sel.start, sel.length, x, y, sel.isBoldLine, color);
+                        this.DrawMarkerEffect(layout, sel.hilight, (int)sel.start, (int)sel.length, x, y, sel.isBoldLine, color);
                     }
                 }
                 if (layout.Selects != null)
@@ -709,7 +709,7 @@ namespace FooEditEngine
                         if (sel.length == 0 || sel.start == -1)
                             continue;
 
-                        this.DrawMarkerEffect(layout, HilightType.Select, sel.start, sel.length, x, y, false);
+                        this.DrawMarkerEffect(layout, HilightType.Select, (int)sel.start, (int)sel.length, x, y, false);
                     }
                 }
 
@@ -875,7 +875,7 @@ namespace FooEditEngine
                             brush = this._factory.GetSolidColorBrush(this.Literal);
                             break;
                     }
-                    newLayout.SetDrawingEffect(brush, new DW.TextRange(s.index, s.length));
+                    newLayout.SetDrawingEffect(brush, new DW.TextRange((int)s.index, (int)s.length));
                 }
             }
 
@@ -901,7 +901,7 @@ namespace FooEditEngine
                             brush = this._factory.GetSolidColorBrush(this.Literal);
                             break;
                     }
-                    newLayout.SetDrawingEffect(brush, new DW.TextRange(s.index, s.length));
+                    newLayout.SetDrawingEffect(brush, new DW.TextRange((int)s.index, (int)s.length));
                 }
             }
 
@@ -913,7 +913,7 @@ namespace FooEditEngine
                     if (sel.length == 0 || sel.start == -1)
                         continue;
                     if (sel.hilight == HilightType.Url)
-                        newLayout.SetDrawingEffect(this._factory.GetSolidColorBrush(this.Url), new DW.TextRange(sel.start, sel.length));
+                        newLayout.SetDrawingEffect(this._factory.GetSolidColorBrush(this.Url), new DW.TextRange((int)sel.start, (int)sel.length));
                 }
             }
 
@@ -927,7 +927,7 @@ namespace FooEditEngine
                         if (sel.length == 0 || sel.start == -1)
                             continue;
 
-                        newLayout.SetDrawingEffect(this._factory.GetSolidColorBrush(this.HilightForeground), new DW.TextRange(sel.start, sel.length));
+                        newLayout.SetDrawingEffect(this._factory.GetSolidColorBrush(this.HilightForeground), new DW.TextRange((int)sel.start, (int)sel.length));
                     }
                 }
             }

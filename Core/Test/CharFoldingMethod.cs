@@ -56,10 +56,10 @@ namespace FooEditEngine.Test
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns>折り畳みリストのイテレーター</returns>
-        public IEnumerable<FoldingItem> AnalyzeDocument(Document doc, int start, int end)
+        public IEnumerable<FoldingItem> AnalyzeDocument(Document doc, long start, long end)
         {
-            Stack<int> BeginIndexColletion = new Stack<int>();
-            for (int i = start; i <= end; i++)
+            Stack<long> BeginIndexColletion = new Stack<long>();
+            for (long i = start; i <= end; i++)
             {
                 if (doc[i] == this.BeginChar)
                     BeginIndexColletion.Push(i);
@@ -67,7 +67,7 @@ namespace FooEditEngine.Test
                 {
                     if (BeginIndexColletion.Count == 0)
                         continue;
-                    int beginIndex = BeginIndexColletion.Pop();
+                    long beginIndex = BeginIndexColletion.Pop();
                     if (beginIndex < i)
                     {
                         yield return new FoldingItem(beginIndex, i);

@@ -724,7 +724,7 @@ namespace FooEditEngine.Windows
         /// </summary>
         /// <param name="start">開始インデックス</param>
         /// <param name="length">長さ</param>
-        public void Select(int start, int length)
+        public void Select(long start, long length)
         {
             this.Document.Select(start, length);
             this.HScrollBar.Value = (int)this.View.Src.X;
@@ -855,7 +855,7 @@ namespace FooEditEngine.Windows
         /// </summary>
         /// <param name="index">インデックス</param>
         /// <returns>座標を返す</returns>
-        public System.Drawing.Point GetPostionFromIndex(int index)
+        public System.Drawing.Point GetPostionFromIndex(long index)
         {
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
@@ -868,7 +868,7 @@ namespace FooEditEngine.Windows
         /// </summary>
         /// <param name="p">座標</param>
         /// <returns>インデックスを返す</returns>
-        public int GetIndexFromPostion(System.Drawing.Point p)
+        public long GetIndexFromPostion(System.Drawing.Point p)
         {
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
@@ -1113,7 +1113,7 @@ namespace FooEditEngine.Windows
             TextPoint tp = this.View.GetTextPointFromPostion(e.Location);
             if (tp == TextPoint.Null)
                 return;
-            int index = this.View.LayoutLines.GetIndexFromTextPoint(tp);
+            long index = this.View.LayoutLines.GetIndexFromTextPoint(tp);
             
             FooMouseEventArgs mouseEvent = new FooMouseEventArgs(index, e.Button, e.Clicks, e.X, e.Y, e.Delta);
             
@@ -1149,7 +1149,7 @@ namespace FooEditEngine.Windows
         /// <param name="e">インベントデータ</param>
         protected override void OnMouseClick(MouseEventArgs e)
         {
-            int index = this.GetIndexFromPostion(e.Location);
+            long index = this.GetIndexFromPostion(e.Location);
 
             FooMouseEventArgs mouseEvent = new FooMouseEventArgs(index, e.Button, e.Clicks, e.X, e.Y, e.Delta);
 
@@ -1165,7 +1165,7 @@ namespace FooEditEngine.Windows
             TextPoint tp = this.View.GetTextPointFromPostion(e.Location);
             if (tp == TextPoint.Null)
                 return;
-            int index = this.View.LayoutLines.GetIndexFromTextPoint(tp);
+            long index = this.View.LayoutLines.GetIndexFromTextPoint(tp);
 
             FooMouseEventArgs mouseEvent = new FooMouseEventArgs(index, e.Button, e.Clicks, e.X, e.Y, e.Delta);
             
@@ -1498,7 +1498,7 @@ namespace FooEditEngine.Windows
             TextPoint tp = this.LayoutLines.GetTextPointFromIndex(this.Controller.SelectionStart);
             tp.col = e.offset;
 
-            int index = this.View.GetIndexFromLayoutLine(tp);
+            long index = this.View.GetIndexFromLayoutLine(tp);
 
             this.Select(index, index + e.length);
         }
@@ -1562,7 +1562,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// イベントが発生したインデックス
         /// </summary>
-        public int index;
+        public long index;
         /// <summary>
         /// 既定の処理を省略するなら真。そうでなければ偽
         /// </summary>
@@ -1576,7 +1576,7 @@ namespace FooEditEngine.Windows
         /// <param name="x">マウスカーソルがあるＸ座標</param>
         /// <param name="y">マウスカーソルがあるＹ座標</param>
         /// <param name="delta">ホイールの回転方向</param>
-        public FooMouseEventArgs(int index, MouseButtons button, int clicks, int x, int y, int delta)
+        public FooMouseEventArgs(long index, MouseButtons button, int clicks, int x, int y, int delta)
             : base(button, clicks, x, y, delta)
         {
             this.index = index;

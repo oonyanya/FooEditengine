@@ -50,12 +50,12 @@ namespace FooEditEngine
         /// <param name="startIndex"></param>
         /// <param name="sep"></param>
         /// <returns></returns>
-        public static string GetWord(Document doc, int startIndex,char[] sep)
+        public static string GetWord(Document doc, long startIndex,char[] sep)
         {
             if (doc.Length == 0)
                 return null;
             StringBuilder word = new StringBuilder();
-            for (int i = startIndex; i >= 0; i--)
+            for (long i = startIndex; i >= 0; i--)
             {
                 if(sep.Contains(doc[i]))
                 {

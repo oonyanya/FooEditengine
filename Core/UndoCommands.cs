@@ -23,7 +23,7 @@ namespace FooEditEngine
 
         StringBuffer replacement, replaced;   //置き換え後の文字列、置き換え前の文字列
 
-        public ReplaceCommand(StringBuffer buf, int start, int length, string str)
+        public ReplaceCommand(StringBuffer buf, long start, long length, string str)
         {
             this.Buffer = buf;
             this.ReplacementRange = new TextRange(start,str.Length);
@@ -46,7 +46,7 @@ namespace FooEditEngine
             this.ReplaceCore(this.ReplacedRange.Index, this.replaced.Count, this.replacement, this.replacement.Count);
         }
 
-        void ReplaceCore(int index, int length, IEnumerable<char> chars, int count)
+        void ReplaceCore(long index, long length, IEnumerable<char> chars, long count)
         {
             using (this.Buffer.GetWriterLock())
             {
@@ -67,7 +67,7 @@ namespace FooEditEngine
                 cmd.ReplacementRange.Index >= this.ReplacementRange.Index &&
                 cmd.ReplacementRange.Index + cmd.ReplacementRange.Length <= this.ReplacementRange.Index + this.ReplacementRange.Length)
             {
-                int bufferIndex = cmd.ReplacedRange.Index - this.ReplacementRange.Index;
+                long bufferIndex = cmd.ReplacedRange.Index - this.ReplacementRange.Index;
                 if(bufferIndex < this.replacement.Count)
                     this.replacement.RemoveRange(bufferIndex, cmd.ReplacedRange.Length);
                 this.replacement.InsertRange(bufferIndex, cmd.replacement);
@@ -136,8 +136,8 @@ namespace FooEditEngine
         {
             for (int i = 0; i < layoutlines.Count; i++)
             {
-                int lineHeadIndex = layoutlines.GetIndexFromLineNumber(i), lineLength = layoutlines.GetLengthFromLineNumber(i);
-                int left = lineHeadIndex, right = lineHeadIndex;
+                long lineHeadIndex = layoutlines.GetIndexFromLineNumber(i), lineLength = layoutlines.GetLengthFromLineNumber(i);
+                long left = lineHeadIndex, right = lineHeadIndex;
                 string output;
 
                 output = regex.Replace(layoutlines[i], (m) => {
@@ -205,7 +205,7 @@ namespace FooEditEngine
         {
             TextSearch ts = new TextSearch(target, ci);
             char[] pattern_chars = pattern.ToCharArray();
-            int left = 0,right;
+            long left = 0,right;
             while ((right = ts.IndexOf(this.buffer, left, this.buffer.Count)) != -1)
             {
                 using (this.buffer.GetWriterLock())

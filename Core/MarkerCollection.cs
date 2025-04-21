@@ -78,14 +78,14 @@ namespace FooEditEngine
     /// <summary>
     /// マーカー自身を表します
     /// </summary>
-    public struct Marker : IRange, IEqualityComparer<Marker>
+    public struct Marker : FooProject.Collection.IRange, IEqualityComparer<Marker>
     {
         #region IRange メンバー
 
         /// <summary>
         /// 開始位置
         /// </summary>
-        public int start
+        public long start
         {
             get;
             set;
@@ -94,7 +94,7 @@ namespace FooEditEngine
         /// <summary>
         /// 長さ
         /// </summary>
-        public int length
+        public long length
         {
             get;
             set;
@@ -124,7 +124,7 @@ namespace FooEditEngine
         /// <param name="length">長さ</param>
         /// <param name="hilight">タイプ</param>
         /// <returns>マーカー</returns>
-        public static Marker Create(int start, int length, HilightType hilight)
+        public static Marker Create(long start, long length, HilightType hilight)
         {
             return new Marker { start = start, length = length, hilight = hilight, color = new Color(), isBoldLine = false};
         }
@@ -138,7 +138,7 @@ namespace FooEditEngine
         /// <param name="color">色</param>
         /// <param name="isBoldLine">線を太くするかどうか</param>
         /// <returns>マーカー</returns>
-        public static Marker Create(int start, int length, HilightType hilight,Color color,bool isBoldLine = false)
+        public static Marker Create(long start, long length, HilightType hilight,Color color,bool isBoldLine = false)
         {
             return new Marker { start = start, length = length, hilight = hilight ,color = color , isBoldLine = isBoldLine };
         }
@@ -161,7 +161,18 @@ namespace FooEditEngine
         /// <returns>ハッシュ</returns>
         public int GetHashCode(Marker obj)
         {
-            return this.start ^ this.length ^ (int)this.hilight;
+            return (int)this.start ^ (int)this.length ^ (int)this.hilight ^ (int)(this.start >> 32);
+        }
+
+        public FooProject.Collection.IRange DeepCopy()
+        {
+            var newItem = new Marker();
+            newItem.start = this.start;
+            newItem.length = this.length;
+            newItem.hilight = this.hilight;
+            newItem.color = this.color;
+            newItem.isBoldLine = this.isBoldLine;
+            return newItem;
         }
     }
 
@@ -221,7 +232,7 @@ namespace FooEditEngine
             this.Updated(this, null);
         }
 
-        internal void RemoveAll(int id,int start, int length)
+        internal void RemoveAll(int id, long start, long length)
         {
             RangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
@@ -264,7 +275,7 @@ namespace FooEditEngine
             yield break;
         }
 
-        internal IEnumerable<Marker> Get(int id, int index)
+        internal IEnumerable<Marker> Get(int id, long index)
         {
             RangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
@@ -275,7 +286,7 @@ namespace FooEditEngine
             yield break;
         }
 
-        internal IEnumerable<Marker> Get(int id, int index, int length)
+        internal IEnumerable<Marker> Get(int id, long index, long length)
         {
             RangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
@@ -307,9 +318,9 @@ namespace FooEditEngine
             this.Updated(this, null);
         }
 
-        internal void UpdateMarkers(int startIndex,int insertLength,int removeLength)
+        internal void UpdateMarkers(long startIndex, long insertLength, long removeLength)
         {
-            int deltaLength = insertLength - removeLength;
+            long deltaLength = insertLength - removeLength;
             foreach (RangeCollection<Marker> markers in this.collection.Values)
             {
                 int updateStartRow = markers.IndexOf(startIndex);

@@ -108,15 +108,15 @@ namespace FooEditEngine
         /// <summary>
         /// 開始位置
         /// </summary>
-        public int startIndex;
+        public long startIndex;
         /// <summary>
         /// 削除された長さ
         /// </summary>
-        public int removeLength;
+        public long removeLength;
         /// <summary>
         /// 追加された長さ
         /// </summary>
-        public int insertLength;
+        public long insertLength;
         /// <summary>
         /// 更新イベントが発生した行。行が不明な場合や行をまたぐ場合はnullを指定すること。
         /// </summary>
@@ -129,7 +129,7 @@ namespace FooEditEngine
         /// <param name="removeLength">削除された長さ</param>
         /// <param name="insertLength">追加された長さ</param>
         /// <param name="row">開始行。nullを指定することができる</param>
-        public DocumentUpdateEventArgs(UpdateType type, int startIndex = EmptyValue, int removeLength = EmptyValue, int insertLength = EmptyValue, int? row = null)
+        public DocumentUpdateEventArgs(UpdateType type, long startIndex = EmptyValue, long removeLength = EmptyValue, long insertLength = EmptyValue, int? row = null)
         {
             this.type = type;
             this.startIndex = startIndex;
@@ -238,7 +238,7 @@ namespace FooEditEngine
         /// <summary>
         /// キャレットでの選択の起点となる位置
         /// </summary>
-        internal int AnchorIndex
+        internal long AnchorIndex
         {
             get;
             set;
@@ -541,8 +541,8 @@ namespace FooEditEngine
         {
             if (autoExpand)
             {
-                int lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
-                int lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
+                long lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
+                long lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
                 FoldingItem foldingData = this.LayoutLines.FoldingCollection.Get(lineHeadIndex, lineLength);
                 if (foldingData != null)
                 {
@@ -724,7 +724,7 @@ namespace FooEditEngine
         /// <summary>
         /// 文字列の長さ
         /// </summary>
-        public int Length
+        public long Length
         {
             get
             {
@@ -732,7 +732,7 @@ namespace FooEditEngine
             }
         }
 
-        public int Count
+        public long Count
         {
             get
             {
@@ -762,7 +762,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="i">インデックス（自然数でなければならない）</param>
         /// <returns>Char型</returns>
-        public char this[int i]
+        public char this[long i]
         {
             get
             {
@@ -848,7 +848,7 @@ namespace FooEditEngine
         /// <param name="start"></param>
         /// <param name="length"></param>
         /// <remarks>RectSelectionの値によって動作が変わります。真の場合は矩形選択モードに、そうでない場合は行ごとに選択されます</remarks>
-        public void Select(int start, int length)
+        public void Select(long start, long length)
         {
             if (this.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
@@ -860,7 +860,7 @@ namespace FooEditEngine
             this.Selections.Clear();
             if (length < 0)
             {
-                int oldStart = start;
+                long oldStart = start;
                 start += length;
                 length = oldStart - start;
             }
@@ -885,14 +885,18 @@ namespace FooEditEngine
         /// <param name="tp">開始位置</param>
         /// <param name="width">桁数</param>
         /// <param name="height">行数</param>
-        public void Select(TextPoint tp, int width, int height)
+        public void Select(TextPoint tp, long width, long height)
         {
             if (this.FireUpdateEvent == false || !this.RectSelection)
                 throw new InvalidOperationException("");
+            if (width > Int32.MaxValue - 1)
+                throw new ArgumentOutOfRangeException("width is within Int32.MaxValue - 1");
+            if (height > Int32.MaxValue - 1)
+                throw new ArgumentOutOfRangeException("height is within Int32.MaxValue - 1");
             TextPoint end = tp;
 
-            end.row = tp.row + height;
-            end.col = tp.col + width;
+            end.row = tp.row + (int)height;
+            end.col = tp.col + (int)width;
 
             if (end.row > this.LayoutLines.Count - 1)
                 throw new ArgumentOutOfRangeException("");
@@ -923,8 +927,8 @@ namespace FooEditEngine
                     if (rect.TopRight.col > lastCol)
                         rightCol = lastCol;
 
-                    int StartIndex = this.LayoutLines.GetIndexFromTextPoint(new TextPoint(i, leftCol));
-                    int EndIndex = this.LayoutLines.GetIndexFromTextPoint(new TextPoint(i, rightCol));
+                    long StartIndex = this.LayoutLines.GetIndexFromTextPoint(new TextPoint(i, leftCol));
+                    long EndIndex = this.LayoutLines.GetIndexFromTextPoint(new TextPoint(i, rightCol));
 
                     Selection sel;
                     sel = Selection.Create(StartIndex, EndIndex - StartIndex);
@@ -939,7 +943,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="index">探索を開始するインデックス</param>
         /// <param name="changeAnchor">選択の起点となるとインデックスを変更するなら真。そうでなければ偽</param>
-        public void SelectWord(int index, bool changeAnchor = false)
+        public void SelectWord(long index, bool changeAnchor = false)
         {
             this.SelectSepartor(index, (c) => Util.IsWordSeparator(c), changeAnchor);
         }
@@ -949,7 +953,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="index">探索を開始するインデックス</param>
         /// <param name="changeAnchor">選択の起点となるとインデックスを変更するなら真。そうでなければ偽</param>
-        public void SelectLine(int index,bool changeAnchor = false)
+        public void SelectLine(long index,bool changeAnchor = false)
         {
             this.SelectSepartor(index, (c) => c == Document.NewLine, changeAnchor);
         }
@@ -960,7 +964,7 @@ namespace FooEditEngine
         /// <param name="index">探索を開始するインデックス</param>
         /// <param name="find_sep_func">セパレーターなら真を返し、そうでないなら偽を返す</param>
         /// <returns>開始インデックス、終了インデックス</returns>
-        public Tuple<int,int> GetSepartor(int index, Func<char, bool> find_sep_func)
+        public Tuple<long, long> GetSepartor(long index, Func<char, bool> find_sep_func)
         {
             if (find_sep_func == null)
                 throw new ArgumentNullException("find_sep_func must not be null");
@@ -970,7 +974,7 @@ namespace FooEditEngine
 
             Document str = this;
 
-            int start = index;
+            long start = index;
             while (start > 0 && !find_sep_func(str[start]))
                 start--;
 
@@ -979,11 +983,11 @@ namespace FooEditEngine
                 start++;
             }
 
-            int end = index;
+            long end = index;
             while (end < this.Length && !find_sep_func(str[end]))
                 end++;
 
-            return new Tuple<int, int>(start, end);
+            return new Tuple<long, long>(start, end);
         }
 
         /// <summary>
@@ -992,7 +996,7 @@ namespace FooEditEngine
         /// <param name="index">探索を開始するインデックス</param>
         /// <param name="find_sep_func">セパレーターなら真を返し、そうでないなら偽を返す</param>
         /// <param name="changeAnchor">選択の起点となるとインデックスを変更するなら真。そうでなければ偽</param>
-        public void SelectSepartor(int index,Func<char,bool> find_sep_func, bool changeAnchor = false)
+        public void SelectSepartor(long index,Func<char,bool> find_sep_func, bool changeAnchor = false)
         {
             if (this.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
@@ -1004,7 +1008,7 @@ namespace FooEditEngine
             if (t == null)
                 return;
 
-            int start = t.Item1, end = t.Item2;
+            long start = t.Item1, end = t.Item2;
 
             this.Select(start, end - start);
 
@@ -1040,7 +1044,7 @@ namespace FooEditEngine
         /// <param name="id">マーカーID</param>
         /// <param name="start">開始インデックス</param>
         /// <param name="length">削除する長さ</param>
-        public void RemoveMarker(int id,int start, int length)
+        public void RemoveMarker(int id, long start, long length)
         {
             if (start < 0 || start + length > this.Length)
                 throw new ArgumentOutOfRangeException("startもしくはendが指定できる範囲を超えています");
@@ -1073,7 +1077,7 @@ namespace FooEditEngine
         /// <param name="id">マーカーID</param>
         /// <param name="index">インデックス</param>
         /// <returns>Marker構造体の列挙子</returns>
-        public IEnumerable<Marker> GetMarkers(int id, int index)
+        public IEnumerable<Marker> GetMarkers(int id, long index)
         {
             if (index < 0 || index > this.Length)
                 throw new ArgumentOutOfRangeException("indexが範囲を超えています");
@@ -1086,7 +1090,7 @@ namespace FooEditEngine
         /// <param name="index">開始インデックス</param>
         /// <param name="length">長さ</param>
         /// <returns>Stringオブジェクト</returns>
-        public string ToString(int index, int length)
+        public string ToString(long index, long length)
         {
             using(this.buffer.GetReaderLock())
             {
@@ -1099,7 +1103,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="index">開始インデックス</param>
         /// <returns>Stringオブジェクト</returns>
-        public string ToString(int index)
+        public string ToString(long index)
         {
             return this.ToString(index, this.buffer.Length - index);
         }
@@ -1111,16 +1115,16 @@ namespace FooEditEngine
         /// <param name="endIndex">終了インデックス</param>
         /// <param name="maxCharCount">最大長</param>
         /// <returns>行イテレーターが返される</returns>
-        public IEnumerable<string> GetLines(int startIndex, int endIndex, int maxCharCount = -1)
+        public IEnumerable<string> GetLines(long startIndex, long endIndex, int maxCharCount = -1)
         {
-            foreach (Tuple<int, int> range in this.LayoutLines.ForEachLines(startIndex, endIndex, maxCharCount))
+            foreach (Tuple<long, long> range in this.LayoutLines.ForEachLines(startIndex, endIndex, maxCharCount))
             {
                 StringBuilder temp = new StringBuilder();
                 temp.Clear();
-                int lineEndIndex = range.Item1;
+                long lineEndIndex = range.Item1;
                 if (range.Item2 > 0)
                     lineEndIndex += range.Item2 - 1;
-                for (int i = range.Item1; i <= lineEndIndex; i++)
+                for (long i = range.Item1; i <= lineEndIndex; i++)
                     temp.Append(this.buffer[i]);
                 yield return temp.ToString();
             }
@@ -1166,7 +1170,7 @@ namespace FooEditEngine
         /// <param name="s">文字列</param>
         /// <param name="UserInput">ユーザーからの入力として扱うなら真</param>
         /// <remarks>読み出し操作中はこのメソッドを実行することはできません</remarks>
-        public void Replace(int index, int length, string s, bool UserInput = false)
+        public void Replace(long index, long length, string s, bool UserInput = false)
         {
             if (index < 0 || index > this.buffer.Length || index + length > this.buffer.Length || length < 0)
                 throw new ArgumentOutOfRangeException();
@@ -1203,7 +1207,7 @@ namespace FooEditEngine
         public void Clear()
         {
             this.buffer.Clear();
-            this.buffer.OnDocumentUpdate(new DocumentUpdateEventArgs(UpdateType.Clear, 0, this.buffer.Count, 0));
+            this.buffer.OnDocumentUpdate(new DocumentUpdateEventArgs(UpdateType.Clear, 0, 0, 0));
             this.Dirty = false;
         }
 
@@ -1359,21 +1363,21 @@ namespace FooEditEngine
         /// <param name="start">開始インデックス</param>
         /// <param name="length">検索する長さ</param>
         /// <remarks>見つかったパターン以外を置き換えた場合、正常に動作しないことがあります</remarks>
-        public IEnumerator<SearchResult> Find(int start, int length)
+        public IEnumerator<SearchResult> Find(long start, long length)
         {
             if (this.regex == null)
                 throw new InvalidOperationException();
             if (start < 0 || start >= this.Length)
                 throw new ArgumentOutOfRangeException();
 
-            int end = start + length - 1;
+            long end = start + length - 1;
 
             if(end > this.Length - 1)
                 throw new ArgumentOutOfRangeException();
 
             StringBuilder line = new StringBuilder();
-            int oldLength = this.Length;
-            for (int i = start; i <= end; i++)
+            long oldLength = this.Length;
+            for (long i = start; i <= end; i++)
             {
                 char c = this[i];
                 line.Append(c);
@@ -1382,14 +1386,14 @@ namespace FooEditEngine
                     this.match = this.regex.Match(line.ToString());
                     while (this.match.Success)
                     {
-                        int startIndex = i - line.Length + 1 + this.match.Index;
-                        int endIndex = startIndex + this.match.Length - 1;
+                        long startIndex = i - line.Length + 1 + this.match.Index;
+                        long endIndex = startIndex + this.match.Length - 1;
 
                         yield return new SearchResult(this.match, startIndex, endIndex);
 
                         if (this.Length != oldLength)   //長さが変わった場合は置き換え後のパターンの終点＋１まで戻る
                         {
-                            int delta = this.Length - oldLength;
+                            long delta = this.Length - oldLength;
                             i = endIndex + delta;
                             end = end + delta;
                             oldLength = this.Length;
@@ -1461,12 +1465,12 @@ namespace FooEditEngine
                 case UpdateType.RebuildLayout:
                     {
                         this._LayoutLines.Clear();
-                        int analyzeLength = PreloadLength;
+                        long analyzeLength = PreloadLength;
                         if (analyzeLength > this.Length)
                             analyzeLength = this.Length;
 
                         this._LayoutLines.UpdateLayoutLine(0, 0, analyzeLength);
-                        int fetchedLength = this._LayoutLines.FetchLineWithoutEvent(CaretPostion.row);
+                        long fetchedLength = this._LayoutLines.FetchLineWithoutEvent(CaretPostion.row);
 
                         int totalLineCount = this._LayoutLines.Count - 1;
                         foreach(var c in this.buffer.GetEnumerator(analyzeLength, this.Length - analyzeLength - fetchedLength))
@@ -1543,12 +1547,12 @@ namespace FooEditEngine
         /// <summary>
         /// 一致した場所の開始位置を表す
         /// </summary>
-        public int Start;
+        public long Start;
 
         /// <summary>
         /// 一致した場所の終了位置を表す
         /// </summary>
-        public int End;
+        public long End;
 
         /// <summary>
         /// 見つかった文字列を返す
@@ -1574,7 +1578,7 @@ namespace FooEditEngine
         /// <param name="m">Matchオブジェクト</param>
         /// <param name="start">開始インデックス</param>
         /// <param name="end">終了インデックス</param>
-        public SearchResult(Match m, int start,int end)
+        public SearchResult(Match m, long start, long end)
         {
             this.Match = m;
             this.Start = start;
@@ -1650,7 +1654,7 @@ namespace FooEditEngine
             if (this.document.Length == 0)
                 return 0;
 
-            int actualCount = count;
+            long actualCount = count;
             if (index + count - 1 > this.document.Length - 1)
                 actualCount = this.document.Length - index;
 
@@ -1659,9 +1663,9 @@ namespace FooEditEngine
             for (int i = 0; i < str.Length; i++)    //ToCharArray()だと戻った時に消えてしまう
                 buffer[i] = str[i];
 
-            this.currentIndex = index + actualCount;
+            this.currentIndex = (int)(index + actualCount);
             
-            return actualCount;
+            return (int)actualCount;
         }
 
         /// <summary>

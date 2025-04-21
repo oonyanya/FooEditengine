@@ -39,13 +39,13 @@ namespace FooEditEngine
                     this.qsTable[pattern[i]] = len - i;
             }
         }
-        public int IndexOf(IRandomEnumrator<char> buf, int start, int end)
+        public long IndexOf(IRandomEnumrator<char> buf, long start, long end)
         {
             //QuickSearch法
-            int buflen = buf.Count - 1;
+            long buflen = buf.Count - 1;
             int plen = this.patternLength;
-            int i = start;
-            int search_end = end - plen;
+            long i = start;
+            long search_end = end - plen;
             //最適化のためわざとコピペした
             if (this.caseInsenstive)
             {
@@ -64,7 +64,7 @@ namespace FooEditEngine
                     }
                     else
                     {
-                        int k = i + plen;
+                        long k = i + plen;
                         if (k <= buflen)	//buffer以降にアクセスする可能性がある
                         {
                             int moveDelta;
@@ -98,7 +98,7 @@ namespace FooEditEngine
                     }
                     else
                     {
-                        int k = i + plen;
+                        long k = i + plen;
                         if (k <= buflen)	//buffer以降にアクセスする可能性がある
                         {
                             int moveDelta;

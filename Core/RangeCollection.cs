@@ -11,23 +11,25 @@ namespace FooEditEngine
     /// <summary>
     /// マーカーを表す
     /// </summary>
+    [Obsolete]
     public interface IRange
     {
         /// <summary>
         /// マーカーの開始位置。-1を設定した場合、そのマーカーはレタリングされません。正しい先頭位置を取得するにはGetLineHeadIndex()を使用してください
         /// </summary>
-        int start { get; set; }
+        long start { get; set; }
         /// <summary>
         /// マーカーの長さ。0を設定した場合、そのマーカーはレタリングされません
         /// </summary>
-        int length { get; set; }
+        long length { get; set; }
     }
 
     public class RangeCollection<T> : IEnumerable<T>
-        where T : IRange
+        where T : FooProject.Collection.IRange
     {
         private protected BigList<T> collection;
-        protected int stepRow = -1, stepLength = 0;
+        protected int stepRow = -1;
+        protected long stepLength = 0;
         protected const int STEP_ROW_IS_NONE = -1;
 
         public RangeCollection()
@@ -81,7 +83,7 @@ namespace FooEditEngine
             }
         }
 
-        public void ReplaceRange(int startRow, IList<T> new_collection, int removeCount, int deltaLength)
+        public void ReplaceRange(int startRow, IList<T> new_collection, int removeCount, long deltaLength)
         {
             //消すべき行が複数ある場合は消すが、そうでない場合は最適化のため長さを変えるだけにとどめておく
             if (removeCount == 1 && new_collection != null && new_collection.Count == 1)
@@ -137,7 +139,7 @@ namespace FooEditEngine
             this.UpdateStartIndex(deltaLength, startRow);
         }
 
-        public void Remove(int start, int length)
+        public void Remove(long start, long length)
         {
             if (this.collection.Count == 0)
                 return;
@@ -177,13 +179,13 @@ namespace FooEditEngine
             this.UpdateStartIndex(0, startRow);
         }
 
-        public int IndexOf(int start)
+        public int IndexOf(long start)
         {
             int dummy;
             return this.IndexOfNearest(start, out dummy);
         }
 
-        public int IndexOfLoose(int start)
+        public int IndexOfLoose(long start)
         {
             int dummy;
             int result = this.IndexOfNearest(start, out dummy);
@@ -202,7 +204,7 @@ namespace FooEditEngine
         }
 
         int lastLineNumber;
-        int IndexOfNearest(int start,out int nearIndex)
+        int IndexOfNearest(long start,out int nearIndex)
         {
             if (start < 0)
                 throw new ArgumentOutOfRangeException("indexに負の値を設定することはできません");
@@ -215,7 +217,7 @@ namespace FooEditEngine
                 return 0;
 
             T line;
-            int lineHeadIndex;
+            long lineHeadIndex;
 
             if (lastLineNumber < this.collection.Count - 1)
             {
@@ -254,7 +256,7 @@ namespace FooEditEngine
             return -1;
         }
 
-        public IEnumerable<T> Get(int index)
+        public IEnumerable<T> Get(long index)
         {
             //TODO:インデックスがおかしくなってる可能性がある
             int at = this.IndexOf(index);
@@ -263,7 +265,7 @@ namespace FooEditEngine
             yield return this.collection[at];
         }
 
-        public IEnumerable<T> Get(int start, int length)
+        public IEnumerable<T> Get(long start, long length)
         {
             //TODO:インデックスがおかしくなってる可能性がある
             int nearAt;
@@ -274,10 +276,10 @@ namespace FooEditEngine
             if (at == -1)
                 yield break;
 
-            int end = start + length - 1;
+            long end = start + length - 1;
             for (int i = at; i < this.collection.Count; i++)
             {
-                int markerEnd = this.collection[i].start + this.collection[i].length - 1;
+                long markerEnd = this.collection[i].start + this.collection[i].length - 1;
                 if (this.collection[i].start >= start && markerEnd <= end ||
                     markerEnd >= start && markerEnd <= end ||
                     this.collection[i].start >= start && this.collection[i].start <= end ||
@@ -296,7 +298,7 @@ namespace FooEditEngine
             DebugLog.WriteLine("Clear");
         }
 
-        public void UpdateStartIndex(int deltaLength, int startRow)
+        public void UpdateStartIndex(long deltaLength, int startRow)
         {
             if (this.collection.Count == 0)
             {
@@ -348,7 +350,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="row"></param>
         /// <returns></returns>
-        public int GetLineHeadIndex(int row)
+        public long GetLineHeadIndex(int row)
         {
             if (this.collection.Count == 0)
                 return 0;

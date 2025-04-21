@@ -20,12 +20,12 @@ namespace FooEditEngine
     /// <summary>
     /// 新しく作成されるフォールティングアイテムを表す
     /// </summary>
-    public class FoldingItem : IRangeProvider<int>
+    public class FoldingItem : IRangeProvider<long>
     {
         /// <summary>
         /// 開始インデックス
         /// </summary>
-        public int Start
+        public long Start
         {
             get
             {
@@ -36,7 +36,7 @@ namespace FooEditEngine
         /// <summary>
         /// 終了インデックス
         /// </summary>
-        public int End
+        public long End
         {
             get
             {
@@ -56,7 +56,7 @@ namespace FooEditEngine
         /// <summary>
         /// 内部で使用しているメンバーです。外部から参照しないでください
         /// </summary>
-        public Range<int> Range
+        public Range<long> Range
         {
             get;
             set;
@@ -68,11 +68,11 @@ namespace FooEditEngine
         /// <param name="start">開始インデックス</param>
         /// <param name="end">終了インデックス</param>
         /// <param name="expand">展開フラグ</param>
-        public FoldingItem(int start, int end,bool expand = true)
+        public FoldingItem(long start, long end,bool expand = true)
         {
             if (start >= end)
                 throw new ArgumentException("start < endである必要があります");
-            this.Range = new Range<int>(start, end);
+            this.Range = new Range<long>(start, end);
             this.Expand = expand;
         }
 
@@ -115,7 +115,7 @@ namespace FooEditEngine
     /// </summary>
     public sealed class FoldingCollection : IEnumerable<FoldingItem>
     {
-        RangeTree<int, FoldingItem> collection = new RangeTree<int, FoldingItem>(new RangeItemComparer());
+        RangeTree<long, FoldingItem> collection = new RangeTree<long, FoldingItem>(new RangeItemComparer());
 
         internal FoldingCollection()
         {
@@ -123,33 +123,33 @@ namespace FooEditEngine
             this.StatusChanged += (s, e) => { };
         }
 
-        internal void UpdateData(Document doc,int startIndex,int insertLength,int removeLength)
+        internal void UpdateData(Document doc, long startIndex, long insertLength, long removeLength)
         {
             if (this.collection.Count == 0)
                 return;
-            int delta = insertLength - removeLength;
+            long delta = insertLength - removeLength;
             foreach (FoldingItem item in this.collection.Items)
             {
-                int endIndex = startIndex + removeLength - 1;
+                long endIndex = startIndex + removeLength - 1;
                 if (startIndex <= item.Start)
                 {
                     if ((endIndex >= item.Start && endIndex <= item.End) || endIndex > item.End)
-                        item.Range = new Range<int>(item.Start, item.Start);    //ここで削除すると例外が発生する
+                        item.Range = new Range<long>(item.Start, item.Start);    //ここで削除すると例外が発生する
                     else
-                        item.Range = new Range<int>(item.Start + delta, item.End + delta);
+                        item.Range = new Range<long>(item.Start + delta, item.End + delta);
                 }
                 else if (startIndex >= item.Start && startIndex <= item.End)
                 {
                     if (endIndex > item.End)
-                        item.Range = new Range<int>(item.Start, item.Start);    //ここで削除すると例外が発生する
+                        item.Range = new Range<long>(item.Start, item.Start);    //ここで削除すると例外が発生する
                     else
-                        item.Range = new Range<int>(item.Start, item.End + delta);
+                        item.Range = new Range<long>(item.Start, item.End + delta);
                 }
             }
             this.collection.Rebuild();
         }
 
-        internal void CollectEmptyFolding(int startIndex,int endIndex)
+        internal void CollectEmptyFolding(long startIndex, long endIndex)
         {
             foreach (FoldingItem foldingData in this.GetRange(startIndex, endIndex - startIndex + 1))
                 if (foldingData.Start == foldingData.End)
@@ -202,14 +202,14 @@ namespace FooEditEngine
         /// <param name="index">開始インデックス</param>
         /// <param name="length">長さ</param>
         /// <returns>FoldingItemイテレーター</returns>
-        public IEnumerable<FoldingItem> GetRange(int index, int length)
+        public IEnumerable<FoldingItem> GetRange(long index, long length)
         {
             if (this.collection.Count == 0)
                 yield break;
 
             this.collection.Rebuild();
 
-            List<FoldingItem> items = this.collection.Query(new Range<int>(index, index + length - 1));
+            List<FoldingItem> items = this.collection.Query(new Range<long>(index, index + length - 1));
             foreach (FoldingItem item in items)
                 yield return item;
         }
@@ -220,14 +220,14 @@ namespace FooEditEngine
         /// <param name="index">開始インデックス</param>
         /// <param name="length">長さ</param>
         /// <returns>FoldingItemオブジェクト</returns>
-        public FoldingItem Get(int index, int length)
+        public FoldingItem Get(long index, long length)
         {
             if (this.collection.Count == 0)
                 return null;
             
             this.collection.Rebuild();
 
-            List<FoldingItem> items = this.collection.Query(new Range<int>(index, index + length - 1));
+            List<FoldingItem> items = this.collection.Query(new Range<long>(index, index + length - 1));
 
             int minLength = Int32.MaxValue;
             FoldingItem minItem = null;
@@ -298,7 +298,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="index">インデックス</param>
         /// <returns>折りたたまれていれば真を返す。そうでない場合・ノードが存在しない場合は偽を返す</returns>
-        public bool IsHidden(int index)
+        public bool IsHidden(long index)
         {
             this.collection.Rebuild();
             List<FoldingItem> items = this.collection.Query(index);
@@ -358,19 +358,19 @@ namespace FooEditEngine
         /// <param name="length">長さ</param>
         /// <returns>FoldingItemオブジェクト</returns>
         /// <remarks>指定した範囲には属する中で隠された親ノードだけが取得される</remarks>
-        public FoldingItem GetFarestHiddenFoldingData(int index, int length)
+        public FoldingItem GetFarestHiddenFoldingData(long index, long length)
         {
             if (this.collection.Count == 0)
                 return null;
             this.collection.Rebuild();
-            List<FoldingItem> items = this.collection.Query(new Range<int>(index, index + length - 1));
+            List<FoldingItem> items = this.collection.Query(new Range<long>(index, index + length - 1));
 
             //もっとも範囲の広いアイテムが親を表す
             FoldingItem parentItem = null;
-            int max = 0;
+            long max = 0;
             foreach(FoldingItem item in items)
             {
-                int item_length = item.End -item.Start + 1;
+                long item_length = item.End -item.Start + 1;
                 if(item_length > max)
                 {
                     max = item_length;

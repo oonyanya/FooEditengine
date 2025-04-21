@@ -25,6 +25,6 @@ namespace FooEditEngine
         /// <param name="start">開始インデックス</param>
         /// <param name="end">終了インデックス</param>
         /// <returns>作成したフォールディングを表すイテレーター</returns>
-        IEnumerable<FoldingItem> AnalyzeDocument(Document doc,int start,int end);
+        IEnumerable<FoldingItem> AnalyzeDocument(Document doc, long start, long end);
     }
 }

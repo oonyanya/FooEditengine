@@ -16,23 +16,31 @@ namespace FooEditEngine
     /// <summary>
     /// 選択領域を表すクラス
     /// </summary>
-    struct Selection : IRange,IEqualityComparer<Selection>
+    struct Selection : FooProject.Collection.IRange, IEqualityComparer<Selection>
     {
-        public int start
+        public long start
         {
             get;
             set;
         }
 
-        public int length
+        public long length
         {
             get;
             set;
         }
 
-        public static Selection Create(int start, int length)
+        public static Selection Create(long start, long length)
         {
             return new Selection { start = start, length = length};
+        }
+
+        public FooProject.Collection.IRange DeepCopy()
+        {
+            var newItem = new Selection();
+            newItem.start = start;
+            newItem.length = length;
+            return newItem;
         }
 
         public bool Equals(Selection x, Selection y)
@@ -42,7 +50,7 @@ namespace FooEditEngine
 
         public int GetHashCode(Selection obj)
         {
-            return this.start ^ this.length;
+            return (int)this.start ^ (int)this.length ^ (int)(this.start >> 32);
         }
     }
 
@@ -128,7 +136,7 @@ namespace FooEditEngine
         /// <param name="index">インデックス</param>
         /// <param name="length">長さ</param>
         /// <returns>要素を表すイテレーター</returns>
-        public IEnumerable<Selection> Get(int index, int length)
+        public IEnumerable<Selection> Get(long index, long length)
         {
             return this.collection.Get(index, length);
         }

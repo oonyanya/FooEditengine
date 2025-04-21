@@ -142,8 +142,8 @@ namespace FooEditEngine
 
                 var doc = e.textbox;
                 //キャレットは入力された文字の後ろにあるので、一致する分だけ選択して置き換える
-                int caretIndex = doc.LayoutLines.GetIndexFromTextPoint(e.textbox.CaretPostion);
-                int start = caretIndex - inputing_word.Length;
+                long caretIndex = doc.LayoutLines.GetIndexFromTextPoint(e.textbox.CaretPostion);
+                long start = caretIndex - inputing_word.Length;
                 if (start < 0)
                     start = 0;
                 doc.Replace(start, inputing_word.Length, word);
@@ -153,8 +153,8 @@ namespace FooEditEngine
                 AutoCompleteBoxBase box = (AutoCompleteBoxBase)s;
 
                 var doc = e.textbox;
-                int caretIndex = doc.LayoutLines.GetIndexFromTextPoint(e.textbox.CaretPostion);
-                int inputingIndex = caretIndex - 1;
+                long caretIndex = doc.LayoutLines.GetIndexFromTextPoint(e.textbox.CaretPostion);
+                long inputingIndex = caretIndex - 1;
                 if (inputingIndex < 0)
                     inputingIndex = 0;
 

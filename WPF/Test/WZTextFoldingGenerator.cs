@@ -12,7 +12,7 @@ namespace Test
         /// <summary>
         /// コンストラクター
         /// </summary>
-        public OutlineItem(int start, int end, int level)
+        public OutlineItem(long start, long end, int level)
             : base(start, end)
         {
             this.Level = level;
@@ -32,18 +32,18 @@ namespace Test
     {
         struct TextLevelInfo
         {
-            public int Index;
+            public long Index;
             public int Level;
-            public TextLevelInfo(int index, int level)
+            public TextLevelInfo(long index, int level)
             {
                 this.Index = index;
                 this.Level = level;
             }
         }
-        public IEnumerable<FoldingItem> AnalyzeDocument(Document doc, int start, int end)
+        public IEnumerable<FoldingItem> AnalyzeDocument(Document doc, long start, long end)
         {
             Stack<TextLevelInfo> beginIndexs = new Stack<TextLevelInfo>();
-            int lineHeadIndex = start;
+            long lineHeadIndex = start;
             foreach (string lineStr in doc.GetLines(start, end))
             {
                 int level = GetWZTextLevel(lineStr);
@@ -59,7 +59,7 @@ namespace Test
                 yield return item;
         }
 
-        IEnumerable<FoldingItem> GetFoldings(Stack<TextLevelInfo> beginIndexs,int level,int lineHeadIndex)
+        IEnumerable<FoldingItem> GetFoldings(Stack<TextLevelInfo> beginIndexs,int level, long lineHeadIndex)
         {
             while (beginIndexs.Count > 0)
             {
@@ -67,7 +67,7 @@ namespace Test
                 if (level > begin.Level)
                     break;
                 beginIndexs.Pop();
-                int endIndex = lineHeadIndex - 1;
+                long endIndex = lineHeadIndex - 1;
                 if (begin.Index < endIndex)
                     yield return new OutlineItem(begin.Index, endIndex,begin.Level);
             }

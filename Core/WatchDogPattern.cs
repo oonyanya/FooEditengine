@@ -25,7 +25,7 @@ namespace FooEditEngine
         /// <param name="lineHeadIndex">行頭へのインデックスを表す</param>
         /// <param name="s">文字列</param>
         /// <returns>Marker列挙体を返す</returns>
-        IEnumerable<Marker> GetMarker(int lineHeadIndex, string s);
+        IEnumerable<Marker> GetMarker(long lineHeadIndex, string s);
     }
     /// <summary>
     /// 正規表現でマーカーの取得を行うクラス
@@ -54,7 +54,7 @@ namespace FooEditEngine
         /// <param name="lineHeadIndex">行頭へのインデックスを表す</param>
         /// <param name="s">文字列</param>
         /// <returns>Marker列挙体を返す</returns>
-        public IEnumerable<Marker> GetMarker(int lineHeadIndex, string s)
+        public IEnumerable<Marker> GetMarker(long lineHeadIndex, string s)
         {
             foreach (Match m in this.regex.Matches(s))
             {

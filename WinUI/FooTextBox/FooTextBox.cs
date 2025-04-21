@@ -182,7 +182,7 @@ namespace FooEditEngine.WinUI
         /// </summary>
         /// <param name="start">開始インデックス</param>
         /// <param name="length">長さ</param>
-        public void Select(int start, int length)
+        public void Select(long start, long length)
         {
             this.Document.Select(start, length);
         }
@@ -330,7 +330,7 @@ namespace FooEditEngine.WinUI
         /// </summary>
         /// <param name="p">座標</param>
         /// <returns>インデックスを返す</returns>
-        public int GetIndexFromPostion(Windows.Foundation.Point p)
+        public long GetIndexFromPostion(Windows.Foundation.Point p)
         {
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
@@ -392,7 +392,10 @@ namespace FooEditEngine.WinUI
                 modified_range.EndCaretPosition = 0;
                 //キャレット位置はロード前と同じにしないと違和感を感じる
                 if (this.textEditContext != null)
-                    this.textEditContext.NotifyTextChanged(modified_range, this.Document.Length, modified_range);
+                {
+                    int lineLength = (int)this.Document.LayoutLines.GetRaw(0).length;
+                    this.textEditContext.NotifyTextChanged(modified_range, lineLength, modified_range);
+                }
 
                 if (this.verticalScrollBar != null)
                     this.verticalScrollBar.Maximum = this._View.LayoutLines.Count;
@@ -849,9 +852,9 @@ namespace FooEditEngine.WinUI
                     isBoldLine = true;
                     break;
             }
-            int inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
-            int start = inputImeStartIndex + args.Range.StartCaretPosition;
-            int lengt = args.Range.EndCaretPosition - args.Range.StartCaretPosition;
+            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+            long start = inputImeStartIndex + args.Range.StartCaretPosition;
+            long lengt = args.Range.EndCaretPosition - args.Range.StartCaretPosition;
             this.Document.SetMarker(MarkerIDs.IME, Marker.Create(start, lengt, type, color, isBoldLine));
 
             if (args.Reason == CoreTextFormatUpdatingReason.CompositionTargetConverted)
@@ -873,13 +876,13 @@ namespace FooEditEngine.WinUI
                 return;
             }
 
-            int inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
-            int start = inputImeStartIndex + req.Range.StartCaretPosition;
-            int end = inputImeStartIndex + req.Range.EndCaretPosition;
+            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+            long start = inputImeStartIndex + req.Range.StartCaretPosition;
+            long end = inputImeStartIndex + req.Range.EndCaretPosition;
             if (end > this.Document.Length)
                 end = this.Document.Length;
 
-            int length = end - start;
+            long length = end - start;
 
             DebugLog.WriteLine("req text start:{0} length:{1}", start, length);
 
@@ -891,9 +894,9 @@ namespace FooEditEngine.WinUI
         {
             //変換候補の範囲を取得する
             Point startPos, endPos;
-            int inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
-            int i_startIndex = inputImeStartIndex + args.Request.Range.StartCaretPosition;
-            int i_endIndex = inputImeStartIndex + args.Request.Range.EndCaretPosition;
+            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+            long i_startIndex = inputImeStartIndex + args.Request.Range.StartCaretPosition;
+            long i_endIndex = inputImeStartIndex + args.Request.Range.EndCaretPosition;
 
             if(args.Request.IsCanceled)
             {
@@ -945,10 +948,10 @@ namespace FooEditEngine.WinUI
             TextRange currentSelection = new TextRange();
             TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out currentSelection);
 
-            int inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
             CoreTextRange currentSelectionRange = new CoreTextRange();
-            currentSelectionRange.StartCaretPosition = currentSelection.Index - inputImeStartIndex;
-            currentSelectionRange.EndCaretPosition = currentSelection.Index + currentSelection.Length - inputImeStartIndex;
+            currentSelectionRange.StartCaretPosition = (int)(currentSelection.Index - inputImeStartIndex);
+            currentSelectionRange.EndCaretPosition = (int)(currentSelection.Index + currentSelection.Length - inputImeStartIndex);
             args.Request.Selection = currentSelectionRange;
             DebugLog.WriteLine("req selection start:{0} end:{1}", currentSelectionRange.StartCaretPosition, currentSelectionRange.EndCaretPosition);
         }
@@ -962,7 +965,7 @@ namespace FooEditEngine.WinUI
             }
             CoreTextRange sel = args.Selection;
             DebugLog.WriteLine("update selection start:{0} end:{1}", sel.StartCaretPosition, sel.EndCaretPosition);
-            int inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
             TextStoreHelper.SetSelectionIndex(this.Controller, this._View, inputImeStartIndex + sel.StartCaretPosition, inputImeStartIndex + sel.EndCaretPosition);
             args.Result = CoreTextSelectionUpdatingResult.Succeeded;
             this.Refresh();
@@ -979,7 +982,7 @@ namespace FooEditEngine.WinUI
                 args.NewSelection.StartCaretPosition, 
                 args.NewSelection.EndCaretPosition);
             bool isTip = args.InputLanguage.Script == "Latan";
-            int inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
             CoreTextRange sel = args.Range;
             TextStoreHelper.SetSelectionIndex(this.Controller, this._View, inputImeStartIndex + sel.StartCaretPosition, inputImeStartIndex + sel.EndCaretPosition);
             TextStoreHelper.InsertTextAtSelection(this._Controller, args.Text, inputImeStartIndex + sel.StartCaretPosition, inputImeStartIndex + sel.EndCaretPosition , isTip);
@@ -1031,9 +1034,9 @@ namespace FooEditEngine.WinUI
                 TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out currentSelection);
 
                 CoreTextRange currentSelectionRange = new CoreTextRange();
-                int inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
-                currentSelectionRange.StartCaretPosition = currentSelection.Index - inputImeStartIndex;
-                currentSelectionRange.EndCaretPosition = currentSelection.Index + currentSelection.Length - inputImeStartIndex;
+                long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+                currentSelectionRange.StartCaretPosition = (int)(currentSelection.Index - inputImeStartIndex);
+                currentSelectionRange.EndCaretPosition = (int)(currentSelection.Index + currentSelection.Length - inputImeStartIndex);
 
                 DebugLog.WriteLine("notify selection start:{0} end:{1}", currentSelectionRange.StartCaretPosition, currentSelectionRange.EndCaretPosition);
                 //変換中に呼び出してはいけない
@@ -1233,7 +1236,7 @@ namespace FooEditEngine.WinUI
             if (tp == TextPoint.Null)
                 return;
 
-            int index = this._View.LayoutLines.GetIndexFromTextPoint(tp);
+            long index = this._View.LayoutLines.GetIndexFromTextPoint(tp);
 
             FoldingItem foldingData = this._View.HitFoldingData(p.X, tp.row);
             if (foldingData != null)
@@ -1373,25 +1376,26 @@ namespace FooEditEngine.WinUI
         {
             if (e.type == UpdateType.Replace && !this.nowCompstion)
             {
-                int inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+                //TODO:行の長さはInt32.MaxValue-1なので適当に合わせる必要があるが、無理やりキャストしてるのでおかしなことになるかも
+                long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
                 CoreTextRange oldTextRange = new CoreTextRange();
-                oldTextRange.StartCaretPosition = e.startIndex - inputImeStartIndex;
-                oldTextRange.EndCaretPosition = e.startIndex - inputImeStartIndex;
+                oldTextRange.StartCaretPosition = (int)(e.startIndex - inputImeStartIndex);
+                oldTextRange.EndCaretPosition = (int)(e.startIndex - inputImeStartIndex);
                 //削除する範囲が1以上の場合、ドキュメントを飛び越えることはできない
                 //https://msdn.microsoft.com/en-us/windows/uwp/input-and-devices/custom-text-input
                 if (e.removeLength > 0)
-                    oldTextRange.EndCaretPosition += e.removeLength;
+                    oldTextRange.EndCaretPosition += (int)e.removeLength;
 
                 TextRange currentSelection = new TextRange();
                 TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out currentSelection);
 
                 CoreTextRange newSelection = new CoreTextRange();
-                newSelection.StartCaretPosition = e.startIndex - inputImeStartIndex;
-                newSelection.EndCaretPosition = e.startIndex - inputImeStartIndex;
+                newSelection.StartCaretPosition = (int)(e.startIndex - inputImeStartIndex);
+                newSelection.EndCaretPosition = (int)(e.startIndex - inputImeStartIndex);
 
                 //置き換え後の長さを指定する
                 //（注意：削除された文字数のほうが多い場合は0を指定しないいけない）
-                int newTextLength = e.insertLength;
+                int newTextLength = (int)e.insertLength;
 
                 DebugLog.WriteLine("notify text change (modify start:{0} end:{1}) newlength:{2} (new sel start:{3} end:{4})",
                     oldTextRange.StartCaretPosition, oldTextRange.EndCaretPosition, newTextLength, newSelection.StartCaretPosition, newSelection.EndCaretPosition);

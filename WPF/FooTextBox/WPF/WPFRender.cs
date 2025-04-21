@@ -522,7 +522,8 @@ namespace FooEditEngine.WPF
                             brush = this.Brushes[this.Literal];
                             break;
                     }
-                    TextEffect effect = new TextEffect(null, brush, null, s.index, s.length);
+                    System.Diagnostics.Debug.Assert(s.index < Int32.MaxValue - 1);
+                    TextEffect effect = new TextEffect(null, brush, null, (int)s.index, (int)s.length);
                     effect.Freeze();
                     layout.SetTextEffect(effect);
                 }
@@ -539,7 +540,7 @@ namespace FooEditEngine.WPF
                     if (m.hilight == HilightType.Url)
                     {
                         brush = this.Brushes[this.Url];
-                        TextEffect effect = new TextEffect(null, brush, null, m.start, m.length);
+                        TextEffect effect = new TextEffect(null, brush, null, (int)m.start, (int)m.length);
                         effect.Freeze();
                         layout.SetTextEffect(effect);
                     }
@@ -563,9 +564,9 @@ namespace FooEditEngine.WPF
                     collection.Add(decoration);
 
                     if (m.hilight == HilightType.Squiggle)
-                        layout.SetSquilleLine(m.start, m.length, collection);
+                        layout.SetSquilleLine((int)m.start, (int)m.length, collection);
                     else
-                        layout.SetTextDecoration(m.start, m.length, collection);
+                        layout.SetTextDecoration((int)m.start, (int)m.length, collection);
                 }
             }
 

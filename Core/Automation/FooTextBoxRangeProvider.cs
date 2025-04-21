@@ -56,13 +56,13 @@ namespace FooEditEngine
     {
         private FooTextBox textbox;
         private FooTextBoxAutomationPeer _peer;
-        private int start, end;
+        private long start, end;
 
         public FooTextBoxRangeProvider(FooTextBox textbox, FooTextBoxAutomationPeer peer)
             : this(textbox, 0, textbox.Document.Length, peer)
         {
         }
-        public FooTextBoxRangeProvider(FooTextBox textbox, int start, int length, FooTextBoxAutomationPeer peer)
+        public FooTextBoxRangeProvider(FooTextBox textbox, long start, long length, FooTextBoxAutomationPeer peer)
         {
             this.textbox = textbox;
             this.start = start;
@@ -115,7 +115,7 @@ namespace FooEditEngine
             throw new ArgumentException("endpointに未知の値が指定されました");
         }
 
-        int Compare(int self, int other)
+        int Compare(long self, long other)
         {
             if (self < other)
                 return -1;
@@ -246,7 +246,7 @@ namespace FooEditEngine
 #endif
         }
 
-        bool IsNewLine(int index)
+        bool IsNewLine(long index)
         {
             if (this.textbox.Document.Length > 0)
                 return this.textbox.Document[index == 0 ? 0 : index - 1] == Document.NewLine;
@@ -268,7 +268,7 @@ namespace FooEditEngine
         {
             if (this.textbox.Document.Length == 0)
                 return "";
-            int length = this.end - this.start;
+            long length = this.end - this.start;
             if (maxLength < 0)
                 return this.textbox.Document.ToString(this.start, length);
             else

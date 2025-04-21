@@ -185,8 +185,8 @@ namespace FooEditEngine
         public ITextRangeProvider[] GetSelection()
         {
             ITextRangeProvider[] ret = new ITextRangeProvider[1];
-            int selStart = this.fooTextBox.Selection.Index;
-            int selLength = this.fooTextBox.Selection.Length;
+            long selStart = this.fooTextBox.Selection.Index;
+            long selLength = this.fooTextBox.Selection.Length;
             ret[0] = new FooTextBoxRangeProvider(this.fooTextBox, selStart, selLength, this);
             return ret;
         }
@@ -201,9 +201,9 @@ namespace FooEditEngine
             else
             {
                 EditView view = this.fooTextBox.View;
-                
-                int startIndex = view.GetIndexFromLayoutLine(new TextPoint(view.Src.Row,0));
-                int endIndex = view.GetIndexFromLayoutLine(new TextPoint(view.Src.Row + view.LineCountOnScreen, 0));
+
+                long startIndex = view.GetIndexFromLayoutLine(new TextPoint(view.Src.Row,0));
+                long endIndex = view.GetIndexFromLayoutLine(new TextPoint(view.Src.Row + view.LineCountOnScreen, 0));
                 ret[0] = new FooTextBoxRangeProvider(this.fooTextBox, startIndex, endIndex - startIndex, this);
             }
             return ret;
@@ -226,8 +226,8 @@ namespace FooEditEngine
             TextPoint tp = view.GetTextPointFromPostion(pt);
             if (tp == TextPoint.Null)
                 tp = new TextPoint(view.Src.Row,0);
-            int index = view.GetIndexFromLayoutLine(tp);
-            int length = 1;
+            long index = view.GetIndexFromLayoutLine(tp);
+            long length = 1;
             if (index == this.fooTextBox.Document.Length)
                 length = 0;
 
@@ -250,8 +250,8 @@ namespace FooEditEngine
             EditView view = this.fooTextBox.View;
             Document doc = this.fooTextBox.Document;
             isActive = true;
-            int index = view.GetIndexFromLayoutLine(doc.CaretPostion);
-            int length = 1;
+            long index = view.GetIndexFromLayoutLine(doc.CaretPostion);
+            long length = 1;
             if (index == this.fooTextBox.Document.Length)
                 length = 0;
 

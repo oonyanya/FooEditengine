@@ -234,8 +234,8 @@ namespace FooEditEngine
 
             if (x >= this.GetRealtiveX(AreaType.FoldingArea) && x <= this.GetRealtiveX(AreaType.FoldingArea) + render.FoldingWidth)
             {
-                int lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
-                int lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
+                long lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
+                long lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
                 FoldingItem foldingData = this.LayoutLines.FoldingCollection.Get(lineHeadIndex, lineLength);
                 if (foldingData != null && foldingData.IsFirstLine(this.LayoutLines,row))
                     return foldingData;
@@ -286,8 +286,8 @@ namespace FooEditEngine
                     for (int i = this.Src.Row; i < this.LayoutLines.Count; i++)
                     {
                         drawLine = i;
-                        int lineIndex = this.LayoutLines.GetIndexFromLineNumber(i);
-                        int lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
+                        long lineIndex = this.LayoutLines.GetIndexFromLineNumber(i);
+                        long lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
                         ITextLayout layout = this.LayoutLines.GetLayout(i);
 
                         if (pos.Y > endposy)
@@ -333,8 +333,8 @@ namespace FooEditEngine
                 
                 for (int i = this.Src.Row; i < this.LayoutLines.Count; i++)
                 {
-                    int lineIndex = this.LayoutLines.GetIndexFromLineNumber(i);
-                    int lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
+                    long lineIndex = this.LayoutLines.GetIndexFromLineNumber(i);
+                    long lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
                     ITextLayout layout = this.LayoutLines.GetLayout(i);
 
                     if (pos.Y > endposy)
@@ -600,8 +600,8 @@ namespace FooEditEngine
             //表示上のずれを考慮せずキャレット位置を求める
             for (int i = this.Src.Row; i < tp.row; i++)
             {
-                int lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(i);
-                int lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
+                long lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(i);
+                long lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
                 if (this.LayoutLines.FoldingCollection.IsHidden(lineHeadIndex))
                     continue;
                 p.Y += this.LayoutLines.GetLayout(i).Height;
@@ -621,7 +621,7 @@ namespace FooEditEngine
             return null;
         }
 
-        public Rectangle GetRectFromIndex(int index,int width,int height)
+        public Rectangle GetRectFromIndex(long index,int width,int height)
         {
             TextPoint tp = this.LayoutLines.GetTextPointFromIndex(index);
             return this.GetRectFromTextPoint(tp, width, height);
@@ -653,7 +653,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="index">インデックス</param>
         /// <returns>調整されたら真。そうでなければ偽</returns>
-        public bool AdjustSrc(int index)
+        public bool AdjustSrc(long index)
         {
             TextPoint startTextPoint = this.GetLayoutLineFromIndex(index);
             var result = this.AdjustSrc(startTextPoint, AdjustFlow.Row);
@@ -758,8 +758,8 @@ namespace FooEditEngine
                 double alignedHeight = PhyLineCountOnScreen * lineHeight - lineHeight;
                 for (int i = this.Src.Row; i < tp.row; i++)
                 {
-                    int lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(i);
-                    int lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
+                    long lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(i);
+                    long lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
 
                     if (this.LayoutLines.FoldingCollection.IsHidden(lineHeadIndex))
                         continue;
@@ -802,7 +802,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="tp">テキストポイント表す</param>
         /// <returns>インデックスを返す</returns>
-        public int GetIndexFromLayoutLine(TextPoint tp)
+        public long GetIndexFromLayoutLine(TextPoint tp)
         {
             return this.LayoutLines.GetIndexFromTextPoint(tp);
         }
@@ -812,7 +812,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="index">インデックスを表す</param>
         /// <returns>テキストポイント返す</returns>
-        public TextPoint GetLayoutLineFromIndex(int index)
+        public TextPoint GetLayoutLineFromIndex(long index)
         {
             return this.LayoutLines.GetTextPointFromIndex(index);
         }
@@ -862,8 +862,8 @@ namespace FooEditEngine
         {
             if (this.LayoutLines.FoldingStrategy == null)
                 return row;
-            int lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
-            int lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
+            long lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
+            long lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
             FoldingItem foldingData = this.LayoutLines.FoldingCollection.GetFarestHiddenFoldingData(lineHeadIndex, lineLength);
             if (foldingData != null && !foldingData.Expand)
             {
@@ -944,8 +944,8 @@ namespace FooEditEngine
             {
                 int row = i < this.LayoutLines.Count ? i : this.LayoutLines.Count - 1;
 
-                int lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
-                int lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
+                long lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
+                long lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
 
                 LineToIndexTableData lineData = null;
                 this.LayoutLines.FetchLine(row);

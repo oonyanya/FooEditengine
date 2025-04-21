@@ -22,24 +22,30 @@ namespace UnitTest
     [TestClass]
     public class RangeCollectionTest
     {
-        class MyRangeItem : IRange
+        class MyRangeItem : FooProject.Collection.IRange
         {
-            public MyRangeItem(int start,int length)
+            public MyRangeItem(long start, long length)
             {
                 this.start = start;
                 this.length = length;
             }
 
-            public int start
+            public long start
             {
                 get;
                 set;
             }
 
-            public int length
+            public long length
             {
                 get;
                 set;
+            }
+
+            public FooProject.Collection.IRange DeepCopy()
+            {
+                var newItem = new MyRangeItem(this.start, this.length);
+                return newItem;
             }
         }
 

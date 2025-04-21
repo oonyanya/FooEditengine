@@ -103,8 +103,8 @@ namespace UnitTest
             Controller ctrl = new Controller(doc, view);
             doc.Append("this is a pen");
             doc.Select(0, 1);
-            int old_sel_start = ctrl.SelectionStart;
-            int old_sel_length = ctrl.SelectionLength;
+            long old_sel_start = ctrl.SelectionStart;
+            long old_sel_length = ctrl.SelectionLength;
             TextPoint old_caret = doc.CaretPostion;
             ctrl.AdjustCaret();
             Assert.IsTrue(old_sel_start == ctrl.SelectionStart);

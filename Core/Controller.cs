@@ -172,7 +172,7 @@ namespace FooEditEngine
         /// 選択範囲の開始位置
         /// </summary>
         /// <remarks>SelectionLengthが0の場合、キャレット位置を表します</remarks>
-        public int SelectionStart
+        public long SelectionStart
         {
             get
             {
@@ -187,7 +187,7 @@ namespace FooEditEngine
         /// 選択範囲の長さ
         /// </summary>
         /// <remarks>矩形選択モードの場合、選択範囲の文字数ではなく、開始位置から終了位置までの長さとなります</remarks>
-        public int SelectionLength
+        public long SelectionLength
         {
             get
             {
@@ -233,7 +233,7 @@ namespace FooEditEngine
         /// <returns>逆転しているなら真を返す</returns>
         public bool IsReverseSelect()
         {
-            int index = this.View.LayoutLines.GetIndexFromTextPoint(this.Document.CaretPostion);
+            long index = this.View.LayoutLines.GetIndexFromTextPoint(this.Document.CaretPostion);
             return index < this.Document.AnchorIndex;
         }
 
@@ -306,7 +306,7 @@ namespace FooEditEngine
         {
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
-            int index = this.View.LayoutLines.GetIndexFromTextPoint(tp);
+            long index = this.View.LayoutLines.GetIndexFromTextPoint(tp);
             return this.IsMarker(index, type);
         }
 
@@ -316,7 +316,7 @@ namespace FooEditEngine
         /// <param name="index"></param>
         /// <param name="type"></param>
         /// <returns>真ならマーカーがある</returns>
-        public bool IsMarker(int index, HilightType type)
+        public bool IsMarker(long index, HilightType type)
         {
             foreach(int id in this.Document.Markers.IDs)
             {
@@ -344,8 +344,8 @@ namespace FooEditEngine
                 col = this.View.LayoutLines[row].Length;
 
             //選択領域が消えてしまうので覚えておく
-            int sel_start = this.SelectionStart;
-            int sel_length = this.SelectionLength;
+            long sel_start = this.SelectionStart;
+            long sel_length = this.SelectionLength;
 
             this.JumpCaret(row, col);
 
@@ -358,7 +358,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="index"></param>
         /// <param name="autoExpand">折り畳みを展開するなら真</param>
-        public void JumpCaret(int index,bool autoExpand = true)
+        public void JumpCaret(long index,bool autoExpand = true)
         {
             if (index < 0 || index > this.Document.Length)
                 throw new ArgumentOutOfRangeException("indexが設定できる範囲を超えています");
@@ -635,13 +635,13 @@ namespace FooEditEngine
                 throw new InvalidOperationException("");
 
             TextPoint CaretPostion = this.Document.CaretPostion;
-            int index = this.View.GetIndexFromLayoutLine(CaretPostion);
+            long index = this.View.GetIndexFromLayoutLine(CaretPostion);
 
             if (index == this.Document.Length)
                 return;
 
-            int lineHeadIndex = this.View.LayoutLines.GetIndexFromLineNumber(CaretPostion.row);
-            int next = this.View.LayoutLines.GetLayout(CaretPostion.row).AlignIndexToNearestCluster(CaretPostion.col, AlignDirection.Forward) + lineHeadIndex;
+            long lineHeadIndex = this.View.LayoutLines.GetIndexFromLineNumber(CaretPostion.row);
+            long next = this.View.LayoutLines.GetLayout(CaretPostion.row).AlignIndexToNearestCluster(CaretPostion.col, AlignDirection.Forward) + lineHeadIndex;
 
             if (this.Document[index] == Document.NewLine)
                 next = index + 1;
@@ -685,9 +685,10 @@ namespace FooEditEngine
             if (CurrentPostion.row == 0 && CurrentPostion.col == 0)
                 return;
 
-            int oldIndex = this.View.GetIndexFromLayoutLine(CurrentPostion);
+            long oldIndex = this.View.GetIndexFromLayoutLine(CurrentPostion);
 
-            int newCol, newIndex;
+            int newCol;
+            long newIndex;
             if (CurrentPostion.col > 0)
             {
                 newCol = this.View.LayoutLines.GetLayout(CurrentPostion.row).AlignIndexToNearestCluster(CurrentPostion.col - 1, AlignDirection.Back);
@@ -751,12 +752,12 @@ namespace FooEditEngine
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
 
-            int index = this.View.GetIndexFromLayoutLine(CaretPos);
-            int length = 0;
+            long index = this.View.GetIndexFromLayoutLine(CaretPos);
+            long length = 0;
             if (this.View.InsertMode == false && index < this.Document.Length && this.Document[index] != Document.NewLine)
             {
                 string lineString = this.View.LayoutLines[CaretPos.row];
-                int end = this.View.LayoutLines.GetLayout(CaretPos.row).AlignIndexToNearestCluster(CaretPos.col + str.Length - 1, AlignDirection.Forward);
+                long end = this.View.LayoutLines.GetLayout(CaretPos.row).AlignIndexToNearestCluster(CaretPos.col + str.Length - 1, AlignDirection.Forward);
                 if (end > lineString.Length - 1)
                     end = lineString.Length - 1;
                 end += this.View.LayoutLines.GetIndexFromLineNumber(CaretPos.row);
@@ -764,8 +765,8 @@ namespace FooEditEngine
             }
             if (str == Document.NewLine.ToString())
             {
-                int lineHeadIndex = this.View.LayoutLines.GetIndexFromLineNumber(CaretPos.row);
-                int lineLength = this.View.LayoutLines.GetLengthFromLineNumber(CaretPos.row);
+                long lineHeadIndex = this.View.LayoutLines.GetIndexFromLineNumber(CaretPos.row);
+                long lineLength = this.View.LayoutLines.GetLengthFromLineNumber(CaretPos.row);
                 FoldingItem foldingData = this.View.LayoutLines.FoldingCollection.GetFarestHiddenFoldingData(lineHeadIndex, lineLength);
                 if (foldingData != null && !foldingData.Expand && index > foldingData.Start && index <= foldingData.End)
                     index = foldingData.End + 1;
@@ -788,7 +789,7 @@ namespace FooEditEngine
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
 
-            int CaretPostion = this.View.GetIndexFromLayoutLine(this.Document.CaretPostion);
+            long CaretPostion = this.View.GetIndexFromLayoutLine(this.Document.CaretPostion);
             
             SelectCollection Selections = this.View.Selections;
             if (isSelected)
@@ -847,7 +848,7 @@ namespace FooEditEngine
         public void MoveCaretAndSelect(TextPoint tp,bool alignWord = false)
         {
             TextPoint endSelectPostion = tp;
-            int CaretPostion = this.View.GetIndexFromLayoutLine(tp);
+            long CaretPostion = this.View.GetIndexFromLayoutLine(tp);
             if (alignWord)
             {
                 if (this.IsReverseSelect())
@@ -919,8 +920,8 @@ namespace FooEditEngine
 
         void MoveSelectBefore(TextPoint tp)
         {
-            int NewAnchorIndex;
-            int SelectionLength;
+            long NewAnchorIndex;
+            long SelectionLength;
             if (this.IsReverseSelect())
             {
                 NewAnchorIndex = this.View.GetIndexFromLayoutLine(tp);
@@ -997,7 +998,7 @@ namespace FooEditEngine
         {
             if (this.RectSelection || this.SelectionLength == 0)
                 return;
-            int selectionStart = this.SelectionStart;
+            long selectionStart = this.SelectionStart;
             string insertStr = this.IndentMode == IndentMode.Space ? this.GetIndentSpace(0) : "\t";
             string text = this.InsertLineHead(GetTextFromLineSelectArea(this.View.Selections), insertStr);
             this.RepleaceSelectionArea(this.View.Selections,text);
@@ -1011,7 +1012,7 @@ namespace FooEditEngine
         {
             if (this.RectSelection || this.SelectionLength == 0)
                 return;
-            int selectionStart = this.SelectionStart;
+            long selectionStart = this.SelectionStart;
             string insertStr = this.IndentMode == IndentMode.Space ? this.GetIndentSpace(0) : "\t";
             string text = this.RemoveLineHead(GetTextFromLineSelectArea(this.View.Selections), insertStr, insertStr.Length);
             this.RepleaceSelectionArea(this.View.Selections, text);
@@ -1110,8 +1111,8 @@ namespace FooEditEngine
                 throw new InvalidOperationException();
 
             SelectCollection temp = this.View.Selections;
-            int selectStart = temp.First().start;
-            int selectEnd = temp.Last().start + temp.Last().length;
+            long selectStart = temp.First().start;
+            long selectEnd = temp.Last().start + temp.Last().length;
 
             //ドキュメント操作後に行うとうまくいかないので、あらかじめ取得しておく
             TextPoint start = this.View.LayoutLines.GetTextPointFromIndex(selectStart);
@@ -1119,7 +1120,7 @@ namespace FooEditEngine
 
             bool reverse = temp.First().start > temp.Last().start;
 
-            int lineHeadIndex = this.View.LayoutLines.GetIndexFromLineNumber(this.View.LayoutLines.GetLineNumberFromIndex(selectStart));
+            long lineHeadIndex = this.View.LayoutLines.GetIndexFromLineNumber(this.View.LayoutLines.GetLineNumberFromIndex(selectStart));
             if (selectStart - removeLength < lineHeadIndex)
                 return;
 
@@ -1181,7 +1182,7 @@ namespace FooEditEngine
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
 
-            int StartIndex = this.SelectionStart;
+            long StartIndex = this.SelectionStart;
 
             SelectCollection newInsertPoint = new SelectCollection();
 

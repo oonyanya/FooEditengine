@@ -573,7 +573,7 @@ namespace FooEditEngine.WinUI
                             brush = this._factory.CreateSolidColorBrush(this.Literal);
                             break;
                     }
-                    newLayout.RawLayout.SetBrush(s.index, s.length, brush);
+                    newLayout.RawLayout.SetBrush((int)s.index, (int)s.length, brush);
                 }
             }
 
@@ -585,7 +585,7 @@ namespace FooEditEngine.WinUI
                     if (sel.length == 0 || sel.start == -1)
                         continue;
                     if (sel.hilight == HilightType.Url)
-                        newLayout.RawLayout.SetBrush(sel.start, sel.length, this._factory.CreateSolidColorBrush(this.Url));
+                        newLayout.RawLayout.SetBrush((int)sel.start, (int)sel.length, this._factory.CreateSolidColorBrush(this.Url));
                 }
             }
 
@@ -599,7 +599,7 @@ namespace FooEditEngine.WinUI
                         if (sel.length == 0 || sel.start == -1)
                             continue;
 
-                        newLayout.RawLayout.SetBrush(sel.start, sel.length, this._factory.CreateSolidColorBrush(this.HilightForeground));
+                        newLayout.RawLayout.SetBrush((int)sel.start, (int)sel.length, this._factory.CreateSolidColorBrush(this.HilightForeground));
                     }
                 }
             }
@@ -637,7 +637,7 @@ namespace FooEditEngine.WinUI
                     {
                         if (sel.length == 0 || sel.start == -1)
                             continue;
-                        this.DrawMarkerEffect(layout, sel.hilight, sel.start, sel.length, x, y, sel.isBoldLine, new Windows.UI.Color() { A = sel.color.A, R = sel.color.R, B = sel.color.B, G = sel.color.G });
+                        this.DrawMarkerEffect(layout, sel.hilight, (int)sel.start, (int)sel.length, x, y, sel.isBoldLine, new Windows.UI.Color() { A = sel.color.A, R = sel.color.R, B = sel.color.B, G = sel.color.G });
                     }
                 }
                 if (layout.Selects != null)
@@ -647,7 +647,7 @@ namespace FooEditEngine.WinUI
                         if (sel.length == 0 || sel.start == -1)
                             continue;
 
-                        this.DrawMarkerEffect(layout, HilightType.Select, sel.start, sel.length, x, y, false);
+                        this.DrawMarkerEffect(layout, HilightType.Select, (int)sel.start, (int)sel.length, x, y, false);
                     }
                 }
 

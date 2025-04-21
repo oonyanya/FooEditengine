@@ -47,7 +47,7 @@ namespace FooEditEngine
             return false;
         }
 
-        void GenerateFolding(Document doc, LineToIndexTable lti,int start, int end)
+        void GenerateFolding(Document doc, LineToIndexTable lti, long start, long end)
         {
             if (start > end)
                 throw new ArgumentException("start <= endである必要があります");
@@ -66,7 +66,7 @@ namespace FooEditEngine
             }
         }
 
-        public void Update(Document doc, int startIndex, int insertLength, int removeLength)
+        public void Update(Document doc, long startIndex, long insertLength, long removeLength)
         {
             this.FoldingCollection.UpdateData(doc, startIndex, insertLength, removeLength);
             this._IsSync = false;
