@@ -541,7 +541,7 @@ namespace FooEditEngine
         {
             if (autoExpand)
             {
-                long lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(row);
+                long lineHeadIndex = this.LayoutLines.GetLongIndexFromLineNumber(row);
                 long lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
                 FoldingItem foldingData = this.LayoutLines.FoldingCollection.Get(lineHeadIndex, lineLength);
                 if (foldingData != null)
@@ -927,8 +927,8 @@ namespace FooEditEngine
                     if (rect.TopRight.col > lastCol)
                         rightCol = lastCol;
 
-                    long StartIndex = this.LayoutLines.GetIndexFromTextPoint(new TextPoint(i, leftCol));
-                    long EndIndex = this.LayoutLines.GetIndexFromTextPoint(new TextPoint(i, rightCol));
+                    long StartIndex = this.LayoutLines.GetLongIndexFromTextPoint(new TextPoint(i, leftCol));
+                    long EndIndex = this.LayoutLines.GetLongIndexFromTextPoint(new TextPoint(i, rightCol));
 
                     Selection sel;
                     sel = Selection.Create(StartIndex, EndIndex - StartIndex);
@@ -1496,7 +1496,7 @@ namespace FooEditEngine
                     else
                     {
                         this._LayoutLines.UpdateLineAsReplace(e.row.Value, e.removeLength, e.insertLength);
-                        this.Markers.UpdateMarkers(this.LayoutLines.GetIndexFromLineNumber(e.row.Value), e.insertLength, e.removeLength);
+                        this.Markers.UpdateMarkers(this.LayoutLines.GetLongIndexFromLineNumber(e.row.Value), e.insertLength, e.removeLength);
                     }
                     this.Dirty = true;
                     break;

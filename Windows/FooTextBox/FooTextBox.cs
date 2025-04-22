@@ -868,7 +868,21 @@ namespace FooEditEngine.Windows
         /// </summary>
         /// <param name="p">座標</param>
         /// <returns>インデックスを返す</returns>
-        public long GetIndexFromPostion(System.Drawing.Point p)
+        [Obsolete]
+        public int GetIndexFromPostion(System.Drawing.Point p)
+        {
+            if (this.Document.FireUpdateEvent == false)
+                throw new InvalidOperationException("");
+            TextPoint tp = this.View.GetTextPointFromPostion(p);
+            return (int)this.View.GetIndexFromLayoutLine(tp);
+        }
+
+        /// <summary>
+        /// 座標からインデックスに変換します
+        /// </summary>
+        /// <param name="p">座標</param>
+        /// <returns>インデックスを返す</returns>
+        public long GetLongIndexFromPostion(System.Drawing.Point p)
         {
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
@@ -1113,7 +1127,7 @@ namespace FooEditEngine.Windows
             TextPoint tp = this.View.GetTextPointFromPostion(e.Location);
             if (tp == TextPoint.Null)
                 return;
-            long index = this.View.LayoutLines.GetIndexFromTextPoint(tp);
+            long index = this.View.LayoutLines.GetLongIndexFromTextPoint(tp);
             
             FooMouseEventArgs mouseEvent = new FooMouseEventArgs(index, e.Button, e.Clicks, e.X, e.Y, e.Delta);
             
@@ -1165,7 +1179,7 @@ namespace FooEditEngine.Windows
             TextPoint tp = this.View.GetTextPointFromPostion(e.Location);
             if (tp == TextPoint.Null)
                 return;
-            long index = this.View.LayoutLines.GetIndexFromTextPoint(tp);
+            long index = this.View.LayoutLines.GetLongIndexFromTextPoint(tp);
 
             FooMouseEventArgs mouseEvent = new FooMouseEventArgs(index, e.Button, e.Clicks, e.X, e.Y, e.Delta);
             

@@ -411,7 +411,7 @@ namespace FooEditEngine
                 {
                     ITextLayout layout = this.Document.LayoutLines.GetLayout(i);
 
-                    long lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(i);
+                    long lineHeadIndex = this.LayoutLines.GetLongIndexFromLineNumber(i);
                     long lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
                     double layoutHeight = layout.Height;
 
@@ -444,7 +444,7 @@ namespace FooEditEngine
                 {
                     ITextLayout layout = this.Document.LayoutLines.GetLayout(i);
 
-                    long lineHeadIndex = this.LayoutLines.GetIndexFromLineNumber(i);
+                    long lineHeadIndex = this.LayoutLines.GetLongIndexFromLineNumber(i);
                     long lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
                     double layoutHeight = layout.Height;
 

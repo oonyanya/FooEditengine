@@ -354,13 +354,13 @@ namespace FooEditEngine
 
             if (endpoint == TextPatternRangeEndpoint.Start)
             {
-                this.start = layoutLine.GetIndexFromTextPoint(newCaret);
+                this.start = layoutLine.GetLongIndexFromTextPoint(newCaret);
                 if (this.start > this.end)
                     this.end = this.start;
             }
             else if (endpoint == TextPatternRangeEndpoint.End)
             {
-                this.end = layoutLine.GetIndexFromTextPoint(newCaret);
+                this.end = layoutLine.GetLongIndexFromTextPoint(newCaret);
                 if (this.end < this.start)
                     this.start = this.end;
             }

@@ -413,7 +413,7 @@ namespace FooEditEngine
             get
             {
                 LineToIndexTableData data = this.GetRaw(n);
-                string str = this.Document.ToString(this.GetLineHeadIndex(n), data.Length);
+                string str = this.Document.ToString(this.GetLineHeadLongIndex(n), data.Length);
 
                 return str;
             }
@@ -433,7 +433,20 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="row"></param>
         /// <returns></returns>
-        public long GetLineHeadIndex(int row)
+        [Obsolete]
+        public int GetLineHeadIndex(int row)
+        {
+            if (this.collection.Count == 0)
+                return 0;
+            return (int)this.collection.GetIndexIntoRange(row).Index;
+        }
+
+        /// <summary>
+        /// 当該行の先頭インデックスを取得する
+        /// </summary>
+        /// <param name="row"></param>
+        /// <returns></returns>
+        public long GetLineHeadLongIndex(int row)
         {
             if (this.collection.Count == 0)
                 return 0;
@@ -449,13 +462,13 @@ namespace FooEditEngine
 
             if(deltaLength != 0)
             {
-                var newData = new LineToIndexTableData(this.GetLineHeadIndex(row), this.GetLengthFromLineNumber(row) + deltaLength, true, true, null);
+                var newData = new LineToIndexTableData(this.GetLineHeadLongIndex(row), this.GetLengthFromLineNumber(row) + deltaLength, true, true, null);
 
                 this.collection.Set(row,newData);
             }
 
             foreach (var generator in this._generators)
-                generator.Update(this.Document, this.GetLineHeadIndex(row), insertedLength, removedLength);
+                generator.Update(this.Document, this.GetLineHeadLongIndex(row), insertedLength, removedLength);
         }
 
         internal int UpdateLayoutLine(long index, long removedLength, long insertedLength)
@@ -565,8 +578,8 @@ namespace FooEditEngine
 
         Tuple<long, long> GetAnalyzeLength(int startRow, int endRow, long updateStartIndex, long removedLength, long insertedLength)
         {
-            long HeadIndex = this.GetIndexFromLineNumber(startRow);
-            long LastIndex = this.GetIndexFromLineNumber(endRow) + this.GetLengthFromLineNumber(endRow) - 1;
+            long HeadIndex = this.GetLongIndexFromLineNumber(startRow);
+            long LastIndex = this.GetLongIndexFromLineNumber(endRow) + this.GetLengthFromLineNumber(endRow) - 1;
 
             //SpilitStringの対象となる範囲を求める
             long fisrtPartLength = updateStartIndex - HeadIndex;
@@ -601,7 +614,7 @@ namespace FooEditEngine
             }
 
             int lastLineRow = this._Lines.Count > 0 ? this._Lines.Count - 1 : 0;
-            long lastLineHeadIndex = this.GetIndexFromLineNumber(lastLineRow);
+            long lastLineHeadIndex = this.GetLongIndexFromLineNumber(lastLineRow);
             long lastLineLength = this.GetLengthFromLineNumber(lastLineRow);
 
             if (lastLineLength != 0 && this.Document[Document.Length - 1] == Document.NewLine)
@@ -654,7 +667,7 @@ namespace FooEditEngine
         /// <param name="row">行</param>
         public void FetchLine(int row)
         {
-            long startIndex = this.GetIndexFromLineNumber(this.collection.Count - 1);
+            long startIndex = this.GetLongIndexFromLineNumber(this.collection.Count - 1);
             long totalAnayzedLength = FetchLineWithoutEvent(row);
             this.Document.FireUpdate(
                 new DocumentUpdateEventArgs(UpdateType.BuildLayout,
@@ -671,7 +684,7 @@ namespace FooEditEngine
             {
                 //直接最終行を取得すると後々おかしくなる
                 int lastRow = this.collection.Count - 1;
-                long LineHeadIndex = this.GetIndexFromLineNumber(lastRow);
+                long LineHeadIndex = this.GetLongIndexFromLineNumber(lastRow);
                 long Length = this.GetLengthFromLineNumber(lastRow);
                 if (LineHeadIndex + Length >= this.Document.Length)
                 {
@@ -694,11 +707,22 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="row">行番号</param>
         /// <returns>0から始まるインデックスを返す</returns>
-        public long GetIndexFromLineNumber(int row)
+        [Obsolete]
+        public int GetIndexFromLineNumber(int row)
+        {
+            return (int)GetLongIndexFromLineNumber(row);
+        }
+
+        /// <summary>
+        /// 行番号をインデックスに変換します
+        /// </summary>
+        /// <param name="row">行番号</param>
+        /// <returns>0から始まるインデックスを返す</returns>
+        public long GetLongIndexFromLineNumber(int row)
         {
             if (row < 0 || row > this._Lines.Count)
                 throw new ArgumentOutOfRangeException();
-            return this.GetLineHeadIndex(row);
+            return this.GetLineHeadLongIndex(row);
         }
 
         /// <summary>
@@ -761,7 +785,7 @@ namespace FooEditEngine
             }
             else
             {
-                long lineHeadIndex = this.GetLineHeadIndex(row);
+                long lineHeadIndex = this.GetLineHeadLongIndex(row);
 
                 string lineString = this.Document.ToString(lineHeadIndex, (int)lineData.length);
 
@@ -808,7 +832,7 @@ namespace FooEditEngine
             {
                 int lastRow = this.collection.Count - 1;
                 var line = this.collection.Get(lastRow);
-                var lineHeadIndex = this.GetLineHeadIndex(lastRow);
+                var lineHeadIndex = this.GetLineHeadLongIndex(lastRow);
                 if (start >= lineHeadIndex && start <= lineHeadIndex + line.length)   //最終行長+1までキャレットが移動する可能性があるので
                 {
                     return this.collection.Count - 1;
@@ -858,7 +882,7 @@ namespace FooEditEngine
         {
             TextPoint tp = new TextPoint();
             tp.row = GetLineNumberFromIndex(index);
-            tp.col = (int)(index - this.GetLineHeadIndex(tp.row));
+            tp.col = (int)(index - this.GetLineHeadLongIndex(tp.row));
             Debug.Assert(tp.row < this._Lines.Count && tp.col <= this.GetRaw(tp.row).Length);
             return tp;
         }
@@ -868,7 +892,18 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="tp">TextPoint構造体</param>
         /// <returns>インデックスを返します</returns>
-        public long GetIndexFromTextPoint(TextPoint tp)
+        [Obsolete]
+        public int GetIndexFromTextPoint(TextPoint tp)
+        {
+            return (int)GetLongIndexFromTextPoint(tp);
+        }
+
+        /// <summary>
+        /// テキストポイントからインデックスに変換します
+        /// </summary>
+        /// <param name="tp">TextPoint構造体</param>
+        /// <returns>インデックスを返します</returns>
+        public long GetLongIndexFromTextPoint(TextPoint tp)
         {
             if (tp == TextPoint.Null)
                 throw new ArgumentNullException("TextPoint.Null以外の値でなければなりません");
@@ -876,7 +911,7 @@ namespace FooEditEngine
                 throw new ArgumentOutOfRangeException("tp.rowが設定できる範囲を超えています");
             if (tp.col < 0 || tp.col > this.GetRaw(tp.row).Length)
                 throw new ArgumentOutOfRangeException("tp.colが設定できる範囲を超えています");
-            return this.GetLineHeadIndex(tp.row) + tp.col;
+            return this.GetLineHeadLongIndex(tp.row) + tp.col;
         }
 
         /// <summary>

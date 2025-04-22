@@ -233,7 +233,7 @@ namespace FooEditEngine
         /// <returns>逆転しているなら真を返す</returns>
         public bool IsReverseSelect()
         {
-            long index = this.View.LayoutLines.GetIndexFromTextPoint(this.Document.CaretPostion);
+            long index = this.View.LayoutLines.GetLongIndexFromTextPoint(this.Document.CaretPostion);
             return index < this.Document.AnchorIndex;
         }
 
@@ -306,7 +306,7 @@ namespace FooEditEngine
         {
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
-            long index = this.View.LayoutLines.GetIndexFromTextPoint(tp);
+            long index = this.View.LayoutLines.GetLongIndexFromTextPoint(tp);
             return this.IsMarker(index, type);
         }
 
@@ -640,7 +640,7 @@ namespace FooEditEngine
             if (index == this.Document.Length)
                 return;
 
-            long lineHeadIndex = this.View.LayoutLines.GetIndexFromLineNumber(CaretPostion.row);
+            long lineHeadIndex = this.View.LayoutLines.GetLongIndexFromLineNumber(CaretPostion.row);
             long next = this.View.LayoutLines.GetLayout(CaretPostion.row).AlignIndexToNearestCluster(CaretPostion.col, AlignDirection.Forward) + lineHeadIndex;
 
             if (this.Document[index] == Document.NewLine)
@@ -760,12 +760,12 @@ namespace FooEditEngine
                 long end = this.View.LayoutLines.GetLayout(CaretPos.row).AlignIndexToNearestCluster(CaretPos.col + str.Length - 1, AlignDirection.Forward);
                 if (end > lineString.Length - 1)
                     end = lineString.Length - 1;
-                end += this.View.LayoutLines.GetIndexFromLineNumber(CaretPos.row);
+                end += this.View.LayoutLines.GetLongIndexFromLineNumber(CaretPos.row);
                 length = end - index;
             }
             if (str == Document.NewLine.ToString())
             {
-                long lineHeadIndex = this.View.LayoutLines.GetIndexFromLineNumber(CaretPos.row);
+                long lineHeadIndex = this.View.LayoutLines.GetLongIndexFromLineNumber(CaretPos.row);
                 long lineLength = this.View.LayoutLines.GetLengthFromLineNumber(CaretPos.row);
                 FoldingItem foldingData = this.View.LayoutLines.FoldingCollection.GetFarestHiddenFoldingData(lineHeadIndex, lineLength);
                 if (foldingData != null && !foldingData.Expand && index > foldingData.Start && index <= foldingData.End)
@@ -1120,7 +1120,7 @@ namespace FooEditEngine
 
             bool reverse = temp.First().start > temp.Last().start;
 
-            long lineHeadIndex = this.View.LayoutLines.GetIndexFromLineNumber(this.View.LayoutLines.GetLineNumberFromIndex(selectStart));
+            long lineHeadIndex = this.View.LayoutLines.GetLongIndexFromLineNumber(this.View.LayoutLines.GetLineNumberFromIndex(selectStart));
             if (selectStart - removeLength < lineHeadIndex)
                 return;
 

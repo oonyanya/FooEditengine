@@ -310,7 +310,7 @@ namespace FooEditEngine.WPF
         /// </summary>
         /// <param name="index">インデックス</param>
         /// <returns>座標を返す</returns>
-        public System.Windows.Point GetPostionFromIndex(int index)
+        public System.Windows.Point GetPostionFromIndex(long index)
         {
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
@@ -323,7 +323,21 @@ namespace FooEditEngine.WPF
         /// </summary>
         /// <param name="p">座標</param>
         /// <returns>インデックスを返す</returns>
-        public long GetIndexFromPostion(System.Windows.Point p)
+        [Obsolete]
+        public int GetIndexFromPostion(System.Windows.Point p)
+        {
+            if (this.Document.FireUpdateEvent == false)
+                throw new InvalidOperationException("");
+            TextPoint tp = this._View.GetTextPointFromPostion(p);
+            return (int)this._View.GetIndexFromLayoutLine(tp);
+        }
+
+        /// <summary>
+        /// 座標からインデックスに変換します
+        /// </summary>
+        /// <param name="p">座標</param>
+        /// <returns>インデックスを返す</returns>
+        public long GetLongIndexFromPostion(System.Windows.Point p)
         {
             if (this.Document.FireUpdateEvent == false)
                 throw new InvalidOperationException("");
@@ -574,7 +588,7 @@ namespace FooEditEngine.WPF
 
         string _textStore_GetString(int start, int length)
         {
-            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadLongIndex(this.Document.CaretPostion.row);
             return this.Document.ToString(inputImeStartIndex + start, length);
         }
 
@@ -595,7 +609,7 @@ namespace FooEditEngine.WPF
         )
         {
             Point startPos, endPos;
-            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadLongIndex(this.Document.CaretPostion.row);
             TextStoreHelper.GetStringExtent(this.Document, this._View, inputImeStartIndex + i_startIndex, inputImeStartIndex + i_endIndex, out startPos, out endPos);
 
             double scale = this.Render.GetScale();
@@ -624,7 +638,7 @@ namespace FooEditEngine.WPF
             TextRange selRange;
             TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out selRange);
 
-            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadLongIndex(this.Document.CaretPostion.row);
 
             sels = new DotNetTextStore.TextSelection[1];
             sels[0] = new DotNetTextStore.TextSelection();
@@ -634,14 +648,14 @@ namespace FooEditEngine.WPF
 
         void _textStore_SetSelectionIndex(DotNetTextStore.TextSelection[] sels)
         {
-            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadLongIndex(this.Document.CaretPostion.row);
             TextStoreHelper.SetSelectionIndex(this._Controller, this._View, sels[0].start + inputImeStartIndex, sels[0].end + inputImeStartIndex);
             this.Refresh();
         }
 
         void _textStore_InsertAtSelection(string i_value, ref int o_startIndex, ref int o_endIndex)
         {
-            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadIndex(this.Document.CaretPostion.row);
+            long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadLongIndex(this.Document.CaretPostion.row);
             TextStoreHelper.InsertTextAtSelection(this._Controller, i_value,o_startIndex + inputImeStartIndex, o_endIndex + inputImeStartIndex);
             this.Refresh();
         }
@@ -827,7 +841,7 @@ namespace FooEditEngine.WPF
             TextPoint tp = this._View.GetTextPointFromPostion(p);
             if (tp == TextPoint.Null)
                 return;
-            long index = this._View.LayoutLines.GetIndexFromTextPoint(tp);
+            long index = this._View.LayoutLines.GetLongIndexFromTextPoint(tp);
 
             FooMouseButtonEventArgs newEventArgs = new FooMouseButtonEventArgs(e.MouseDevice,
                 e.Timestamp,
@@ -870,7 +884,7 @@ namespace FooEditEngine.WPF
             TextPoint tp = this._View.GetTextPointFromPostion(p);
             if (tp == TextPoint.Null)
                 return;
-            long index = this._View.LayoutLines.GetIndexFromTextPoint(tp);
+            long index = this._View.LayoutLines.GetLongIndexFromTextPoint(tp);
 
             FooMouseButtonEventArgs newEventArgs = new FooMouseButtonEventArgs(e.MouseDevice,
                 e.Timestamp,
@@ -1016,7 +1030,7 @@ namespace FooEditEngine.WPF
             TextPoint tp = this._View.GetTextPointFromPostion(p);
             if (tp == TextPoint.Null)
                 return;
-            long index = this._View.LayoutLines.GetIndexFromTextPoint(tp);
+            long index = this._View.LayoutLines.GetLongIndexFromTextPoint(tp);
 
             FoldingItem foldingData = this._View.HitFoldingData(p.X, tp.row);
             if (foldingData != null)
@@ -1146,7 +1160,7 @@ namespace FooEditEngine.WPF
                 return;
             if(e.type == UpdateType.Replace)
             {
-                long lineHeadIndex = this.Document.LayoutLines.GetIndexFromLineNumber(this.Document.CaretPostion.row);
+                long lineHeadIndex = this.Document.LayoutLines.GetLongIndexFromLineNumber(this.Document.CaretPostion.row);
                 long lineLength = this.Document.LayoutLines.GetLengthFromLineNumber(this.Document.CaretPostion.row);
                 if(e.startIndex >= lineHeadIndex & e.startIndex < lineHeadIndex + lineLength)
                     TextStoreHelper.NotifyTextChanged(this.textStore, (int)(e.startIndex - lineHeadIndex), e.removeLength, e.insertLength);

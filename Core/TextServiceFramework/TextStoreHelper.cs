@@ -36,7 +36,7 @@ namespace FooEditEngine
         {
             if (textStore.IsLocked() == false)
                 return false;
-            long inputImeStartIndex = view.Document.LayoutLines.GetLineHeadIndex(view.Document.CaretPostion.row);
+            long inputImeStartIndex = view.Document.LayoutLines.GetLineHeadLongIndex(view.Document.CaretPostion.row);
             using (Unlocker locker = textStore.LockDocument(false))
             {
                 foreach (TextDisplayAttribute attr in textStore.EnumAttributes(start, end))

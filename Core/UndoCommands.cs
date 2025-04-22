@@ -136,7 +136,7 @@ namespace FooEditEngine
         {
             for (int i = 0; i < layoutlines.Count; i++)
             {
-                long lineHeadIndex = layoutlines.GetIndexFromLineNumber(i), lineLength = layoutlines.GetLengthFromLineNumber(i);
+                long lineHeadIndex = layoutlines.GetLongIndexFromLineNumber(i), lineLength = layoutlines.GetLengthFromLineNumber(i);
                 long left = lineHeadIndex, right = lineHeadIndex;
                 string output;
 
