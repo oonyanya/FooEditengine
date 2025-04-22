@@ -1146,7 +1146,7 @@ namespace FooEditEngine
         /// <param name="index">開始インデックス</param>
         /// <param name="s">追加したい文字列</param>
         /// <remarks>読み出し操作中はこのメソッドを実行することはできません</remarks>
-        public void Insert(int index, string s)
+        public void Insert(long index, string s)
         {
             this.Replace(index, 0, s);
         }
@@ -1157,7 +1157,7 @@ namespace FooEditEngine
         /// <param name="index">開始インデックス</param>
         /// <param name="length">長さ</param>
         /// <remarks>読み出し操作中はこのメソッドを実行することはできません</remarks>
-        public void Remove(int index, int length)
+        public void Remove(long index, long length)
         {
             this.Replace(index, length, "");
         }
@@ -1222,7 +1222,7 @@ namespace FooEditEngine
         /// 読み取り操作は別スレッドで行われます。
         /// また、非同期操作中はこのメソッドを実行することはできません。
         /// </remarks>
-        public async Task LoadAsync(TextReader fs, CancellationTokenSource tokenSource = null, int file_size = -1)
+        public async Task LoadAsync(TextReader fs, CancellationTokenSource tokenSource = null, long file_size = -1)
         {
             if (fs.Peek() == -1)
                 return;
@@ -1243,7 +1243,7 @@ namespace FooEditEngine
             }
         }
 
-        async Task LoadAsyncCore(TextReader fs, CancellationTokenSource tokenSource = null, int file_size = -1)
+        async Task LoadAsyncCore(TextReader fs, CancellationTokenSource tokenSource = null, long file_size = -1)
         {
             this.Clear();
             if (file_size > 0)
