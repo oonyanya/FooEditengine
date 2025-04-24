@@ -401,8 +401,7 @@ namespace FooEditEngine.WPF
             }
             else if (e.state == ProgressState.Complete)
             {
-                int lineLength = this.Document.LayoutLines.GetLengthFromLineNumber(0);
-                TextStoreHelper.NotifyTextChanged(this.textStore, 0, 0, lineLength);
+                TextStoreHelper.NotifyTextChanged(this.textStore, 0, 0, this.Document.Length);
                 if (this.verticalScrollBar != null)
                     this.verticalScrollBar.Maximum = this._View.LayoutLines.Count;
                 this._View.CalculateWhloeViewPort();
@@ -1157,9 +1156,7 @@ namespace FooEditEngine.WPF
                 return;
             if(e.type == UpdateType.Replace)
             {
-                long lineHeadIndex = this.Document.LayoutLines.GetLongIndexFromLineNumber(this.Document.CaretPostion.row);
-                long lineLength = this.Document.LayoutLines.GetLengthFromLineNumber(this.Document.CaretPostion.row);
-                TextStoreHelper.NotifyTextChanged(this.textStore, 0, 0, 0);
+                TextStoreHelper.NotifyTextChanged(this.textStore, e.startIndex, e.removeLength, e.insertLength);
             }
             if (this.peer != null)
                 this.peer.OnNotifyTextChanged();
@@ -1283,7 +1280,7 @@ namespace FooEditEngine.WPF
                 old_doc.LoadProgress -= Document_LoadProgress;
                 old_doc.SelectionChanged -= new EventHandler(Controller_SelectionChanged);
                 old_doc.AutoCompleteChanged -= _Document_AutoCompleteChanged;
-                oldLength = (int)old_doc.LayoutLines.GetRaw(old_doc.CaretPostion.row).Length;
+                oldLength = (int)old_doc.Length;
                 if (this._Document.AutoComplete != null)
                 {
                     ((AutoCompleteBox)this._Document.AutoComplete).TargetPopup = null;
@@ -1308,8 +1305,7 @@ namespace FooEditEngine.WPF
                 this._View.Document = value;
                 this.Controller.AdjustCaret();
                 //行の長さはInt32.MaxValue - 1 まで
-                int newLineLength = (int)value.LayoutLines.GetRaw(value.CaretPostion.row).Length;
-                this.textStore.NotifyTextChanged(oldLength, newLineLength);
+                this.textStore.NotifyTextChanged(oldLength, (int)this.Document.Length);
 
                 //依存プロパティとドキュメント内容が食い違っているので再設定する
                 this.ShowFullSpace = value.ShowFullSpace;
