@@ -393,8 +393,7 @@ namespace FooEditEngine.WinUI
                 //キャレット位置はロード前と同じにしないと違和感を感じる
                 if (this.textEditContext != null)
                 {
-                    int lineLength = (int)this.Document.LayoutLines.GetRaw(0).length;
-                    this.textEditContext.NotifyTextChanged(modified_range, lineLength, modified_range);
+                    this.textEditContext.NotifyTextChanged(modified_range, (int)this.Document.Length, modified_range);
                 }
 
                 if (this.verticalScrollBar != null)
@@ -1028,9 +1027,8 @@ namespace FooEditEngine.WinUI
                 TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out currentSelection);
 
                 CoreTextRange currentSelectionRange = new CoreTextRange();
-                long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadLongIndex(this.Document.CaretPostion.row);
-                currentSelectionRange.StartCaretPosition = (int)(currentSelection.Index - inputImeStartIndex);
-                currentSelectionRange.EndCaretPosition = (int)(currentSelection.Index + currentSelection.Length - inputImeStartIndex);
+                currentSelectionRange.StartCaretPosition = (int)(currentSelection.Index);
+                currentSelectionRange.EndCaretPosition = (int)(currentSelection.Index + currentSelection.Length);
 
                 DebugLog.WriteLine("notify selection start:{0} end:{1}", currentSelectionRange.StartCaretPosition, currentSelectionRange.EndCaretPosition);
                 //変換中に呼び出してはいけない
@@ -1371,10 +1369,9 @@ namespace FooEditEngine.WinUI
             if (e.type == UpdateType.Replace && !this.nowCompstion)
             {
                 //TODO:行の長さはInt32.MaxValue-1なので適当に合わせる必要があるが、無理やりキャストしてるのでおかしなことになるかも
-                long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadLongIndex(this.Document.CaretPostion.row);
                 CoreTextRange oldTextRange = new CoreTextRange();
-                oldTextRange.StartCaretPosition = (int)(e.startIndex - inputImeStartIndex);
-                oldTextRange.EndCaretPosition = (int)(e.startIndex - inputImeStartIndex);
+                oldTextRange.StartCaretPosition = (int)e.startIndex;
+                oldTextRange.EndCaretPosition = (int)e.startIndex;
                 //削除する範囲が1以上の場合、ドキュメントを飛び越えることはできない
                 //https://msdn.microsoft.com/en-us/windows/uwp/input-and-devices/custom-text-input
                 if (e.removeLength > 0)
@@ -1384,8 +1381,8 @@ namespace FooEditEngine.WinUI
                 TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out currentSelection);
 
                 CoreTextRange newSelection = new CoreTextRange();
-                newSelection.StartCaretPosition = (int)(e.startIndex - inputImeStartIndex);
-                newSelection.EndCaretPosition = (int)(e.startIndex - inputImeStartIndex);
+                newSelection.StartCaretPosition = (int)e.startIndex;
+                newSelection.EndCaretPosition = (int)e.startIndex;
 
                 //置き換え後の長さを指定する
                 //（注意：削除された文字数のほうが多い場合は0を指定しないいけない）

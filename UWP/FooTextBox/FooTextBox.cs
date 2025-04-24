@@ -1038,10 +1038,9 @@ namespace FooEditEngine.UWP
                 TextRange currentSelection = new TextRange();
                 TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out currentSelection);
 
-                long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadLongIndex(this.Document.CaretPostion.row);
                 CoreTextRange currentSelectionRange = new CoreTextRange();
-                currentSelectionRange.StartCaretPosition = (int)(currentSelection.Index - inputImeStartIndex);
-                currentSelectionRange.EndCaretPosition = (int)(currentSelection.Index + currentSelection.Length - inputImeStartIndex);
+                currentSelectionRange.StartCaretPosition = (int)(currentSelection.Index);
+                currentSelectionRange.EndCaretPosition = (int)(currentSelection.Index + currentSelection.Length);
 
                 System.Diagnostics.Debug.WriteLine("notify selection start:{0} end:{1}", currentSelectionRange.StartCaretPosition, currentSelectionRange.EndCaretPosition);
                 //変換中に呼び出してはいけない
@@ -1334,10 +1333,9 @@ namespace FooEditEngine.UWP
         {
             if (e.type == UpdateType.Replace && !this.nowCompstion)
             {
-                long inputImeStartIndex = this.Document.LayoutLines.GetLineHeadLongIndex(this.Document.CaretPostion.row);
                 CoreTextRange oldTextRange = new CoreTextRange();
-                oldTextRange.StartCaretPosition = (int)(e.startIndex - inputImeStartIndex);
-                oldTextRange.EndCaretPosition = (int)(e.startIndex - inputImeStartIndex);
+                oldTextRange.StartCaretPosition = (int)(e.startIndex);
+                oldTextRange.EndCaretPosition = (int)(e.startIndex);
                 //削除する範囲が1以上の場合、ドキュメントを飛び越えることはできない
                 //https://msdn.microsoft.com/en-us/windows/uwp/input-and-devices/custom-text-input
                 if (e.removeLength > 0)
@@ -1347,8 +1345,8 @@ namespace FooEditEngine.UWP
                 TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out currentSelection);
 
                 CoreTextRange newSelection = new CoreTextRange();
-                newSelection.StartCaretPosition = (int)(e.startIndex - inputImeStartIndex);
-                newSelection.EndCaretPosition = (int)(e.startIndex - inputImeStartIndex);
+                newSelection.StartCaretPosition = (int)(e.startIndex);
+                newSelection.EndCaretPosition = (int)(e.startIndex);
 
                 //置き換え後の長さを指定する
                 //（注意：削除された文字数のほうが多い場合は0を指定しないいけない）
