@@ -63,6 +63,7 @@ namespace FooEditEngine.UWP
         bool requestSizeChange = false;
         Document _Document;
         DispatcherTimer timer = new DispatcherTimer();
+        TextStoreHelper TextStoreHelper;
 
         const int Interval = 32;
         const int IntervalWhenLostFocus = 160;
@@ -97,6 +98,8 @@ namespace FooEditEngine.UWP
             this.Document.TabStops = this.TabChars;
 
             this._Controller = new Controller(this.Document, this._View);
+
+            this.TextStoreHelper = new TextStoreHelper(this._Controller);
 
             this.gestureRecongnizer.GestureSettings = GestureSettings.Drag | 
                 GestureSettings.RightTap | 
@@ -865,7 +868,7 @@ namespace FooEditEngine.UWP
                     isBoldLine = true;
                     break;
             }
-            long start = args.Range.StartCaretPosition;
+            long start = this.TextStoreHelper.ConvertToDocument(args.Range.StartCaretPosition);
             long lengt = args.Range.EndCaretPosition - args.Range.StartCaretPosition;
             this.Document.SetMarker(MarkerIDs.IME, Marker.Create(start, lengt, type, color, isBoldLine));
 
@@ -916,7 +919,7 @@ namespace FooEditEngine.UWP
 
             if (i_startIndex != i_endIndex && i_startIndex != -1 && i_endIndex != -1)
             {
-                TextStoreHelper.GetStringExtent(this.Document, this._View, i_startIndex, i_endIndex, out startPos, out endPos);
+                TextStoreHelper.GetStringExtent(this._View, i_startIndex, i_endIndex, out startPos, out endPos);
 
                 double scale = Util.GetScale();
 
@@ -954,7 +957,7 @@ namespace FooEditEngine.UWP
                 return;
             }
             TextRange currentSelection = new TextRange();
-            TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out currentSelection);
+            TextStoreHelper.GetSelection(this._View.Selections, out currentSelection);
 
             CoreTextRange currentSelectionRange = new CoreTextRange();
             currentSelectionRange.StartCaretPosition = (int)(currentSelection.Index);
@@ -972,7 +975,7 @@ namespace FooEditEngine.UWP
             }
             CoreTextRange sel = args.Selection;
             System.Diagnostics.Debug.WriteLine("update selection start:{0} end:{1}", sel.StartCaretPosition, sel.EndCaretPosition);
-            TextStoreHelper.SetSelectionIndex(this.Controller, this._View, sel.StartCaretPosition, sel.EndCaretPosition);
+            TextStoreHelper.SetSelectionIndex(this._View, sel.StartCaretPosition, sel.EndCaretPosition);
             args.Result = CoreTextSelectionUpdatingResult.Succeeded;
             this.Refresh();
         }
@@ -989,8 +992,8 @@ namespace FooEditEngine.UWP
                 args.NewSelection.EndCaretPosition);
             bool isTip = args.InputLanguage.Script == "Latan";
             CoreTextRange sel = args.Range;
-            TextStoreHelper.SetSelectionIndex(this.Controller, this._View, sel.StartCaretPosition, sel.EndCaretPosition);
-            TextStoreHelper.InsertTextAtSelection(this._Controller, args.Text, args.Range.StartCaretPosition, args.Range.EndCaretPosition, isTip);
+            TextStoreHelper.SetSelectionIndex(this._View, sel.StartCaretPosition, sel.EndCaretPosition);
+            TextStoreHelper.InsertTextAtSelection(args.Text, args.Range.StartCaretPosition, args.Range.EndCaretPosition, isTip);
             this.Refresh();
             args.Result = CoreTextTextUpdatingResult.Succeeded;
 
@@ -1000,7 +1003,7 @@ namespace FooEditEngine.UWP
         private void TextEditContext_CompositionCompleted(CoreTextEditContext sender, CoreTextCompositionCompletedEventArgs args)
         {
             System.Diagnostics.Debug.WriteLine("end compostion");
-            TextStoreHelper.EndCompostion(this.Document);
+            TextStoreHelper.EndCompostion();
             this.Document.RemoveAllMarker(MarkerIDs.IME);
             this.Refresh();
         }
@@ -1008,7 +1011,7 @@ namespace FooEditEngine.UWP
         private void TextEditContext_CompositionStarted(CoreTextEditContext sender, CoreTextCompositionStartedEventArgs args)
         {
             System.Diagnostics.Debug.WriteLine("start compstion");
-            TextStoreHelper.StartCompstion(this.Document);
+            TextStoreHelper.StartCompstion();
         }
 
         private void TextEditContext_NotifyFocusLeaveCompleted(CoreTextEditContext sender, object args)
@@ -1035,13 +1038,8 @@ namespace FooEditEngine.UWP
 
             if(!this.nowCompstion)
             {
-                TextRange currentSelection = new TextRange();
-                TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out currentSelection);
-
                 CoreTextRange currentSelectionRange = new CoreTextRange();
-                currentSelectionRange.StartCaretPosition = (int)(currentSelection.Index);
-                currentSelectionRange.EndCaretPosition = (int)(currentSelection.Index + currentSelection.Length);
-
+                this.TextStoreHelper.GetNotifySelectionArea(this.View.Selections, out currentSelectionRange.StartCaretPosition, out currentSelectionRange.EndCaretPosition);
                 System.Diagnostics.Debug.WriteLine("notify selection start:{0} end:{1}", currentSelectionRange.StartCaretPosition, currentSelectionRange.EndCaretPosition);
                 //変換中に呼び出してはいけない
                 if (this.textEditContext != null)
@@ -1333,29 +1331,23 @@ namespace FooEditEngine.UWP
         {
             if (e.type == UpdateType.Replace && !this.nowCompstion)
             {
-                CoreTextRange oldTextRange = new CoreTextRange();
-                oldTextRange.StartCaretPosition = (int)(e.startIndex);
-                oldTextRange.EndCaretPosition = (int)(e.startIndex);
-                //削除する範囲が1以上の場合、ドキュメントを飛び越えることはできない
-                //https://msdn.microsoft.com/en-us/windows/uwp/input-and-devices/custom-text-input
-                if (e.removeLength > 0)
-                    oldTextRange.EndCaretPosition += (int)e.removeLength;
+                int startIndex, endIndex, newStartIndex, newEndIndex;
+                this.TextStoreHelper.GetNotifyTextChageArea(e, out startIndex, out endIndex, out newStartIndex, out newEndIndex);
 
-                TextRange currentSelection = new TextRange();
-                TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out currentSelection);
+                CoreTextRange oldTextRange = new CoreTextRange();
+                oldTextRange.StartCaretPosition = (int)startIndex;
+                oldTextRange.EndCaretPosition = (int)endIndex;
 
                 CoreTextRange newSelection = new CoreTextRange();
-                newSelection.StartCaretPosition = (int)(e.startIndex);
-                newSelection.EndCaretPosition = (int)(e.startIndex);
+                newSelection.StartCaretPosition = newStartIndex;
+                newSelection.EndCaretPosition = newStartIndex;
 
-                //置き換え後の長さを指定する
-                //（注意：削除された文字数のほうが多い場合は0を指定しないいけない）
-                int newTextLength = (int)e.insertLength;
+                int newTextLength = newEndIndex - newStartIndex;
 
-                System.Diagnostics.Debug.WriteLine("notify text change (modify start:{0} end:{1}) newlength:{2} (new sel start:{3} end:{4})",
+                DebugLog.WriteLine("notify text change (modify start:{0} end:{1}) newlength:{2} (new sel start:{3} end:{4})",
                     oldTextRange.StartCaretPosition, oldTextRange.EndCaretPosition, newTextLength, newSelection.StartCaretPosition, newSelection.EndCaretPosition);
                 //変換中に呼び出してはいけない
-                if(this.textEditContext != null)
+                if (this.textEditContext != null)
                     this.textEditContext.NotifyTextChanged(oldTextRange, newTextLength, newSelection);
             }
 #if ENABLE_AUTMATION

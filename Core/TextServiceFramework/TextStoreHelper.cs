@@ -9,7 +9,9 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #if METRO || WPF || WINDOWS_UWP || WINUI
- using System.Linq;
+using System.Linq;
+using System;
+
 #if METRO || WPF
 using DotNetTextStore.UnmanagedAPI.WinDef;
 using DotNetTextStore.UnmanagedAPI.TSF;
@@ -18,32 +20,74 @@ using DotNetTextStore;
 
 namespace FooEditEngine
 {
-    static class TextStoreHelper
+    class TextStoreHelper
     {
-        public static bool StartCompstion(Document document)
+        long startImeDocumentIndex = 0;
+        Controller controller;
+
+        public TextStoreHelper(Controller c)
         {
+            controller = c;
+        }
+
+        public bool IsAllowFullDocument()
+        {
+#if DISABLE_DOCUMENTFEED
+            return false;
+#else
+            if (controller.Document.Length < Int32.MaxValue - 1)
+                return true;
+            else
+                return false;
+#endif
+        }
+
+        public bool StartCompstion()
+        {
+            var document = controller.Document;
             document.UndoManager.BeginUndoGroup();
+            if(IsAllowFullDocument())
+                this.startImeDocumentIndex = 0;
+            else
+                this.startImeDocumentIndex = document.LayoutLines.GetLongIndexFromLineNumber(document.CaretPostion.row);
             return true;
         }
 
-        public static void EndCompostion(Document document)
+        public void EndCompostion()
         {
+            var document = controller.Document;
             document.UndoManager.EndUndoGroup();
+            if (IsAllowFullDocument())
+                this.startImeDocumentIndex = 0;
+            else
+                this.startImeDocumentIndex = document.LayoutLines.GetLongIndexFromLineNumber(document.CaretPostion.row);
+        }
+
+        public int ImeDoumentLength
+        {
+            get {
+                return IsAllowFullDocument() ? (int)this.controller.Document.Length : 0;
+            }
+        }
+
+        public string GetString(long i_startIndex, long i_endIndex)
+        {
+            var length = i_endIndex - i_startIndex;
+            return controller.Document.ToString(i_startIndex + this.startImeDocumentIndex, length);
         }
 
 #if METRO || WPF
-        public static bool ScrollToCompstionUpdated(TextStoreBase textStore,EditView view,int start, int end)
+        public bool ScrollToCompstionUpdated(TextStoreBase textStore,EditView view,int start, int end)
         {
             if (textStore.IsLocked() == false)
                 return false;
-            long inputImeStartIndex = view.Document.LayoutLines.GetLineHeadLongIndex(view.Document.CaretPostion.row);
             using (Unlocker locker = textStore.LockDocument(false))
             {
                 foreach (TextDisplayAttribute attr in textStore.EnumAttributes(start, end))
                 {
                     if (attr.attribute.bAttr == TF_DA_ATTR_INFO.TF_ATTR_TARGET_CONVERTED)
                     {
-                        if (view.AdjustSrc(attr.startIndex + inputImeStartIndex))
+                        if (view.AdjustSrc(attr.startIndex + this.startImeDocumentIndex))
                         {
                             return true;
                         }
@@ -54,9 +98,11 @@ namespace FooEditEngine
         }
 #endif
 
-        public static void GetStringExtent(Document document,EditView view,long i_startIndex, long i_endIndex,out Point startPos,out Point endPos)
+        public void GetStringExtent(EditView view,long i_startIndex, long i_endIndex,out Point startPos,out Point endPos)
         {
-            TextPoint startTextPoint = view.LayoutLines.GetTextPointFromIndex(i_startIndex);
+            var document = controller.Document;
+            long a_startIndex = i_startIndex + this.startImeDocumentIndex;
+            TextPoint startTextPoint = view.LayoutLines.GetTextPointFromIndex(a_startIndex);
             if (i_startIndex == i_endIndex)
             {
                 startPos = view.CaretLocation;
@@ -78,61 +124,91 @@ namespace FooEditEngine
             endPos.Y += emHeight + 10;
         }
 
-        public static void GetSelection(Controller controller, SelectCollection selectons, out TextRange sel)
+        public void GetSelection(SelectCollection selectons, out TextRange sel)
         {
             if (controller.RectSelection && selectons.Count > 0)
             {
-                sel.Index = selectons[0].start;
+                sel.Index = selectons[0].start - this.startImeDocumentIndex;
                 sel.Length = 0;
             }
             else
             {
-                sel.Index = controller.SelectionStart;
+                sel.Index = controller.SelectionStart - this.startImeDocumentIndex;
                 sel.Length = controller.SelectionLength;
             }
         }
 
-        public static void SetSelectionIndex(Controller controller,EditView view, long i_startIndex, long i_endIndex)
+        public void SetSelectionIndex(EditView view, long i_startIndex, long i_endIndex)
         {
+            long a_startIndex = i_startIndex + this.startImeDocumentIndex;
+            long a_endIndex = i_endIndex + this.startImeDocumentIndex;
             if (controller.IsRectInsertMode())
             {
-                TextPoint start = view.LayoutLines.GetTextPointFromIndex(i_startIndex);
+                TextPoint start = view.LayoutLines.GetTextPointFromIndex(a_startIndex);
                 TextPoint end = view.LayoutLines.GetTextPointFromIndex(view.Selections.Last().start);
                 controller.JumpCaret(i_endIndex);
-                controller.Document.Select(start, i_endIndex - i_startIndex, end.row - start.row);
+                controller.Document.Select(start, a_endIndex - a_startIndex, end.row - start.row);
             }
             else if (i_startIndex == i_endIndex)
             {
-                controller.JumpCaret(i_startIndex);
+                controller.JumpCaret(a_startIndex);
             }
             else
             {
-                controller.Document.Select(i_startIndex, i_endIndex - i_startIndex);
+                controller.Document.Select(a_startIndex, a_endIndex - a_startIndex);
             }
         }
 
-        public static void InsertTextAtSelection(Controller controller,string i_value, long startIndex, long endIndex, bool fromTIP = true)
+        public void InsertTextAtSelection(string i_value, long startIndex, long endIndex, bool fromTIP = true)
         {
             controller.DoInputString(i_value, fromTIP);
         }
 
-#if METRO || WPF
-        public static void NotifyTextChanged(TextStoreBase textStore, long startIndex, long removeLength, long insertLength)
+        public int ConvertToIMEDocument(int index)
         {
-#if METRO
-            //Windows8.1では同じ値にしないと日本語入力ができなくなってしまう
-            int oldend = startIndex,
-            newend = startIndex;
-#else
-            //TS_TEXTCHANGE structure's remark
-            //１文字削除した場合はoldendに削除前の位置を設定し、newendとstartIndexに現在位置を設定し、
-            //１文字追加した場合はoldendに追加前の位置を設定し、newendとstartIndexに現在位置を設定する
-            long oldend = startIndex + removeLength,
-                newend = startIndex + insertLength;
-#endif
-            textStore.NotifyTextChanged((int)startIndex, (int)oldend, (int)newend);
+            return (int)(index - this.startImeDocumentIndex);
         }
-#endif
+
+        public long ConvertToDocument(int index)
+        {
+            return index + this.startImeDocumentIndex;
+        }
+
+        public void GetNotifySelectionArea(SelectCollection selections, out int startIndex,out int endIndex)
+        {
+            if (this.IsAllowFullDocument())
+            {
+                TextRange currentSelection = new TextRange();
+                this.GetSelection(selections, out currentSelection);
+
+                startIndex = (int)(currentSelection.Index);
+                endIndex = (int)(currentSelection.Index + currentSelection.Length);
+            }
+            else
+            {
+                startIndex = 0;
+                endIndex = 0;
+            }
+        }
+
+        public void GetNotifyTextChageArea(DocumentUpdateEventArgs e, out int startIndex, out int endIndex, out int newStartIndex, out int newEndIndex) 
+        {
+            if (IsAllowFullDocument())
+            {
+                startIndex = (int)e.startIndex;
+                endIndex = (int)(e.startIndex + e.removeLength);
+                newStartIndex = startIndex;
+                newEndIndex = (int)(startIndex + e.insertLength);
+            }
+            else
+            {
+                startIndex = 0;
+                endIndex = 0;
+                newStartIndex = 0;
+                newEndIndex = 0;
+            }
+        }
+
     }
 }
 #endif

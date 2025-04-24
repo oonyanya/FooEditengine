@@ -47,6 +47,7 @@ namespace FooEditEngine.WPF
         bool isNotifyChanged = false;
         Document _Document;
         Popup popup;
+        TextStoreHelper TextStoreHelper;
 
         const int Interval = 96;
         const int IntervalWhenLostFocuse = 160;
@@ -104,6 +105,8 @@ namespace FooEditEngine.WPF
 
             this._Controller = new Controller(this.Document, this._View);
             this._Document.SelectionChanged += new EventHandler(Controller_SelectionChanged);
+
+            this.TextStoreHelper = new TextStoreHelper(this.Controller);
 
             this.CommandBindings.Add(new CommandBinding(ApplicationCommands.Copy, CopyCommand, CanExecute));
             this.CommandBindings.Add(new CommandBinding(ApplicationCommands.Cut, CutCommand, CanExecute));
@@ -401,7 +404,9 @@ namespace FooEditEngine.WPF
             }
             else if (e.state == ProgressState.Complete)
             {
-                TextStoreHelper.NotifyTextChanged(this.textStore, 0, 0, this.Document.Length);
+                int oldStart,oldEnd, newStart, newEnd;
+                this.TextStoreHelper.GetNotifyTextChageArea(new DocumentUpdateEventArgs(UpdateType.Replace,0,0,Document.Length), out oldStart, out oldEnd, out newStart, out newEnd);
+                this.textStore.NotifyTextChanged(oldStart, oldEnd, newEnd);
                 if (this.verticalScrollBar != null)
                     this.verticalScrollBar.Maximum = this._View.LayoutLines.Count;
                 this._View.CalculateWhloeViewPort();
@@ -565,7 +570,7 @@ namespace FooEditEngine.WPF
 
         void textStore_CompositionEnded()
         {
-            TextStoreHelper.EndCompostion(this.Document);
+            TextStoreHelper.EndCompostion();
             this.Refresh();
         }
 
@@ -577,7 +582,7 @@ namespace FooEditEngine.WPF
 
         bool textStore_CompositionStarted()
         {
-            bool result = TextStoreHelper.StartCompstion(this.Document);
+            bool result = TextStoreHelper.StartCompstion();
             if (!result)
                 System.Media.SystemSounds.Beep.Play();
             return result;
@@ -585,12 +590,12 @@ namespace FooEditEngine.WPF
 
         private int TextStore_GetStringLength()
         {
-            return (int)this.Document.Length;
+            return this.TextStoreHelper.ImeDoumentLength;
         }
 
         string _textStore_GetString(int start, int length)
         {
-            return this.Document.ToString(start, length);
+            return this.TextStoreHelper.GetString(start, length);
         }
 
         IntPtr _textStore_GetHWnd()
@@ -610,7 +615,7 @@ namespace FooEditEngine.WPF
         )
         {
             Point startPos, endPos;
-            TextStoreHelper.GetStringExtent(this.Document, this._View, i_startIndex, i_endIndex, out startPos, out endPos);
+            TextStoreHelper.GetStringExtent(this._View, i_startIndex, i_endIndex, out startPos, out endPos);
 
             double scale = this.Render.GetScale();
             
@@ -636,7 +641,7 @@ namespace FooEditEngine.WPF
         void _textStore_GetSelectionIndex(int start_index, int max_count, out DotNetTextStore.TextSelection[] sels)
         {
             TextRange selRange;
-            TextStoreHelper.GetSelection(this._Controller, this._View.Selections, out selRange);
+            TextStoreHelper.GetSelection(this._View.Selections, out selRange);
 
             sels = new DotNetTextStore.TextSelection[1];
             sels[0] = new DotNetTextStore.TextSelection();
@@ -646,13 +651,13 @@ namespace FooEditEngine.WPF
 
         void _textStore_SetSelectionIndex(DotNetTextStore.TextSelection[] sels)
         {
-            TextStoreHelper.SetSelectionIndex(this._Controller, this._View, sels[0].start, sels[0].end);
+            TextStoreHelper.SetSelectionIndex(this._View, sels[0].start, sels[0].end);
             this.Refresh();
         }
 
         void _textStore_InsertAtSelection(string i_value, ref int o_startIndex, ref int o_endIndex)
         {
-            TextStoreHelper.InsertTextAtSelection(this._Controller, i_value,o_startIndex, o_endIndex);
+            TextStoreHelper.InsertTextAtSelection(i_value,o_startIndex, o_endIndex);
             this.Refresh();
         }
 
@@ -1156,7 +1161,9 @@ namespace FooEditEngine.WPF
                 return;
             if(e.type == UpdateType.Replace)
             {
-                TextStoreHelper.NotifyTextChanged(this.textStore, e.startIndex, e.removeLength, e.insertLength);
+                int oldStart, oldEnd, newStart, newEnd;
+                this.TextStoreHelper.GetNotifyTextChageArea(new DocumentUpdateEventArgs(UpdateType.Replace, 0, 0, Document.Length), out oldStart, out oldEnd, out newStart, out newEnd);
+                this.textStore.NotifyTextChanged(oldStart,oldEnd,newEnd);
             }
             if (this.peer != null)
                 this.peer.OnNotifyTextChanged();
