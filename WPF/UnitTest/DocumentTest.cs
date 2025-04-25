@@ -197,28 +197,28 @@ namespace UnitTest
             doc.Clear();
             doc.Append("a\nb\nc");
 
-            Assert.IsTrue(view.LayoutLines.GetIndexFromLineNumber(1) == 2);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromLineNumber(1) == 2);
             Assert.IsTrue(view.LayoutLines.GetLengthFromLineNumber(1) == 2);
             Assert.IsTrue(view.LayoutLines.GetLineNumberFromIndex(2) == 1);
             TextPoint tp = view.LayoutLines.GetTextPointFromIndex(2);
             Assert.IsTrue(tp.row == 1 && tp.col == 0);
-            Assert.IsTrue(view.LayoutLines.GetIndexFromTextPoint(tp) == 2);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromTextPoint(tp) == 2);
 
             doc.Insert(2, "a");
 
-            Assert.IsTrue(view.LayoutLines.GetIndexFromLineNumber(2) == 5);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromLineNumber(2) == 5);
             Assert.IsTrue(view.LayoutLines.GetLineNumberFromIndex(5) == 2);
             tp = view.LayoutLines.GetTextPointFromIndex(5);
             Assert.IsTrue(tp.row == 2 && tp.col == 0);
-            Assert.IsTrue(view.LayoutLines.GetIndexFromTextPoint(tp) == 5);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromTextPoint(tp) == 5);
 
             doc.Insert(0, "a");
 
-            Assert.IsTrue(view.LayoutLines.GetIndexFromLineNumber(2) == 6);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromLineNumber(2) == 6);
             Assert.IsTrue(view.LayoutLines.GetLineNumberFromIndex(6) == 2);
             tp = view.LayoutLines.GetTextPointFromIndex(6);
             Assert.IsTrue(tp.row == 2 && tp.col == 0);
-            Assert.IsTrue(view.LayoutLines.GetIndexFromTextPoint(tp) == 6);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromTextPoint(tp) == 6);
         }
 
         [TestMethod]

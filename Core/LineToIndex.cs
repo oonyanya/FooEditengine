@@ -450,7 +450,7 @@ namespace FooEditEngine
         {
             if (this.collection.Count == 0)
                 return 0;
-            return this.collection.GetIndexIntoRange(row).Index;
+            return this.collection.GetWithConvertAbsolteIndex(row).Index;
         }
 
         internal void UpdateLineAsReplace(int row, long removedLength, long insertedLength)
@@ -827,7 +827,7 @@ namespace FooEditEngine
 
         public int IndexOfLoose(long start)
         {
-            int result = (int)this.collection.GetIndexFromIndexIntoRange(start);
+            int result = (int)this.collection.GetIndexFromAbsoluteIndexIntoRange(start);
             if (result == -1)
             {
                 int lastRow = this.collection.Count - 1;
@@ -967,7 +967,7 @@ namespace FooEditEngine
         /// コレクションを反復処理するためのIEnumeratorを返す
         /// </summary>
         /// <returns>IEnumeratorオブジェクト</returns>
-        public new IEnumerator<string> GetEnumerator()
+        public IEnumerator<string> GetEnumerator()
         {
             for (int i = 0; i < this._Lines.Count; i++)
                 yield return this[i];

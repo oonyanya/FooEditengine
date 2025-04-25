@@ -527,8 +527,7 @@ namespace FooEditEngine
 
         public void RaiseCaretPostionChanged()
         {
-            if(this.CaretPostion != null)
-                this.CaretChanged(this, null);
+            this.CaretChanged(this, null);
         }
 
         /// <summary>
