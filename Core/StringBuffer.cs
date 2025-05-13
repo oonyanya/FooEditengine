@@ -21,6 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FooProject.Collection;
 using System.Collections;
+using System.Runtime.CompilerServices;
 
 namespace FooEditEngine
 {
@@ -59,8 +60,9 @@ namespace FooEditEngine
 
         public static BigList<char> GetBuffer()
         {
-            BigList<char>.BlockSize = 32768;
-            return new BigList<char>();
+            var buf = new BigList<char>();
+            buf.BlockSize = 32768;
+            return buf;
         }
 
 
