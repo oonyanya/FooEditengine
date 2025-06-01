@@ -61,7 +61,10 @@ namespace FooEditEngine
         public static BigList<char> GetBuffer()
         {
             var buf = new BigList<char>();
+            //LOHの都合上、このくらいの値がちょうどいい
             buf.BlockSize = 32768;
+            //BigList<T>.FIBONACCIに書かれている数値で、Int.MaxValue以外の奴なら設定しても問題はない
+            buf.MaxCapacity = (long)1836311903 * (long)32768;
             return buf;
         }
 
@@ -86,12 +89,12 @@ namespace FooEditEngine
 
         public long Length
         {
-            get { return this.buf.Count; }
+            get { return this.buf.LongCount; }
         }
 
         public long Count
         {
-            get { return this.buf.Count; }
+            get { return this.buf.LongCount; }
         }
 
         internal DocumentUpdateEventHandler Update;
