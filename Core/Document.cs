@@ -853,6 +853,8 @@ namespace FooEditEngine
                 throw new InvalidOperationException("");
             if (start < 0 || start + length < 0 || start + length > this.Length)
                 throw new ArgumentOutOfRangeException("startかendが指定できる範囲を超えてます");
+            if (length > Int32.MaxValue - 1)
+                throw new ArgumentOutOfRangeException("length is within Int32.MaxValue - 1");
             //選択範囲が消されたとき
             foreach (Selection sel in this.Selections)
                 this.LayoutLines.ClearLayoutCache(sel.start, sel.length);
@@ -1033,6 +1035,8 @@ namespace FooEditEngine
         {
             if (m.start < 0 || m.start + m.length > this.Length)
                 throw new ArgumentOutOfRangeException("startもしくはendが指定できる範囲を超えています");
+            if (m.length > Int32.MaxValue - 1)
+                throw new ArgumentOutOfRangeException("Length is within Int32.MaxValue - 1");
 
             this.Markers.Add(id,m);
         }
@@ -1047,6 +1051,8 @@ namespace FooEditEngine
         {
             if (start < 0 || start + length > this.Length)
                 throw new ArgumentOutOfRangeException("startもしくはendが指定できる範囲を超えています");
+            if (length > Int32.MaxValue - 1)
+                throw new ArgumentOutOfRangeException("Length is within Int32.MaxValue - 1");
 
             this.Markers.RemoveAll(id,start, length);
         }
