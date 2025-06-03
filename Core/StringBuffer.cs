@@ -43,6 +43,9 @@ namespace FooEditEngine
 
     sealed class StringBuffer : IEnumerable<char>, IRandomEnumrator<char>
     {
+        //LOHの都合上、このくらいの値がちょうどいい
+        const int BUF_BLOCKSIZE = 32768;
+
         BigList<char> buf = GetBuffer();
         const int MaxSemaphoreCount = 1;
         AsyncReaderWriterLock rwlock = new AsyncReaderWriterLock();
@@ -61,10 +64,9 @@ namespace FooEditEngine
         public static BigList<char> GetBuffer()
         {
             var buf = new BigList<char>();
-            //LOHの都合上、このくらいの値がちょうどいい
-            buf.BlockSize = 32768;
+            buf.BlockSize = BUF_BLOCKSIZE;
             //BigList<T>.FIBONACCIに書かれている数値で、Int.MaxValue以外の奴なら設定しても問題はない
-            buf.MaxCapacity = (long)1836311903 * (long)32768;
+            buf.MaxCapacity = (long)1836311903 * (long)BUF_BLOCKSIZE;
             return buf;
         }
 
