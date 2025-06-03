@@ -916,6 +916,7 @@ namespace FooEditEngine.WPF
                 if (this.peer != null)
                     this.peer.OnNotifyCaretChanged();
                 this._View.IsFocused = true;
+                this._View.HideCaret = false;
                 this.Focus();
                 this.Document.SelectGrippers.BottomLeft.Enabled = false;
                 this.Document.SelectGrippers.BottomRight.Enabled = false;
