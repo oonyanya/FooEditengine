@@ -20,6 +20,7 @@ using Nito.AsyncEx;
 using System.Threading;
 using System.Threading.Tasks;
 using FooProject.Collection;
+using FooProject.Collection.DataStore;
 using System.Collections;
 using System.Runtime.CompilerServices;
 
@@ -41,27 +42,67 @@ namespace FooEditEngine
         long Count {  get; }
     }
 
-    sealed class StringBuffer : IEnumerable<char>, IRandomEnumrator<char>
+    class StringBufferSerializer : ISerializeData<FixedList<char>>
+    {
+        public FixedList<char> DeSerialize(byte[] inputData)
+        {
+            var memStream = new MemoryStream(inputData);
+            var reader = new BinaryReader(memStream, Encoding.Unicode);
+            var arrayCount = reader.ReadInt32();
+            var maxcapacity = reader.ReadInt32();
+            var array = new FixedList<char>(arrayCount, maxcapacity);
+            array.AddRange(reader.ReadChars(arrayCount));
+            return array;
+        }
+
+        public byte[] Serialize(FixedList<char> data)
+        {
+            var output = new byte[data.Count * 2 + 4 + 4]; //int32のサイズは4byte、charのサイズ2byte
+            var memStream = new MemoryStream(output);
+            var writer = new BinaryWriter(memStream, Encoding.Unicode);
+            writer.Write(data.Count);
+            writer.Write(data.MaxCapacity);
+            writer.Write(data.ToArray());
+            writer.Close();
+            memStream.Dispose();
+            return output;
+        }
+    }
+
+    sealed class StringBuffer : IEnumerable<char>, IRandomEnumrator<char>, IDisposable
     {
         //LOHの都合上、このくらいの値がちょうどいい
         const int BUF_BLOCKSIZE = 32768;
+        const int NOUSE_DISKBUFFER_SIZE = -1;
 
-        BigList<char> buf = GetBuffer();
+        BigList<char> buf = null;
         const int MaxSemaphoreCount = 1;
         AsyncReaderWriterLock rwlock = new AsyncReaderWriterLock();
+        DiskPinableContentDataStore<FixedList<char>> diskDataStore = null;
+        int cacheSize = NOUSE_DISKBUFFER_SIZE;
 
-        public StringBuffer()
+        public StringBuffer(int cache_size = NOUSE_DISKBUFFER_SIZE)
         {
+            this.buf = GetBuffer();
+            //2以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
+            if (cache_size >= 2)
+            {
+                var serializer = new StringBufferSerializer();
+                this.diskDataStore = new DiskPinableContentDataStore<FixedList<char>>(serializer,cache_size);
+                buf.CustomBuilder.DataStore = diskDataStore;
+                this.cacheSize = cache_size;
+            }
             this.Update = (s, e) => { };
         }
 
         public StringBuffer(StringBuffer buffer)
-            : this()
+            : this(buffer.cacheSize)
         {
+            System.Diagnostics.Debug.Assert(buffer.cacheSize == this.cacheSize);
             buf.AddRange(buffer.buf);
         }
 
-        public static BigList<char> GetBuffer()
+        private static BigList<char> GetBuffer()
         {
             var buf = new BigList<char>();
             buf.BlockSize = BUF_BLOCKSIZE;
@@ -69,7 +110,6 @@ namespace FooEditEngine
             buf.MaxCapacity = (long)1836311903 * (long)BUF_BLOCKSIZE;
             return buf;
         }
-
 
         public char this[long index]
         {
@@ -157,6 +197,14 @@ namespace FooEditEngine
         internal void Clear()
         {
             this.buf.Clear();
+        }
+
+        public void Dispose()
+        {
+            if (this.diskDataStore != null)
+            {
+                this.diskDataStore.Dispose();
+            }
         }
 
         internal IEnumerable<char> GetEnumerator(long start, long length)

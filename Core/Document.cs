@@ -176,8 +176,9 @@ namespace FooEditEngine
         /// <summary>
         /// コンストラクター
         /// </summary>
-        public Document()
-            : this(null)
+        /// <param name="cache_size">２の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します</param>
+        public Document(int cache_size = -1)
+            : this(null, cache_size)
         {
         }
 
@@ -185,11 +186,12 @@ namespace FooEditEngine
         /// コンストラクター
         /// </summary>
         /// <param name="doc">ドキュメントオブジェクト</param>
-        /// <remarks>docが複製されますが、プロパティは引き継がれません</remarks>
-        public Document(Document doc)
+        /// <param name="cache_size">２の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します</param>
+        /// <remarks>docが複製されますが、プロパティは引き継がれません。また、cache_sizeはdocがnullの場合だけ反映されます。</remarks>
+        public Document(Document doc,int cache_size = -1)
         {
             if (doc == null)
-                this.buffer = new StringBuffer();
+                this.buffer = new StringBuffer(cache_size);
             else
                 this.buffer = new StringBuffer(doc.buffer);
             this.buffer.Update = new DocumentUpdateEventHandler(buffer_Update);
@@ -1526,6 +1528,7 @@ namespace FooEditEngine
                 {
                     this.buffer.Clear();
                     this.LayoutLines.Clear();
+                    this.buffer.Dispose();
                 }
 
                 disposedValue = true;
