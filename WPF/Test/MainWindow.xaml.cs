@@ -150,7 +150,7 @@ namespace Test
             if (this.fooTextBox.Hilighter == null)
             {
                 this.fooTextBox.Hilighter = new XmlHilighter();
-                this.fooTextBox.LayoutLineCollection.HilightAll();
+                this.fooTextBox.LayoutLineCollection.HilightAll(true);
             }
             this.fooTextBox.Refresh();
         }
@@ -167,7 +167,7 @@ namespace Test
 
         private void MenuItem_Click_9(object sender, RoutedEventArgs e)
         {
-            this.fooTextBox.LayoutLineCollection.GenerateFolding();
+            this.fooTextBox.LayoutLineCollection.GenerateFolding(true);
             this.fooTextBox.Refresh();
         }
 

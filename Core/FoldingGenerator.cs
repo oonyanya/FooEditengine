@@ -5,6 +5,8 @@ namespace FooEditEngine
 {
     class FoldingGenerator : ILineInfoGenerator
     {
+        const int HUGE_FILE_LENGTH = 1024 * 1024 * 10;
+
         public FoldingCollection FoldingCollection = new FoldingCollection();
         const long AllowCallTicks = 1000 * 10000;   //see.DateTime.Ticks プロパティ
         long lastUpdateTicks = DateTime.Now.Ticks;
@@ -37,6 +39,9 @@ namespace FooEditEngine
                 return false;
             long nowTick = DateTime.Now.Ticks;
             bool sync = force || !this._IsSync;
+            //巨大ファイルは解析に時間がかかるので指示がない限りは実行しない
+            if (force == false && doc.Length > HUGE_FILE_LENGTH)
+                return false;
             if (sync && Math.Abs(nowTick - this.lastUpdateTicks) >= AllowCallTicks)
             {
                 this.GenerateFolding(doc, lti, 0, doc.Length - 1);
