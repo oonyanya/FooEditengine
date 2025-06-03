@@ -1179,9 +1179,11 @@ namespace FooEditEngine.WPF
                 return;
             }
 
-            bool updateAll = this._View.LayoutLines.HilightAll() || this._View.LayoutLines.GenerateFolding() || this.Document.IsRequestRedraw;
+            bool updateAll = false;
+            if(this.IsEnabled)
+                updateAll  = this._View.LayoutLines.HilightAll() || this._View.LayoutLines.GenerateFolding() || this.Document.IsRequestRedraw;
 
-            this.Refresh(this._View.PageBound);
+                this.Refresh(this._View.PageBound);
             /*
              * HIGHDPIだとうまく動かない
             if (updateAll)
