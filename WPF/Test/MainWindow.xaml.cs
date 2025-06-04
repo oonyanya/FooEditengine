@@ -8,6 +8,7 @@
 
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#define USE_DISK_FOR_DOCUMENT
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
@@ -29,8 +30,6 @@ namespace Test
     {
         System.Threading.CancellationTokenSource cancleTokenSrc = new System.Threading.CancellationTokenSource();
 
-        List<Document> Documents = new List<Document>();
-
         public MainWindow()
         {
             InitializeComponent();
@@ -48,13 +47,19 @@ namespace Test
             complete_collection.Add(new CompleteWord("char"));
             complete_collection.Add(new CompleteWord("var"));
 
-            Document doc = this.fooTextBox.Document;
+            Document doc;
+#if USE_DISK_FOR_DOCUMENT
+            doc = new Document(16);
+#else
+            doc = new Document();
+#endif
             doc.AutoComplete = new AutoCompleteBox(doc);
             doc.AutoComplete.Items = complete_collection;
             doc.AutoComplete.Enabled = true;
             doc.LayoutLines.FoldingStrategy = new CharFoldingMethod('{', '}');
             //doc.LayoutLines.FoldingStrategy = new WZTextFoldingGenerator();
             doc.Update += Document_Update;
+            this.fooTextBox.Document = doc;
 
             this.Closed += MainWindow_Closed;
         }
