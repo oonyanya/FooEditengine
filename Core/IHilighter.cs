@@ -24,23 +24,23 @@ namespace FooEditEngine
         /// <summary>
         /// キーワード1として表示するトークンを表す
         /// </summary>
-        Keyword1,
+        Keyword1 = 1,
         /// <summary>
         /// キーワード2として表示するトークンを表す
         /// </summary>
-        Keyword2,
+        Keyword2 = 2,
         /// <summary>
         /// コメントとして表示するトークンを表す
         /// </summary>
-        Comment,
+        Comment = 3,
         /// <summary>
         /// 文字リテラルとして表示するトークンを表す
         /// </summary>
-        Literal,
+        Literal = 4,
         /// <summary>
         /// コントロールとして表示するトークンを表す
         /// </summary>
-        Control,
+        Control = 5,
     }
 
     /// <summary>
@@ -110,11 +110,13 @@ namespace FooEditEngine
         /// <param name="text">対象となる文字列</param>
         /// <param name="length">文字列の長さ</param>
         /// <param name="action">トークンが切り出されたときに呼び出す関数</param>
-        /// <returns>エンクロージャーレベル。開始エンクロージャーだけを検出した場合は1以上の値を返し、
+        /// <returns>
+        /// エンクロージャーレベル。開始エンクロージャーだけを検出した場合は1以上の値を返し、
         /// 終了エンクロージャーだけを検出した場合を-1以下の値を返すようにします。
         /// 何も検出しなかった場合、開始エンクロージャーと終了エンクロージャーが対になっている場合、
-        /// エンクロージャー内で開始エンクロージャーを検出した場合は0を返します
-        /// なお、開始エンクロージャーがすでに検出されている状態で検出したことを返した場合、その結果は無視されます
+        /// エンクロージャー内で開始エンクロージャーを検出した場合は0を返します。
+        /// また、textに空の文字列が入る場合も0を返します。
+        /// なお、開始エンクロージャーがすでに検出されている状態で検出したことを返した場合、その結果は無視されます。
         /// </returns>
         /// <example>
         /// int DoHilight(string text,int length, TokenSpilitHandeler action)
