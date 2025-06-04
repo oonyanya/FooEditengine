@@ -15,6 +15,8 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using FooProject.Collection;
+using FooProject.Collection.DataStore;
+using System.IO;
 
 namespace FooEditEngine
 {
@@ -143,10 +145,10 @@ namespace FooEditEngine
 
     internal enum EncloserType
     {
-        None,
-        Begin,
-        Now,
-        End,
+        None = 0,
+        Begin = 1,
+        Now = 2,
+        End = 3,
     }
 
     interface ILineInfoGenerator
@@ -216,6 +218,81 @@ namespace FooEditEngine
         }
     }
 
+    class LineToIndexTableDataSerializer : ISerializeData<FixedList<LineToIndexTableData>>
+    {
+        public FixedList<LineToIndexTableData> DeSerialize(byte[] inputData)
+        {
+            var memStream = new MemoryStream(inputData);
+            var reader = new BinaryReader(memStream);
+            var arrayCount = reader.ReadInt32();
+            var maxcapacity = reader.ReadInt32();
+            var array = new FixedList<LineToIndexTableData>(arrayCount, maxcapacity);
+            for(int i = 0; i < arrayCount; i++)
+            {
+                var item = new LineToIndexTableData();
+                item.start = reader.ReadInt64();
+                item.length = reader.ReadInt64();
+                item.Dirty = reader.ReadBoolean();
+                item.EncloserType = (EncloserType)reader.ReadInt64();
+                var syntax_item_count = reader.ReadInt64();
+                if (syntax_item_count > 0)
+                {
+                    var syntax_items = new SyntaxInfo[syntax_item_count];
+                    for (int j = 0; j < syntax_item_count; j++)
+                    {
+                        var info = new SyntaxInfo();
+                        info.start = reader.ReadInt64();
+                        info.length = reader.ReadInt64();
+                        info.type = (TokenType)reader.ReadInt64();
+                        syntax_items[j] = info;
+                    }
+                    item.Syntax = syntax_items;
+                }
+                else
+                {
+                    item.Syntax = null;
+                }
+                array.Add(item);
+            }
+            return array;
+        }
+
+        public byte[] Serialize(FixedList<LineToIndexTableData> data)
+        {
+            //内部配列の確保に時間がかかるので、書き込むメンバー数×バイト数の２倍程度をひとまず確保しておく
+            var memStream = new MemoryStream(data.Count * 5 * 8 * 2);
+            var writer = new BinaryWriter(memStream, Encoding.Unicode);
+            //面倒なのでlongにキャストできるところはlongで書き出す
+            writer.Write(data.Count);
+            writer.Write(data.MaxCapacity);
+            foreach(var item in data)
+            {
+                writer.Write(item.start);
+                writer.Write(item.length);
+                writer.Write(item.Dirty);
+                writer.Write((long)item.EncloserType);
+                if(item.Syntax == null)
+                {
+                    writer.Write(0L);
+                }
+                else
+                {
+                    writer.Write((long)item.Syntax.Length);
+                    foreach (var s in item.Syntax)
+                    {
+                        writer.Write((long)s.type);
+                        writer.Write(s.start);
+                        writer.Write(s.length);
+                    }
+                }
+            }
+            writer.Close();
+            var result = memStream.ToArray();
+            memStream.Dispose();
+            return result;
+        }
+    }
+
     internal delegate IList<LineToIndexTableData> SpilitStringEventHandler(object sender, SpilitStringEventArgs e);
 
     internal sealed class CreateLayoutEventArgs
@@ -259,6 +336,7 @@ namespace FooEditEngine
     {
         const int MaxEntries = 100;
         BigRangeList<LineToIndexTableData> collection;
+        DiskPinableContentDataStore<FixedList<LineToIndexTableData>> diskDataStore;
         BigRangeList<LineToIndexTableData> _Lines { get { return this.collection; } }
         Document Document;
         ITextRender render;
@@ -267,11 +345,18 @@ namespace FooEditEngine
         const int SYNTAX_HIGLITHER_INDEX = 1;
         ILineInfoGenerator[] _generators = new ILineInfoGenerator[2];
 
-        internal LineToIndexTable(Document buf)
+        internal LineToIndexTable(Document buf, int cache_size = -1)
         {
             this.Document = buf;
             this.Document.Markers.Updated += Markers_Updated;
             this.collection = new BigRangeList<LineToIndexTableData>();
+            //2以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
+            if (cache_size >= 2)
+            {
+                var serializer = new LineToIndexTableDataSerializer();
+                this.diskDataStore = new DiskPinableContentDataStore<FixedList<LineToIndexTableData>>(serializer, cache_size);
+                this.collection.CustomBuilder.DataStore = diskDataStore;
+            }
             this._generators[FOLDING_INDEX] = new FoldingGenerator();
             this._generators[SYNTAX_HIGLITHER_INDEX] = new SyntaxHilightGenerator();
             this.WrapWidth = NONE_BREAK_LINE;
@@ -285,6 +370,7 @@ namespace FooEditEngine
                 //Debug.AutoFlush = true;
             }
 #endif
+            this.Init();
         }
 
         void Markers_Updated(object sender, EventArgs e)
@@ -949,6 +1035,12 @@ namespace FooEditEngine
             this._generators[SYNTAX_HIGLITHER_INDEX].Clear(this);
         }
 
+        private void Init()
+        {
+            LineToIndexTableData dummy = new LineToIndexTableData();
+            this._Lines.Add(dummy);
+        }
+
         /// <summary>
         /// すべて削除します
         /// </summary>
@@ -957,8 +1049,12 @@ namespace FooEditEngine
             this.collection.Clear();
             this.ClearLayoutCache();
             this.ClearFolding();
-            LineToIndexTableData dummy = new LineToIndexTableData();
-            this._Lines.Add(dummy);
+            this.Init();
+        }
+
+        internal void Flush()
+        {
+            this.diskDataStore.Commit();
         }
 
         #region IEnumerable<string> メンバー

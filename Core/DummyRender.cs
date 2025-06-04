@@ -261,4 +261,32 @@ namespace FooEditEngine
             return 0;
         }
     }
+
+    class DummyHilighter : IHilighter
+    {
+        char spiliter;
+        public DummyHilighter(char spiliter)
+        {
+            this.spiliter = spiliter;
+        }
+        public int DoHilight(string text, int length, TokenSpilitHandeler action)
+        {
+            if(text == string.Empty)
+                return 0;
+            var tokens = text.Split(spiliter);
+            int index = 0;
+            foreach(var token in tokens)
+            {
+                if (token[0] == Document.NewLine)
+                    break;
+                action(new TokenSpilitEventArgs(index, token.Length, TokenType.Keyword1));
+                index += token.Length;
+            }
+            return 0;
+        }
+
+        public void Reset()
+        {
+        }
+    }
 }

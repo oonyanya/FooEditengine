@@ -200,8 +200,7 @@ namespace FooEditEngine
             this.PropertyChanged += new PropertyChangedEventHandler((s, e) => { });
             this.Markers = new MarkerCollection();
             this.UndoManager = new UndoManager();
-            this._LayoutLines = new LineToIndexTable(this);
-            this._LayoutLines.Clear();
+            this._LayoutLines = new LineToIndexTable(this, this.buffer.cacheSize);
             this.MarkerPatternSet = new MarkerPatternSet(this._LayoutLines, this.Markers);
             this.MarkerPatternSet.Updated += WacthDogPattern_Updated;
             this.Selections = new SelectCollection();

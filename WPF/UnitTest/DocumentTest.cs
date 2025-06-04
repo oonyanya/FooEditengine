@@ -416,12 +416,15 @@ namespace UnitTest
             Document olddoc = new Document(2);
             Document doc = new Document(olddoc);
             olddoc.Dispose();
+            doc.LayoutLines.Hilighter =new DummyHilighter('.');
             doc.LayoutLines.Render = render;
-            Document.PreloadLength = 64;
             for (int i = 0; i < ADD_COUNT; i++)
             {
                 doc.Append("this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.\n");
             }
+            doc.StringBuffer.Flush();
+            doc.LayoutLines.Flush();
+            doc.LayoutLines.HilightAll(true);
             doc.Dispose();
         }
 

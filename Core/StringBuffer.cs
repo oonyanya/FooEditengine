@@ -79,7 +79,7 @@ namespace FooEditEngine
         const int MaxSemaphoreCount = 1;
         AsyncReaderWriterLock rwlock = new AsyncReaderWriterLock();
         DiskPinableContentDataStore<FixedList<char>> diskDataStore = null;
-        int cacheSize = NOUSE_DISKBUFFER_SIZE;
+        internal int cacheSize = NOUSE_DISKBUFFER_SIZE;
 
         public StringBuffer(int cache_size = NOUSE_DISKBUFFER_SIZE)
         {
@@ -189,6 +189,11 @@ namespace FooEditEngine
         internal void OnDocumentUpdate(DocumentUpdateEventArgs e)
         {
             this.Update(this, e);
+        }
+
+        internal void Flush()
+        {
+            this.diskDataStore.Commit();
         }
 
         /// <summary>
