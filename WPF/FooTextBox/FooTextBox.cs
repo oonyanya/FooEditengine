@@ -595,7 +595,7 @@ namespace FooEditEngine.WPF
 
         string _textStore_GetString(int start, int length)
         {
-            return this.TextStoreHelper.GetString(start, length);
+            return this.TextStoreHelper.GetString(start, start + length);
         }
 
         IntPtr _textStore_GetHWnd()
