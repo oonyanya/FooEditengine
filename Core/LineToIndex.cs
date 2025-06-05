@@ -226,7 +226,7 @@ namespace FooEditEngine
             var reader = new BinaryReader(memStream);
             var arrayCount = reader.ReadInt32();
             var maxcapacity = reader.ReadInt32();
-            var array = new FixedList<LineToIndexTableData>(arrayCount, maxcapacity);
+            var array = new FixedRangeList<LineToIndexTableData>(arrayCount, maxcapacity);
             for(int i = 0; i < arrayCount; i++)
             {
                 var item = new LineToIndexTableData();
