@@ -427,15 +427,19 @@ namespace UnitTest
             doc.LayoutLines.Flush();
             doc.LayoutLines.HilightAll(true);
             //最終行は空行なので確かめる必要はない
+            long documentIndex = 0;
             for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
             {
                 Assert.AreEqual(text, doc.LayoutLines[i]);
-                var syntaxs = doc.LayoutLines.GetRaw(i).Syntax;
+                Assert.AreEqual(documentIndex, doc.LayoutLines.GetLongIndexFromLineNumber(i));
+                var lineData = doc.LayoutLines.GetRaw(i);
+                var syntaxs = lineData.Syntax;
                 Assert.AreEqual(6,syntaxs.Length);
                 foreach(var syntax in syntaxs)
                 {
                     Assert.AreEqual(TokenType.Keyword1, syntax.type);
                 }
+                documentIndex += lineData.length;
             }
             doc.Dispose();
         }
