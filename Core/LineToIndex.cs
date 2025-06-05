@@ -254,6 +254,8 @@ namespace FooEditEngine
                 }
                 array.Add(item);
             }
+            //FixedRangeListを返さないとうまく動作しない
+            System.Diagnostics.Debug.Assert(array is FixedRangeList<LineToIndexTableData>);
             return array;
         }
 
