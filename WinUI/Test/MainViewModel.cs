@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define USE_DISK_FOR_DOCUMENT
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -30,6 +31,7 @@ namespace Test
     class MainViewModel : INotifyPropertyChanged
     {
         ObservableCollection<Document> _list;
+        const int DOCUMENT_CACHE_SIZE = 16;
 
         public MainViewModel()
         {
@@ -110,7 +112,11 @@ namespace Test
             CompleteHelper.AddComleteWord(complete_collection, "var");
             CompleteHelper.AddComleteWord(complete_collection, "short");
 
-            var doc = new Document() { Title = "test1" };
+#if USE_DISK_FOR_DOCUMENT
+            var doc = new Document(DOCUMENT_CACHE_SIZE) { Title = "test1" };
+#else
+            var doc = new Document(){ Title = "test1" };
+#endif
             doc.AutoComplete = new AutoCompleteBox(doc);
             doc.AutoComplete.Items = complete_collection;
             doc.AutoComplete.Enabled = true;
@@ -124,7 +130,11 @@ namespace Test
             doc.LayoutLines.Hilighter = new TestHilighter();
             _list.Add(doc);
 
+#if USE_DISK_FOR_DOCUMENT
+            doc = new Document(DOCUMENT_CACHE_SIZE) { Title = "test2" };
+#else
             doc = new Document() { Title = "test2" };
+#endif
             _list.Add(doc);
 
             this.CurrentDocument = _list[0];
@@ -132,7 +142,11 @@ namespace Test
 
         public void AddDocument()
         {
+#if USE_DISK_FOR_DOCUMENT
+            var doc = new Document(DOCUMENT_CACHE_SIZE) { Title = "test" + _list.Count };
+#else
             var doc = new Document() { Title = "test" + _list.Count };
+#endif
             _list.Add(doc);
             this.CurrentDocument = _list.Last();
         }
@@ -148,7 +162,11 @@ namespace Test
         {
             if (file != null)
             {
+#if USE_DISK_FOR_DOCUMENT
+                var doc = new Document(DOCUMENT_CACHE_SIZE) { Title = "test" + _list.Count };
+#else
                 var doc = new Document() { Title = "test" + _list.Count };
+#endif
                 doc.ShowLineBreak = true;
                 doc.ShowFullSpace = true;
                 doc.ShowTab = true;
