@@ -19,7 +19,9 @@ WinUIを使用してください。
 
 https://github.com/oonyanya/FooList
 
-をFooEditengineがあるフォルダーにクローンすること
+をFooEditengineがあるフォルダーにクローンすること。
+
+ビルド環境：VisualStudio 2022
 
 # 制限事項
 
