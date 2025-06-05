@@ -202,7 +202,9 @@ namespace FooEditEngine
         public void Dispose()
         {
             if(this.Layout != null)
+            {
                 this.Layout.Dispose();
+            }
         }
 
         public FooProject.Collection.IRange DeepCopy()
@@ -1054,8 +1056,9 @@ namespace FooEditEngine
             this.Init();
         }
 
-        internal void Flush()
+        internal void Trim()
         {
+            this.ClearLayoutCache();
             this.diskDataStore.Commit();
         }
 
