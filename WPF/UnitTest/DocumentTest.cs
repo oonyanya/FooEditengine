@@ -411,6 +411,7 @@ namespace UnitTest
         public void DiskbaseDocumentTest()
         {
             const int ADD_COUNT = 2000;
+            const string text = "this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.\n";
 
             DummyRender render = new DummyRender();
             Document olddoc = new Document(2);
@@ -420,11 +421,22 @@ namespace UnitTest
             doc.LayoutLines.Render = render;
             for (int i = 0; i < ADD_COUNT; i++)
             {
-                doc.Append("this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.\n");
+                doc.Append(text);
             }
             doc.StringBuffer.Flush();
             doc.LayoutLines.Flush();
             doc.LayoutLines.HilightAll(true);
+            //最終行は空行なので確かめる必要はない
+            for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
+            {
+                Assert.AreEqual(text, doc.LayoutLines[i]);
+                var syntaxs = doc.LayoutLines.GetRaw(i).Syntax;
+                Assert.AreEqual(6,syntaxs.Length);
+                foreach(var syntax in syntaxs)
+                {
+                    Assert.AreEqual(TokenType.Keyword1, syntax.type);
+                }
+            }
             doc.Dispose();
         }
 

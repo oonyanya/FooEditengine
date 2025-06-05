@@ -241,9 +241,9 @@ namespace FooEditEngine
                     for (int j = 0; j < syntax_item_count; j++)
                     {
                         var info = new SyntaxInfo();
+                        info.type = (TokenType)reader.ReadInt64();
                         info.start = reader.ReadInt64();
                         info.length = reader.ReadInt64();
-                        info.type = (TokenType)reader.ReadInt64();
                         syntax_items[j] = info;
                     }
                     item.Syntax = syntax_items;
