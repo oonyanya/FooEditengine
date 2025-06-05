@@ -54,9 +54,10 @@ namespace FooEditEngine
                 relativeIndex -= splitLength;
                 layoutNumber++;
             }
-            if (layoutNumber >= TextLayouts.Count)
-                layoutNumber = TextLayouts.Count - 1;
-            int result = TextLayouts[layoutNumber].AlignIndexToNearestCluster(relativeIndex, flow);
+            int arrayIndex = layoutNumber;
+            if (arrayIndex >= TextLayouts.Count)
+                arrayIndex = TextLayouts.Count - 1;
+            int result = TextLayouts[arrayIndex].AlignIndexToNearestCluster(relativeIndex, flow);
             result += layoutNumber * splitLength;
             return result;
         }

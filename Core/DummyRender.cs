@@ -155,7 +155,7 @@ namespace FooEditEngine
 
         public ITextLayout CreateLaytout(string str, SyntaxInfo[] syntaxCollection, IEnumerable<Marker> MarkerRanges, IEnumerable<Selection> SelectRanges, double wrapwidth)
         {
-            return new DummyTextLayout();
+            return new DummyTextLayout(str.Length);
         }
 
         public void DrawGripper(Point p, double radius)
@@ -201,14 +201,19 @@ namespace FooEditEngine
     }
     class DummyTextLayout : ITextLayout
     {
+        int _charnum;
+        public DummyTextLayout(int charnum)
+        {
+            this._charnum = charnum;
+        }
         public double Width
         {
-            get { return 0; }
+            get { return _charnum; }
         }
 
         public double Height
         {
-            get { return 0; }
+            get { return 10; }
         }
 
         public bool Disposed
@@ -224,12 +229,12 @@ namespace FooEditEngine
 
         public int GetIndexFromColPostion(double x)
         {
-            return 0;
+            return (int)x;
         }
 
         public double GetWidthFromIndex(int index)
         {
-            return 0;
+            return 1;
         }
 
         public double GetColPostionFromIndex(int index)
@@ -253,12 +258,12 @@ namespace FooEditEngine
 
         public Point GetPostionFromIndex(int index)
         {
-            return new Point();
+            return new Point(index,0);
         }
 
         public int GetIndexFromPostion(double x, double y)
         {
-            return 0;
+            return (int)x;
         }
     }
 

@@ -178,7 +178,7 @@ namespace UnitTest
 
         public double GetWidthFromIndex(int index)
         {
-            return 0;
+            return 1;
         }
 
         public double GetColPostionFromIndex(int index)

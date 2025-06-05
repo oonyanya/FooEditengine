@@ -445,6 +445,49 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void LongLineTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            for(int i = 0; i < 2; i++)
+            {
+                int testLength = Document.MaximumLineLength * 2;
+                for (int j = 0; j < testLength; j++)
+                {
+                    doc.Append('a');
+                }
+                doc.Append('\n');
+            }
+            doc.PerformLayout();
+
+            var layoutLines = doc.LayoutLines;
+
+            Assert.AreEqual(20, layoutLines.GetLineHeight(new TextPoint(0,0)));
+
+            ITextLayout layout = layoutLines.GetLayout(0);
+            Point p = layout.GetPostionFromIndex(0);
+            Assert.AreEqual(0, p.X);
+            Assert.AreEqual(0, p.Y);
+
+            p = layout.GetPostionFromIndex(Document.MaximumLineLength);
+            Assert.AreEqual(0, p.X);
+            Assert.AreEqual(20, p.Y);
+
+            Assert.AreEqual(0, layout.GetIndexFromPostion(0, 0));
+
+            Assert.AreEqual(Document.MaximumLineLength, layout.GetIndexFromPostion(0, 20));
+
+            Assert.AreEqual(1, layout.GetWidthFromIndex(0));
+
+            Assert.AreEqual(1, layout.GetWidthFromIndex(Document.MaximumLineLength));
+
+            Assert.AreEqual(1,layout.AlignIndexToNearestCluster(0,AlignDirection.Forward));
+
+            Assert.AreEqual(Document.MaximumLineLength + 1, layout.AlignIndexToNearestCluster(Document.MaximumLineLength, AlignDirection.Forward));
+        }
+
+        [TestMethod]
         public void MarkerTest()
         {
             DummyRender render = new DummyRender();
