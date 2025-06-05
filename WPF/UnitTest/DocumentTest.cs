@@ -424,7 +424,7 @@ namespace UnitTest
                 doc.Append(text);
             }
             doc.StringBuffer.Flush();
-            doc.LayoutLines.Flush();
+            doc.LayoutLines.Trim();
             doc.LayoutLines.HilightAll(true);
             //最終行は空行なので確かめる必要はない
             long documentIndex = 0;
