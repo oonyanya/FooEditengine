@@ -80,25 +80,28 @@ namespace FooEditEngine
         AsyncReaderWriterLock rwlock = new AsyncReaderWriterLock();
         DiskPinableContentDataStore<FixedList<char>> diskDataStore = null;
         internal int cacheSize = NOUSE_DISKBUFFER_SIZE;
+        internal string workfile_path = null;
 
-        public StringBuffer(int cache_size = NOUSE_DISKBUFFER_SIZE)
+        public StringBuffer(string workfile_path = null,int cache_size = NOUSE_DISKBUFFER_SIZE)
         {
             this.buf = GetBuffer();
             //2以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
             if (cache_size >= 2)
             {
                 var serializer = new StringBufferSerializer();
-                this.diskDataStore = new DiskPinableContentDataStore<FixedList<char>>(serializer,cache_size);
+                this.diskDataStore = new DiskPinableContentDataStore<FixedList<char>>(serializer, workfile_path, cache_size);
                 buf.CustomBuilder.DataStore = diskDataStore;
                 this.cacheSize = cache_size;
+                this.workfile_path = workfile_path;
             }
             this.Update = (s, e) => { };
         }
 
         public StringBuffer(StringBuffer buffer)
-            : this(buffer.cacheSize)
+            : this(buffer.workfile_path, buffer.cacheSize)
         {
             System.Diagnostics.Debug.Assert(buffer.cacheSize == this.cacheSize);
+            System.Diagnostics.Debug.Assert(buffer.workfile_path == this.workfile_path);
             buf.AddRange(buffer.buf);
         }
 

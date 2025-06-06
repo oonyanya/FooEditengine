@@ -178,7 +178,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="cache_size">２の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します</param>
         public Document(int cache_size = -1)
-            : this(null, cache_size)
+            : this(null, null, cache_size)
         {
         }
 
@@ -188,10 +188,10 @@ namespace FooEditEngine
         /// <param name="doc">ドキュメントオブジェクト</param>
         /// <param name="cache_size">２の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します</param>
         /// <remarks>docが複製されますが、プロパティは引き継がれません。また、cache_sizeはdocがnullの場合だけ反映されます。</remarks>
-        public Document(Document doc,int cache_size = -1)
+        public Document(Document doc,string workfile_path = null,int cache_size = -1)
         {
             if (doc == null)
-                this.buffer = new StringBuffer(cache_size);
+                this.buffer = new StringBuffer(workfile_path, cache_size);
             else
                 this.buffer = new StringBuffer(doc.buffer);
             this.buffer.Update = new DocumentUpdateEventHandler(buffer_Update);
