@@ -44,19 +44,29 @@ namespace FooEditEngine
             get; set;
         }
 
-        public int AlignIndexToNearestCluster(int index, AlignDirection flow)
+        private (int,int,int, double) GetLayoutNumberFromIndex(int index, int splitLength)
         {
-            int splitLength = Document.MaximumLineLength;
             int relativeIndex = index;
             int layoutNumber = 0;
+            double pos_y = 0.0;
             while (relativeIndex >= splitLength)
             {
                 relativeIndex -= splitLength;
+                pos_y += TextLayouts[layoutNumber].Height;
                 layoutNumber++;
             }
             int arrayIndex = layoutNumber;
             if (arrayIndex >= TextLayouts.Count)
                 arrayIndex = TextLayouts.Count - 1;
+            return (relativeIndex, arrayIndex,layoutNumber, pos_y);
+        }
+
+        public int AlignIndexToNearestCluster(int index, AlignDirection flow)
+        {
+            int splitLength = Document.MaximumLineLength;
+            int relativeIndex,layoutNumber,arrayIndex;
+            double pos_y;
+            (relativeIndex,arrayIndex,layoutNumber, pos_y) = GetLayoutNumberFromIndex(index, splitLength);
             int result = TextLayouts[arrayIndex].AlignIndexToNearestCluster(relativeIndex, flow);
             result += layoutNumber * splitLength;
             return result;
@@ -109,34 +119,19 @@ namespace FooEditEngine
         public Point GetPostionFromIndex(int index)
         {
             int splitLength = Document.MaximumLineLength;
-            int relativeIndex = index;
-            int layoutNumber = 0;
-            double pos_x = 0,pos_y = 0;
-            while (relativeIndex >= splitLength)
-            {
-                relativeIndex -= splitLength;
-                pos_y += TextLayouts[layoutNumber].Height;
-                layoutNumber++;
-            }
-            if(layoutNumber >= TextLayouts.Count)
-                layoutNumber = TextLayouts.Count - 1;
-            Point relativePointInSublayout = TextLayouts[layoutNumber].GetPostionFromIndex(relativeIndex);
-            return new Point(pos_x + relativePointInSublayout.X, pos_y + relativePointInSublayout.Y);
+            int relativeIndex, layoutNumber, arrayIndex;
+            double pos_y;
+            (relativeIndex, arrayIndex, layoutNumber, pos_y) = GetLayoutNumberFromIndex(index, splitLength);
+            Point relativePointInSublayout = TextLayouts[arrayIndex].GetPostionFromIndex(relativeIndex);
+            return new Point(relativePointInSublayout.X, pos_y + relativePointInSublayout.Y);
         }
 
         public double GetWidthFromIndex(int index)
         {
-            int splitLength = Document.MaximumLineLength;
-            int relativeIndex = index;
-            int layoutNumber = 0;
-            while (relativeIndex >= splitLength)
-            {
-                relativeIndex -= splitLength;
-                layoutNumber++;
-            }
-            if (layoutNumber >= TextLayouts.Count)
-                layoutNumber = TextLayouts.Count - 1;
-            return TextLayouts[layoutNumber].GetWidthFromIndex(relativeIndex);
+            int relativeIndex, layoutNumber, arrayIndex;
+            double pos_y;
+            (relativeIndex, arrayIndex, layoutNumber, pos_y) = GetLayoutNumberFromIndex(index, Document.MaximumLineLength);
+            return TextLayouts[arrayIndex].GetWidthFromIndex(relativeIndex);
         }
 
         public void Draw(double x, double y,Action<ITextLayout,int,double,double> action)
