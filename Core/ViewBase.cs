@@ -143,7 +143,6 @@ namespace FooEditEngine
                 this.render.ShowLineBreak = this.Document.ShowLineBreak;
             CalculateClipRect();
             CalculateLineCountOnScreen();
-            this._LayoutLines.ClearLayoutCache();
         }
 
         private void Document_LineBreakChanged(object sender, EventArgs e)

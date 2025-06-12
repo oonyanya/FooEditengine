@@ -232,7 +232,7 @@ namespace FooEditEngine
             set
             {
                 _Dirty = value;
-                this.OnProperyChanged();
+                this.OnProperyChanged(false);
             }
         }
 
@@ -267,7 +267,7 @@ namespace FooEditEngine
             set
             {
                 _Title = value;
-                this.OnProperyChanged();
+                this.OnProperyChanged(false);
             }
         }
 
@@ -305,8 +305,11 @@ namespace FooEditEngine
         public event PropertyChangedEventHandler PropertyChanged;
 
         
-        public void OnProperyChanged([CallerMemberName] string  propertyName = "")
+        public void OnProperyChanged(bool clearCache = true,[CallerMemberName] string  propertyName = "")
         {
+            if (clearCache)
+                this._LayoutLines.ClearLayoutCache();
+
             if(this.PropertyChanged != null)
                 this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -406,7 +409,7 @@ namespace FooEditEngine
             set
             {
                 this._RectSelection = value;
-                this.OnProperyChanged();
+                this.OnProperyChanged(false);
             }
         }
 
@@ -422,7 +425,7 @@ namespace FooEditEngine
             set
             {
                 this._IndentMode = value;
-                this.OnProperyChanged();
+                this.OnProperyChanged(false);
             }
         }
 
@@ -438,7 +441,7 @@ namespace FooEditEngine
             set
             {
                 this._HideLineMarker = value;
-                this.OnProperyChanged();
+                this.OnProperyChanged(false);
             }
         }
 
@@ -454,7 +457,7 @@ namespace FooEditEngine
             set
             {
                 this._HideCaret = value;
-                this.OnProperyChanged();
+                this.OnProperyChanged(false);
             }
         }
 
@@ -470,7 +473,7 @@ namespace FooEditEngine
             set
             {
                 this._InsertMode = value;
-                this.OnProperyChanged();
+                this.OnProperyChanged(false);
             }
         }
 
@@ -486,7 +489,7 @@ namespace FooEditEngine
                     return;
                 this._HideRuler = value;
                 this.LayoutLines.ClearLayoutCache();
-                this.OnProperyChanged();
+                this.OnProperyChanged(false);
             }
         }
 
@@ -577,7 +580,7 @@ namespace FooEditEngine
                     return;
                 this._DrawLineNumber = value;
                 this._LayoutLines.ClearLayoutCache();
-                this.OnProperyChanged();
+                this.OnProperyChanged(false);
             }
         }
 
