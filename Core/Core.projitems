@@ -12,7 +12,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)AutoCompleteBoxBase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Automation\FooTextBoxAutomationPeer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Automation\FooTextBoxRangeProvider.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)CacheManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CombineTextLayout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CompleteCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CompleteCollectionHelper.cs" />
