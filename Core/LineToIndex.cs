@@ -463,9 +463,22 @@ namespace FooEditEngine
         /// </summary>
         public void ClearLayoutCache()
         {
-            foreach (LineToIndexTableData data in this._Lines)
+            if(diskDataStore == null)
             {
-                data.Dispose();
+                foreach (LineToIndexTableData data in this._Lines)
+                {
+                    data.Dispose();
+                }
+            }
+            else
+            {
+                foreach (var items in this.diskDataStore.ForEachAvailableContent())
+                {
+                    foreach(LineToIndexTableData data in items)
+                    {
+                        data.Dispose();
+                    }
+                }
             }
         }
 
@@ -1050,8 +1063,8 @@ namespace FooEditEngine
         /// </summary>
         public void Clear()
         {
-            this.collection.Clear();
             this.ClearLayoutCache();
+            this.collection.Clear();
             this.ClearFolding();
             this.Init();
         }
