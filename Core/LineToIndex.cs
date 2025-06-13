@@ -263,7 +263,7 @@ namespace FooEditEngine
 
         public byte[] Serialize(FixedList<LineToIndexTableData> data)
         {
-            //内部配列の確保に時間がかかるので、書き込むメンバー数×バイト数の２倍程度をひとまず確保しておく
+            //内部配列の確保に時間がかかるので、書き込むメンバー数×バイト数の2倍程度をひとまず確保しておく
             var memStream = new MemoryStream(data.Count * 5 * 8 * 2);
             var writer = new BinaryWriter(memStream, Encoding.Unicode);
             //面倒なのでlongにキャストできるところはlongで書き出す
@@ -340,13 +340,14 @@ namespace FooEditEngine
     {
         const int MaxEntries = 100;
         BigRangeList<LineToIndexTableData> collection;
-        DiskPinableContentDataStore<FixedList<LineToIndexTableData>> diskDataStore;
+        IPinableContainerStoreWithAutoDisposer<FixedList<LineToIndexTableData>> dataStore;
         BigRangeList<LineToIndexTableData> _Lines { get { return this.collection; } }
         Document Document;
         ITextRender render;
 
         const int FOLDING_INDEX = 0;
         const int SYNTAX_HIGLITHER_INDEX = 1;
+        const int LAYOUT_CACHE_SIZE_MEMORY_MODE = 128;
         ILineInfoGenerator[] _generators = new ILineInfoGenerator[2];
 
         internal LineToIndexTable(Document buf, int cache_size = -1)
@@ -358,9 +359,14 @@ namespace FooEditEngine
             if (cache_size >= 2)
             {
                 var serializer = new LineToIndexTableDataSerializer();
-                this.diskDataStore = new DiskPinableContentDataStore<FixedList<LineToIndexTableData>>(serializer, cache_size);
-                this.collection.CustomBuilder.DataStore = diskDataStore;
+                this.dataStore = new DiskPinableContentDataStore<FixedList<LineToIndexTableData>>(serializer, cache_size);
             }
+            else
+            {
+                this.dataStore = new MemoryPinableContentDataStoreWithAutoDisposer<FixedList<LineToIndexTableData>>(LAYOUT_CACHE_SIZE_MEMORY_MODE);
+            }
+            this.dataStore.Disposeing += DataStore_Disposeing;
+            this.collection.CustomBuilder.DataStore = dataStore;
             this._generators[FOLDING_INDEX] = new FoldingGenerator();
             this._generators[SYNTAX_HIGLITHER_INDEX] = new SyntaxHilightGenerator();
             this.WrapWidth = NONE_BREAK_LINE;
@@ -375,6 +381,14 @@ namespace FooEditEngine
             }
 #endif
             this.Init();
+        }
+
+        private void DataStore_Disposeing(FixedList<LineToIndexTableData> list)
+        {
+            foreach(var item in list)
+            {
+                item.Dispose();
+            }
         }
 
         void Markers_Updated(object sender, EventArgs e)
@@ -463,21 +477,11 @@ namespace FooEditEngine
         /// </summary>
         public void ClearLayoutCache()
         {
-            if(diskDataStore == null)
+            foreach (var items in this.dataStore.ForEachAvailableContent())
             {
-                foreach (LineToIndexTableData data in this._Lines)
+                foreach (LineToIndexTableData data in items)
                 {
                     data.Dispose();
-                }
-            }
-            else
-            {
-                foreach (var items in this.diskDataStore.ForEachAvailableContent())
-                {
-                    foreach(LineToIndexTableData data in items)
-                    {
-                        data.Dispose();
-                    }
                 }
             }
         }
@@ -487,15 +491,7 @@ namespace FooEditEngine
         /// </summary>
         public void ClearLayoutCache(long index, long length)
         {
-            if (index >= this.Document.Length)
-                return;
-            long startRow = this.GetLineNumberFromIndex(index);
-            long lastIndex = Math.Min(index + length - 1, this.Document.Length - 1);
-            if (lastIndex < 0)
-                lastIndex = 0;
-            long endRow = this.GetLineNumberFromIndex(lastIndex);
-            for (long i = startRow; i <= endRow; i++)
-                this._Lines.Get(i).Dispose();
+            this.ClearLayoutCache();
         }
 
         public int Count
@@ -1072,7 +1068,7 @@ namespace FooEditEngine
         internal void Trim()
         {
             this.ClearLayoutCache();
-            this.diskDataStore.Commit();
+            this.dataStore.Commit();
         }
 
         #region IEnumerable<string> メンバー
