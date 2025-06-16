@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
     <PackageId>FooEditEngine.WPF</PackageId>
-    <Version>1.204.1.0</Version>
+    <Version>1.204.2.0</Version>
     <Authors>FooProject</Authors>
     <Company>FooProject</Company>
     <projectUrl>https://ja.osdn.net/projects/fooeditengine/</projectUrl>
