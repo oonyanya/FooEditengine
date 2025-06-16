@@ -359,7 +359,7 @@ namespace FooEditEngine
             if (cache_size >= 2)
             {
                 var serializer = new LineToIndexTableDataSerializer();
-                this.dataStore = new DiskPinableContentDataStore<FixedList<LineToIndexTableData>>(serializer, cache_size);
+                this.dataStore = new DiskPinableContentDataStore<FixedList<LineToIndexTableData>>(serializer, buf.StringBuffer.WorkfilePath, cache_size);
             }
             else
             {

@@ -185,8 +185,8 @@ namespace FooEditEngine
         /// <summary>
         /// コンストラクター
         /// </summary>
-        /// <param name="doc">ドキュメントオブジェクト</param>
-        /// <param name="cache_size">２の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します</param>
+        /// <param name="doc">ドキュメントオブジェクト。nullを指定した場合は空のドキュメントを作成します。</param>
+        /// <param name="cache_size">２の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します。</param>
         /// <remarks>docが複製されますが、プロパティは引き継がれません。また、cache_sizeはdocがnullの場合だけ反映されます。</remarks>
         public Document(Document doc,string workfile_path = null,int cache_size = -1)
         {
@@ -200,7 +200,7 @@ namespace FooEditEngine
             this.PropertyChanged += new PropertyChangedEventHandler((s, e) => { });
             this.Markers = new MarkerCollection();
             this.UndoManager = new UndoManager();
-            this._LayoutLines = new LineToIndexTable(this, this.buffer.cacheSize);
+            this._LayoutLines = new LineToIndexTable(this, this.buffer.CacheSize);
             this.MarkerPatternSet = new MarkerPatternSet(this._LayoutLines, this.Markers);
             this.MarkerPatternSet.Updated += WacthDogPattern_Updated;
             this.Selections = new SelectCollection();

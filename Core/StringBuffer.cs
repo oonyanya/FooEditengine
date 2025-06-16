@@ -73,14 +73,15 @@ namespace FooEditEngine
     {
         //LOHの都合上、このくらいの値がちょうどいい
         const int BUF_BLOCKSIZE = 32768;
+        //ディスクバッファーを使用しないことを示す値
         const int NOUSE_DISKBUFFER_SIZE = -1;
 
         BigList<char> buf = null;
         const int MaxSemaphoreCount = 1;
         AsyncReaderWriterLock rwlock = new AsyncReaderWriterLock();
         DiskPinableContentDataStore<FixedList<char>> diskDataStore = null;
-        internal int cacheSize = NOUSE_DISKBUFFER_SIZE;
-        internal string workfile_path = null;
+        int cacheSize = NOUSE_DISKBUFFER_SIZE;
+        string workfile_path = null;
 
         public StringBuffer(string workfile_path = null,int cache_size = NOUSE_DISKBUFFER_SIZE)
         {
@@ -112,6 +113,16 @@ namespace FooEditEngine
             //BigList<T>.FIBONACCIに書かれている数値で、Int.MaxValue以外の奴なら設定しても問題はない
             buf.MaxCapacity = (long)1836311903 * (long)BUF_BLOCKSIZE;
             return buf;
+        }
+
+        internal int CacheSize
+        {
+            get { return this.cacheSize; }
+        }
+
+        internal string WorkfilePath
+        {
+            get { return workfile_path; }
         }
 
         public char this[long index]
