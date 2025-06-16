@@ -69,13 +69,14 @@ namespace FooEditEngine.WPF
             this.HilightForeground = ToColor4(textbox.HilightForeground);
             this.store = textbox.TextStore;
 
-            this.CreateDevice();
+            float dpiX, dpiY;
+            this.GetDpi(out dpiX, out dpiY);
+
+            this.CreateDevice(dpiX,dpiY);
 
             this.ConstructRenderAndResource(width, height);
             this.InitTextFormat(this.fontFamily.Source, (float)this.fontSize, this.GetDWFontWeigth(this.fontWeigth), this.GetDWFontStyle(this.fontStyle));
 
-            float dpiX, dpiY;
-            this.GetDpi(out dpiX, out dpiY);
             this.imageSource = new D3DImage(dpiX,dpiY);
             this.imageSource.Lock();
             this.imageSource.SetBackBuffer(D3DResourceType.IDirect3DSurface9, this.surface9.NativePointer);  //設定しないとロード時に例外が発生する
@@ -286,7 +287,7 @@ namespace FooEditEngine.WPF
             this.hasCache = true;
         }
 
-        void CreateDevice()
+        void CreateDevice(double dpiX,double dpiY)
         {
             SharpDX.Direct3D.FeatureLevel[] levels = new SharpDX.Direct3D.FeatureLevel[]{
                 SharpDX.Direct3D.FeatureLevel.Level_11_0,
@@ -315,6 +316,7 @@ namespace FooEditEngine.WPF
             dxgiDevice.Dispose();
 
             this.render = new D2D.DeviceContext1(this.device2d, D2D.DeviceContextOptions.None);
+            this.render.DotsPerInch = new Size2F((float)dpiX, (float)dpiY);
 
             IntPtr DesktopWnd = NativeMethods.GetDesktopWindow();
             D3D9.Direct3DEx d3dex = new D3D9.Direct3DEx();
@@ -381,17 +383,14 @@ namespace FooEditEngine.WPF
         {
             float dpiX, dpiY;
             this.GetDpi(out dpiX, out dpiY);
-            D2D.RenderTargetProperties prop = new D2D.RenderTargetProperties(
-                D2D.RenderTargetType.Default,
-                new D2D.PixelFormat(DXGI.Format.B8G8R8A8_UNorm, D2D.AlphaMode.Premultiplied),
-                dpiX,
-                dpiY,
-                D2D.RenderTargetUsage.None,
-                D2D.FeatureLevel.Level_DEFAULT);
 
+            double pixelWidth = width * dpiX / 96.0f;
+            double pixelHeight = height * dpiY / 96.0f;
+
+            //widthとheightはDIPなのでピクセルサイズ≒テクセルサイズを渡す必要がある
             D3D11.Texture2DDescription desc = new D3D11.Texture2DDescription();
-            desc.Width = (int)width;
-            desc.Height = (int)height;
+            desc.Width = (int)pixelWidth;
+            desc.Height = (int)pixelHeight;
             desc.MipLevels = 1;
             desc.ArraySize = 1;
             desc.Format = DXGI.Format.B8G8R8A8_UNorm;
@@ -421,10 +420,10 @@ namespace FooEditEngine.WPF
 
             D2D.BitmapProperties bmpProp = new D2D.BitmapProperties();
             bmpProp.DpiX = dpiX;
-            bmpProp.DpiY = dpiY;
+            bmpProp.DpiY = dpiX;
             bmpProp.PixelFormat = new D2D.PixelFormat(DXGI.Format.B8G8R8A8_UNorm, D2D.AlphaMode.Premultiplied);
             this.bmpd2d = new D2D.Bitmap(this.render, this.surface, bmpProp);
-            this.cachedBitMap = new D2D.Bitmap(this.render, new Size2((int)width, (int)height), bmpProp);
+            this.cachedBitMap = new D2D.Bitmap(this.render, new Size2((int)pixelWidth, (int)pixelHeight), bmpProp);
             this.hasCache = false;
 
             this.render.Target = this.bmpd2d;

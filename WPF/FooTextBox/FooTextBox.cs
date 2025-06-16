@@ -1184,14 +1184,10 @@ namespace FooEditEngine.WPF
             if(this.IsEnabled)
                 updateAll  = this._View.LayoutLines.HilightAll() || this._View.LayoutLines.GenerateFolding() || this.Document.IsRequestRedraw;
 
-                this.Refresh(this._View.PageBound);
-            /*
-             * HIGHDPIだとうまく動かない
             if (updateAll)
                 this.Refresh(this._View.PageBound);
             else
                 this.Refresh(this._View.GetCurrentCaretRect());
-            */
         }
 
         void horizontalScrollBar_Scroll(object sender, ScrollEventArgs e)
