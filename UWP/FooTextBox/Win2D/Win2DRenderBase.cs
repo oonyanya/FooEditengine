@@ -559,7 +559,7 @@ namespace FooEditEngine.UWP
                     string str = lti[row];
                     CanvasCachedGeometry geo = null;
                     double lineHeight = this.emSize.Height * this.LineEmHeight;
-                    int subLayoutLength = Math.Min(lineLength, Document.MaximumLineLength);
+                    int subLayoutLength = Math.Min(lineLength - subLayoutStartIndex, Document.MaximumLineLength);
                     for (int i = 0; i < subLayoutLength; i++)
                     {
                         int indexMainLayout = i + subLayoutStartIndex;
