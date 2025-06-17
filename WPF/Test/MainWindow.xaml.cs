@@ -8,7 +8,7 @@
 
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#define USE_DISK_FOR_DOCUMENT
+//#define USE_DISK_FOR_DOCUMENT
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
