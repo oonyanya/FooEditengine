@@ -519,15 +519,6 @@ namespace FooEditEngine
         }
 
         /// <summary>
-        /// 更新フラグを更新しないなら真
-        /// </summary>
-        public bool IsFrozneDirtyFlag
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
         /// 当該行の先頭インデックスを取得する
         /// </summary>
         /// <param name="row"></param>
@@ -570,7 +561,7 @@ namespace FooEditEngine
                 generator.Update(this.Document, this.GetLineHeadLongIndex(row), insertedLength, removedLength);
         }
 
-        internal int UpdateLayoutLine(long index, long removedLength, long insertedLength)
+        internal int UpdateLayoutLine(long index, long removedLength, long insertedLength,bool setdirtyflag)
         {
             DebugLog.WriteLine("Replaced Index:{0} RemoveLength:{1} InsertLength:{2}", index, removedLength, insertedLength);
 
@@ -589,7 +580,7 @@ namespace FooEditEngine
 
             //挿入範囲内のドキュメントから行を生成する
             SpilitStringEventArgs e = new SpilitStringEventArgs(this.Document, HeadIndex, analyzeLength, startRow);
-            IList<LineToIndexTableData> newLines = this.CreateLineList(e.index, e.length);
+            IList<LineToIndexTableData> newLines = this.CreateLineList(e.index, e.length, setdirtyflag);
 
             int removeCount = endRow - startRow + 1;
             for (int i = startRow; i < startRow + removeCount; i++)
@@ -640,7 +631,7 @@ namespace FooEditEngine
                 yield return new Tuple<long, long>(currentLineHeadIndex, currentLineLength);
         }
 
-        IList<LineToIndexTableData> CreateLineList(long index, long length, int lineLimitLength = -1)
+        IList<LineToIndexTableData> CreateLineList(long index, long length,bool setdirtyflag = false, int lineLimitLength = -1)
         {
             long startIndex = index;
             long endIndex = index + length - 1;
@@ -652,7 +643,7 @@ namespace FooEditEngine
                 long lineLength = range.Item2;
                 char c = this.Document[lineHeadIndex + lineLength - 1];
                 bool hasNewLine = c == Document.NewLine;
-                LineToIndexTableData result = new LineToIndexTableData(lineHeadIndex, lineLength, hasNewLine, this.IsFrozneDirtyFlag == false, null);
+                LineToIndexTableData result = new LineToIndexTableData(lineHeadIndex, lineLength, hasNewLine, setdirtyflag, null);
                 output.Add(result);
             }
 
@@ -778,7 +769,6 @@ namespace FooEditEngine
         internal long FetchLineWithoutEvent(int row)
         {
             long totalAnalyzedLength = 0;
-            this.IsFrozneDirtyFlag = true;
             while (row >= this._Lines.Count - 1)
             {
                 //直接最終行を取得すると後々おかしくなる
@@ -794,10 +784,9 @@ namespace FooEditEngine
                 long documentLength = this.Document.Length;
                 if (analyzeStartIndex + analyzeLength > documentLength)
                     analyzeLength = documentLength - analyzeStartIndex;
-                this.UpdateLayoutLine(analyzeStartIndex, 0, analyzeLength);
+                this.UpdateLayoutLine(analyzeStartIndex, 0, analyzeLength, false);
                 totalAnalyzedLength += analyzeLength;
             }
-            this.IsFrozneDirtyFlag = false;
             return totalAnalyzedLength;
         }
 

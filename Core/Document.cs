@@ -819,9 +819,7 @@ namespace FooEditEngine
             }
             else
             {
-                this.LayoutLines.IsFrozneDirtyFlag = true;
                 this.FireUpdate(new DocumentUpdateEventArgs(UpdateType.RebuildLayout, -1, -1, -1));
-                this.LayoutLines.IsFrozneDirtyFlag = false;
             }
             if (this.PerformLayouted != null)
                 this.PerformLayouted(this, null);
@@ -1478,17 +1476,17 @@ namespace FooEditEngine
                         if (analyzeLength > this.Length)
                             analyzeLength = this.Length;
 
-                        this._LayoutLines.UpdateLayoutLine(0, 0, analyzeLength);
+                        this._LayoutLines.UpdateLayoutLine(0, 0, analyzeLength, false);
                         long fetchedLength = this._LayoutLines.FetchLineWithoutEvent(CaretPostion.row);
 
                         int totalLineCount = this._LayoutLines.Count - 1;
-                        foreach(var c in this.buffer.GetEnumerator(analyzeLength, this.Length - analyzeLength - fetchedLength))
+                        foreach (var c in this.buffer.GetEnumerator(analyzeLength, this.Length - analyzeLength - fetchedLength))
                         {
                             if (c == Document.NewLine)
                                 totalLineCount++;
-                        };
+                        }
+            ;
                         this.TotalLineCount = totalLineCount;
-
                         break;
                     }
                 case UpdateType.BuildLayout:
@@ -1498,7 +1496,7 @@ namespace FooEditEngine
                 case UpdateType.Replace:
                     if (e.row == null)
                     {
-                        var updateLineCount = this._LayoutLines.UpdateLayoutLine(e.startIndex, e.removeLength, e.insertLength);
+                        var updateLineCount = this._LayoutLines.UpdateLayoutLine(e.startIndex, e.removeLength, e.insertLength, true);
                         this.Markers.UpdateMarkers(e.startIndex, e.insertLength, e.removeLength);
                         this.TotalLineCount += updateLineCount;
                     }
