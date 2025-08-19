@@ -149,7 +149,6 @@ namespace FooEditEngine
     /// <summary>
     /// ドキュメントの管理を行う
     /// </summary>
-    /// <remarks>この型のすべてのメソッド・プロパティはスレッドセーフです</remarks>
     public class Document : IEnumerable<char>, IRandomEnumrator<char>, IDisposable, INotifyPropertyChanged
     {
 
