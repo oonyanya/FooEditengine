@@ -111,7 +111,6 @@ namespace FooEditEngine.WinUI
 
             this.timer.Interval = new TimeSpan(0, 0, 0, 0, Interval);
             this.timer.Tick += this.timer_Tick;
-            this.timer.Start();
 
             this.GettingFocus += FooTextBox_GettingFocus;
             this.LosingFocus += FooTextBox_LosingFocus;
@@ -119,6 +118,7 @@ namespace FooEditEngine.WinUI
             this.SizeChanged += FooTextBox_SizeChanged;
 
             this.Loaded += FooTextBox_Loaded;
+            this.Unloaded += FooTextBox_Unloaded;
 
             this.RegisterPropertyChangedCallback(Control.FlowDirectionProperty, InheritanceDependecyPropertyCallback);
             this.RegisterPropertyChangedCallback(Control.FontFamilyProperty, InheritanceDependecyPropertyCallback);
@@ -138,7 +138,6 @@ namespace FooEditEngine.WinUI
                 }
             };
         }
-
 
         /// <summary>
         /// ファイナライザー
@@ -1402,9 +1401,17 @@ namespace FooEditEngine.WinUI
             this.View.CaretBlink = true;
             this.View.CaretBlinkTime = (int)uisetting.CaretBlinkRate * 2;
 
+            this.timer.Start();
+
             //適当な値を設定しておかないと落ちるのでひとまずこうしておく
             this.Render.CreateSurface(this.rectangle, 100, 100);
             this.Focus(FocusState.Programmatic);
+        }
+
+        private void FooTextBox_Unloaded(object sender, RoutedEventArgs e)
+        {
+            //タイマーを止めないとTabViewに追加して閉じるボタンを押したときに変な動作をする
+            this.timer.Stop();
         }
 
         void timer_Tick(object sender, object e)
