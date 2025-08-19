@@ -185,8 +185,9 @@ namespace FooEditEngine
         /// コンストラクター
         /// </summary>
         /// <param name="doc">ドキュメントオブジェクト。nullを指定した場合は空のドキュメントを作成します。</param>
+        /// <param name="workfile_path">ワークファイルのパスを指定します。メモリーに保存する場合、この値は無視されます。</param>
         /// <param name="cache_size">２の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します。</param>
-        /// <remarks>docが複製されますが、プロパティは引き継がれません。また、cache_sizeはdocがnullの場合だけ反映されます。</remarks>
+        /// <remarks>docが複製されますが、プロパティは引き継がれません。また、workfile_pathとcache_sizeはdocがnullの場合だけ反映されます。そうでない場合はdocに指定した値がそのまま引き継がれます。</remarks>
         public Document(Document doc,string workfile_path = null,int cache_size = -1)
         {
             if (doc == null)
