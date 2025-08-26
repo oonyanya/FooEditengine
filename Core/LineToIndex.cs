@@ -355,8 +355,8 @@ namespace FooEditEngine
             this.Document = buf;
             this.Document.Markers.Updated += Markers_Updated;
             this.collection = new BigRangeList<LineToIndexTableData>();
-            //2以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
-            if (cache_size >= 2)
+            //4以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
+            if (cache_size >= 4)
             {
                 var serializer = new LineToIndexTableDataSerializer();
                 this.dataStore = new DiskPinableContentDataStore<FixedList<LineToIndexTableData>>(serializer, buf.StringBuffer.WorkfilePath, cache_size);

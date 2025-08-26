@@ -86,8 +86,8 @@ namespace FooEditEngine
         public StringBuffer(string workfile_path = null,int cache_size = NOUSE_DISKBUFFER_SIZE)
         {
             this.buf = GetBuffer();
-            //2以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
-            if (cache_size >= 2)
+            //4以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
+            if (cache_size >= 4)
             {
                 var serializer = new StringBufferSerializer();
                 this.diskDataStore = new DiskPinableContentDataStore<FixedList<char>>(serializer, workfile_path, cache_size);
