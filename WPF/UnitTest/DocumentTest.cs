@@ -410,7 +410,7 @@ namespace UnitTest
         [TestMethod]
         public void DiskbaseDocumentTest()
         {
-            const int ADD_COUNT = 2000;
+            const int ADD_COUNT = 3000;
             const string text = "this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.\n";
 
             DummyRender render = new DummyRender();
