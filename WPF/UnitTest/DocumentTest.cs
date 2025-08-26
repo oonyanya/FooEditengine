@@ -414,7 +414,7 @@ namespace UnitTest
             const string text = "this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.\n";
 
             DummyRender render = new DummyRender();
-            Document olddoc = new Document(2);
+            Document olddoc = new Document(4);
             Document doc = new Document(olddoc);
             olddoc.Dispose();
             doc.LayoutLines.Hilighter =new DummyHilighter('.');
@@ -441,6 +441,14 @@ namespace UnitTest
                 }
                 documentIndex += lineData.length;
             }
+
+            var replacedText = text.Replace("pen", "ratking");
+            doc.ReplaceAll2("pen", "ratking");
+            for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
+            {
+                Assert.AreEqual(replacedText, doc.LayoutLines[i]);
+            }
+            
             doc.Dispose();
         }
 
