@@ -965,6 +965,8 @@ namespace FooEditEngine
             }
             else
             {
+                this.Document.LayoutLines.FetchLine(current.row + 1);
+
                 Point current_pos = this.View.LayoutLines.GetLayout(current.row).GetPostionFromIndex(current.col);
                 //この値を足さないとうまく動作しない
                 double offset_y = this.View.render.emSize.Height * count + this.View.render.emSize.Height / 2;
