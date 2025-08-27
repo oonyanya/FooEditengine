@@ -220,9 +220,9 @@ namespace FooEditEngine
         }
     }
 
-    class LineToIndexTableDataSerializer : ISerializeData<FixedList<LineToIndexTableData>>
+    class LineToIndexTableDataSerializer : ISerializeData<IComposableList<LineToIndexTableData>>
     {
-        public FixedList<LineToIndexTableData> DeSerialize(byte[] inputData)
+        public IComposableList<LineToIndexTableData> DeSerialize(byte[] inputData)
         {
             var memStream = new MemoryStream(inputData);
             var reader = new BinaryReader(memStream);
@@ -261,15 +261,16 @@ namespace FooEditEngine
             return array;
         }
 
-        public byte[] Serialize(FixedList<LineToIndexTableData> data)
+        public byte[] Serialize(IComposableList<LineToIndexTableData> data)
         {
+            FixedRangeList<LineToIndexTableData> list = (FixedRangeList<LineToIndexTableData>)data;
             //内部配列の確保に時間がかかるので、書き込むメンバー数×バイト数の2倍程度をひとまず確保しておく
             var memStream = new MemoryStream(data.Count * 5 * 8 * 2);
             var writer = new BinaryWriter(memStream, Encoding.Unicode);
             //面倒なのでlongにキャストできるところはlongで書き出す
-            writer.Write(data.Count);
-            writer.Write(data.MaxCapacity);
-            foreach(var item in data)
+            writer.Write(list.Count);
+            writer.Write(list.MaxCapacity);
+            foreach(var item in list)
             {
                 writer.Write(item.start);
                 writer.Write(item.length);
@@ -340,7 +341,7 @@ namespace FooEditEngine
     {
         const int MaxEntries = 100;
         BigRangeList<LineToIndexTableData> collection;
-        IPinableContainerStoreWithAutoDisposer<FixedList<LineToIndexTableData>> dataStore;
+        IPinableContainerStoreWithAutoDisposer<IComposableList<LineToIndexTableData>> dataStore;
         BigRangeList<LineToIndexTableData> _Lines { get { return this.collection; } }
         Document Document;
         ITextRender render;
@@ -359,11 +360,11 @@ namespace FooEditEngine
             if (cache_size >= 4)
             {
                 var serializer = new LineToIndexTableDataSerializer();
-                this.dataStore = new DiskPinableContentDataStore<FixedList<LineToIndexTableData>>(serializer, buf.StringBuffer.WorkfilePath, cache_size);
+                this.dataStore = new DiskPinableContentDataStore<IComposableList<LineToIndexTableData>>(serializer, buf.StringBuffer.WorkfilePath, cache_size);
             }
             else
             {
-                this.dataStore = new MemoryPinableContentDataStoreWithAutoDisposer<FixedList<LineToIndexTableData>>(LAYOUT_CACHE_SIZE_MEMORY_MODE);
+                this.dataStore = new MemoryPinableContentDataStoreWithAutoDisposer<IComposableList<LineToIndexTableData>>(LAYOUT_CACHE_SIZE_MEMORY_MODE);
             }
             this.dataStore.Disposeing += DataStore_Disposeing;
             this.collection.CustomBuilder.DataStore = dataStore;
@@ -383,7 +384,7 @@ namespace FooEditEngine
             this.Init();
         }
 
-        private void DataStore_Disposeing(FixedList<LineToIndexTableData> list)
+        private void DataStore_Disposeing(IComposableList<LineToIndexTableData> list)
         {
             foreach(var item in list)
             {

@@ -42,9 +42,9 @@ namespace FooEditEngine
         long Count {  get; }
     }
 
-    class StringBufferSerializer : ISerializeData<FixedList<char>>
+    class StringBufferSerializer : ISerializeData<IComposableList<char>>
     {
-        public FixedList<char> DeSerialize(byte[] inputData)
+        public IComposableList<char> DeSerialize(byte[] inputData)
         {
             var memStream = new MemoryStream(inputData);
             var reader = new BinaryReader(memStream, Encoding.Unicode);
@@ -55,14 +55,15 @@ namespace FooEditEngine
             return array;
         }
 
-        public byte[] Serialize(FixedList<char> data)
+        public byte[] Serialize(IComposableList<char> data)
         {
+            FixedList<char> list = (FixedList<char>)data;
             var output = new byte[data.Count * 2 + 4 + 4]; //int32のサイズは4byte、charのサイズ2byte
             var memStream = new MemoryStream(output);
             var writer = new BinaryWriter(memStream, Encoding.Unicode);
-            writer.Write(data.Count);
-            writer.Write(data.MaxCapacity);
-            writer.Write(data.ToArray());
+            writer.Write(list.Count);
+            writer.Write(list.MaxCapacity);
+            writer.Write(list.ToArray());
             writer.Close();
             memStream.Dispose();
             return output;
@@ -79,7 +80,7 @@ namespace FooEditEngine
         BigList<char> buf = null;
         const int MaxSemaphoreCount = 1;
         AsyncReaderWriterLock rwlock = new AsyncReaderWriterLock();
-        DiskPinableContentDataStore<FixedList<char>> diskDataStore = null;
+        DiskPinableContentDataStore<IComposableList<char>> diskDataStore = null;
         int cacheSize = NOUSE_DISKBUFFER_SIZE;
         string workfile_path = null;
 
@@ -90,7 +91,7 @@ namespace FooEditEngine
             if (cache_size >= 4)
             {
                 var serializer = new StringBufferSerializer();
-                this.diskDataStore = new DiskPinableContentDataStore<FixedList<char>>(serializer, workfile_path, cache_size);
+                this.diskDataStore = new DiskPinableContentDataStore<IComposableList<char>>(serializer, workfile_path, cache_size);
                 buf.CustomBuilder.DataStore = diskDataStore;
                 this.cacheSize = cache_size;
                 this.workfile_path = workfile_path;
