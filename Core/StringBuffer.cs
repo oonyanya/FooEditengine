@@ -88,7 +88,7 @@ namespace FooEditEngine
         {
             this.buf = GetBuffer();
             //4以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
-            if (cache_size >= 4)
+            if (cache_size >= CacheParameters.MINCACHESIZE)
             {
                 var serializer = new StringBufferSerializer();
                 this.diskDataStore = new DiskPinableContentDataStore<IComposableList<char>>(serializer, workfile_path, cache_size);
