@@ -1106,6 +1106,30 @@ namespace FooEditEngine
         }
 
         /// <summary>
+        /// インデックスを開始位置とする文字配列を返す
+        /// </summary>
+        /// <param name="index">開始インデックス</param>
+        /// <returns>Stringオブジェクト</returns>
+        public void CopyTo(char[] arrays,long index)
+        {
+            this.CopyTo(arrays, index, this.buffer.Length - index);
+        }
+
+        /// <summary>
+        /// 文字配列を取得する
+        /// </summary>
+        /// <param name="index">開始インデックス</param>
+        /// <param name="length">長さ</param>
+        /// <returns>Stringオブジェクト</returns>
+        public void CopyTo(char[] arrays,long index, long length)
+        {
+            using (this.buffer.GetReaderLock())
+            {
+                this.buffer.CopyTo(arrays, index, length);
+            }
+        }
+
+        /// <summary>
         /// インデックスを開始位置とする文字列を返す
         /// </summary>
         /// <param name="index">開始インデックス</param>

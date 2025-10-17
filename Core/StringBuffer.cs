@@ -144,6 +144,16 @@ namespace FooEditEngine
             return temp.ToString();
         }
 
+        public void CopyTo(char[] array, long index, long length)
+        {
+            var range = this.buf.GetRangeEnumerable(index, length);
+            int i = 0;
+            foreach(var c in range)
+            {
+                array[i++] = c;
+            }
+        }
+
         public long Length
         {
             get { return this.buf.LongCount; }

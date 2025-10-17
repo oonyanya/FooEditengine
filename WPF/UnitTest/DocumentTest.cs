@@ -626,6 +626,20 @@ namespace UnitTest
             Assert.AreEqual(content, doc.ToString(0));
         }
 
+        [TestMethod]
+        public void CopyToTest()
+        {
+            const string content = "0123456789";
+            Document doc = new Document();
+            doc.Append(content);
+            char[] result = new char[4];
+            doc.CopyTo(result, 6);
+            AreEqual(content.Substring(6).ToCharArray(), result);
+
+            doc.CopyTo(result, 2, 4);
+            AreEqual(content.Substring(2,4).ToCharArray(), result);
+        }
+
         void AreEqual<T>(IEnumerable<T> t1, IEnumerable<T> t2)
         {
             Assert.AreEqual(t1.Count(), t2.Count());
