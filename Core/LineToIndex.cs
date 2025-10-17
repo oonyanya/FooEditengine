@@ -175,6 +175,11 @@ namespace FooEditEngine
             set { this.length = Length; }
         }
 
+        /// <summary>
+        /// キャッシュ済みの行文字列を取得する
+        /// </summary>
+        public string LineString { get; internal set; }
+
         internal SyntaxInfo[] Syntax;
         internal EncloserType EncloserType;
         internal ITextLayout Layout;
@@ -201,6 +206,7 @@ namespace FooEditEngine
 
         public void Dispose()
         {
+            this.LineString = null;
             if(this.Layout != null)
             {
                 this.Layout.Dispose();
@@ -513,9 +519,13 @@ namespace FooEditEngine
             get
             {
                 LineToIndexTableData data = this.GetRaw(n);
-                string str = this.Document.ToString(this.GetLineHeadLongIndex(n), data.Length);
+                if(data.LineString == null)
+                {
+                    string str = this.Document.ToString(this.GetLineHeadLongIndex(n), data.Length);
+                    data.LineString = str;
+                }
 
-                return str;
+                return data.LineString;
             }
         }
 
@@ -877,6 +887,7 @@ namespace FooEditEngine
                 long lineHeadIndex = this.GetLineHeadLongIndex(row);
 
                 string lineString = this.Document.ToString(lineHeadIndex, (int)lineData.length);
+                lineData.LineString = lineString;
 
                 if (this.CreateingLayout != null)
                     this.CreateingLayout(this, new CreateLayoutEventArgs(lineHeadIndex, lineData.Length, lineString));
