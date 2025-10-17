@@ -1,4 +1,4 @@
-﻿#define USE_DISK_FOR_DOCUMENT
+﻿//#define USE_DISK_FOR_DOCUMENT
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
