@@ -370,24 +370,33 @@ namespace UnitTest
         public void ReplaceAll2Test()
         {
             const int ADD_COUNT = 3000;
+            string expected_string = "this is a pen\n";
+            string expected_string_two = expected_string.Replace("is", "aaa");
 
             DummyRender render = new DummyRender();
             Document doc = new Document();
             doc.LayoutLines.Render = render;
             Document.PreloadLength = 64;
-            doc.Append("this is a pen\n");
+            doc.Append(expected_string);
             doc.ReplaceAll2("is", "aaa");
-            Assert.IsTrue(doc.ToString(0) == "thaaa aaa a pen\n");
+            Assert.IsTrue(doc.ToString(0) == expected_string_two);
 
             doc.Clear();
 
             for (int i = 0; i < ADD_COUNT; i++)
             {
-                doc.Append("this is a pen\n");
+                doc.Append(expected_string);
             }
 
             doc.LayoutLines.FetchLine(ADD_COUNT);
             doc.SetCaretPostionWithoutEvent(ADD_COUNT - 1, 0, false);
+
+            //末尾は空行なので無視して構わない
+            for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
+            {
+                Assert.AreEqual(expected_string, doc.LayoutLines[i]);
+            }
+
 
             doc.ReplaceAll2("is", "aaa");
 
@@ -397,8 +406,14 @@ namespace UnitTest
                 var actual =  doc.ToString(line.Item1, line.Item2);
                 if(line.Item1 < doc.Count)
                 {
-                    Assert.AreEqual("thaaa aaa a pen\n", actual);
+                    Assert.AreEqual(expected_string_two, actual);
                 }
+            }
+
+            //末尾は空行なので無視して構わない
+            for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
+            {
+                Assert.AreEqual(expected_string_two, doc.LayoutLines[i]);
             }
 
             Assert.IsTrue(doc.LayoutLines.Count > ADD_COUNT);
