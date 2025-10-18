@@ -213,7 +213,7 @@ namespace FooEditEngine
                 if (this.RectSelection)
                     return GetTextFromRectangleSelectArea(this.View.Selections);
                 else
-                    return GetTextFromLineSelectArea(this.View.Selections).Replace(Document.NewLine.ToString(), Environment.NewLine);
+                    return Util.NormalizeLineFeed(GetTextFromLineSelectArea(this.View.Selections), Environment.NewLine);
             }
             set
             {
@@ -587,16 +587,29 @@ namespace FooEditEngine
         {
             string str = this.View.LayoutLines[caret.row];
             while (caret.col > 0 &&
-                caret.col < str.Length &&
-                str[caret.col] != Document.NewLine)
+                caret.col < str.Length)
             {
-                if (!Util.IsWordSeparator(str[caret.col]))
+                if (str[caret.col] == '\r')
+                {
+                    if (caret.col + 1 < str.Length && str[caret.col + 1] == '\n')
+                    {
+                        caret = this.MoveCaretHorizontical(caret, MoveFlow);
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                } else if (str[caret.col] == '\n'){
+                    break;
+                }
+                else if (!Util.IsWordSeparator(str[caret.col]))
                 {
                     caret = this.MoveCaretHorizontical(caret, MoveFlow);
                 }
                 else
                 {
-                    if(MoveFlow)
+                    if (MoveFlow)
                         caret = this.MoveCaretHorizontical(caret, MoveFlow);
                     break;
                 }
@@ -852,9 +865,17 @@ namespace FooEditEngine
             if (alignWord)
             {
                 if (this.IsReverseSelect())
+                {
+                    if (this.Document[CaretPostion] == '\r')
+                        CaretPostion--;
                     while (CaretPostion >= 0 && CaretPostion < this.Document.Length && !Util.IsWordSeparator(this.Document[CaretPostion])) CaretPostion--;
+                }
                 else
+                {
+                    if (this.Document[CaretPostion] == '\r')
+                        CaretPostion++;
                     while (CaretPostion < this.Document.Length && !Util.IsWordSeparator(this.Document[CaretPostion])) CaretPostion++;
+                }
                 if (CaretPostion < 0)
                     CaretPostion = 0;
                 endSelectPostion = this.View.LayoutLines.GetTextPointFromIndex(CaretPostion);
@@ -1023,28 +1044,28 @@ namespace FooEditEngine
 
         string InsertLineHead(string s, string str)
         {
-            string[] lines = s.Split(new string[] { Document.NewLine.ToString() }, StringSplitOptions.None);
+            var lines = Util.EnumrateLine(s).ToArray();
             StringBuilder output = new StringBuilder();
             for (int i = 0; i < lines.Length; i++)
             {
-                if(lines[i].Length > 0)
-                    output.Append(str + lines[i] + Document.NewLine);
+                if(lines[i].str.Length > 0)
+                    output.Append(str + lines[i].str + lines[i].linefeed);
                 else if(i < lines.Length - 1)
-                    output.Append(lines[i] + Document.NewLine);
+                    output.Append(lines[i].str + lines[i].linefeed);
             }
             return output.ToString();
         }
 
         public string RemoveLineHead(string s, string str,int remove_count)
         {
-            string[] lines = s.Split(new string[] { Document.NewLine.ToString() }, StringSplitOptions.None);
+            var lines = Util.EnumrateLine(s).ToArray();
             StringBuilder output = new StringBuilder();
             for (int i = 0; i < lines.Length; i++)
             {
-                if (lines[i].StartsWith(str))
-                    output.Append(lines[i].Substring(remove_count) + Document.NewLine);
+                if (lines[i].str.StartsWith(str))
+                    output.Append(lines[i].str.Substring(remove_count) + lines[i].linefeed);
                 else if (i < lines.Length - 1)
-                    output.Append(lines[i] + Document.NewLine);
+                    output.Append(lines[i] + lines[i].linefeed);
             }
             return output.ToString();
         }
@@ -1196,7 +1217,7 @@ namespace FooEditEngine
 
                 this.Document.FireUpdateEvent = false;
 
-                string[] line = value.Split(new string[] { Document.NewLine.ToString() }, StringSplitOptions.RemoveEmptyEntries);
+                var line = Util.EnumrateLine(value).Where(item => item.str.Length > 0).ToArray();
 
                 TextPoint Current = this.View.GetLayoutLineFromIndex(this.SelectionStart);
 
@@ -1205,14 +1226,14 @@ namespace FooEditEngine
                     if (Current.col > this.View.LayoutLines[Current.row].Length)
                         Current.col = this.View.LayoutLines[Current.row].Length;
                     StartIndex = this.View.GetIndexFromLayoutLine(Current);
-                    this.Document.Replace(StartIndex, 0, line[i]);
-                    StartIndex += line[i].Length;
+                    this.Document.Replace(StartIndex, 0, line[i].str);
+                    StartIndex += line[i].str.Length;
                 }
 
                 for (; i < line.Length; i++)
                 {
                     StartIndex = this.Document.Length;
-                    string str = Document.NewLine + line[i];
+                    string str = line[i].linefeed + line[i].str;
                     this.Document.Replace(StartIndex, 0, str);
                     StartIndex += str.Length;
                 }

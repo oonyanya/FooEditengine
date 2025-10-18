@@ -612,18 +612,37 @@ namespace FooEditEngine
             return (addedDummyLine ? 1 : 0) + newLines.Count - removeCount;
         }
 
-        internal IEnumerable<Tuple<long, long>> ForEachLines(long startIndex, long endIndex, int maxCharCount = -1)
+        internal IEnumerable<Tuple<long, long,string>> ForEachLines(long startIndex, long endIndex, int maxCharCount = -1)
         {
             long currentLineHeadIndex = startIndex;
             long currentLineLength = 0;
+            string linefeed = string.Empty;
 
-            for (long i = startIndex; i <= endIndex; i++)
+            long i = startIndex;
+            while (true)
             {
+                if (i > endIndex)
+                    break;
                 currentLineLength++;
                 char c = this.Document[i];
-                if (c == Document.NewLine ||
-                    (maxCharCount != -1 && currentLineLength >= maxCharCount))
+                if (c == '\n')
                 {
+                    linefeed = "\n";
+                }else if (c == '\r'){
+                    if (i + 1 <= endIndex && this.Document[i + 1] == '\n')
+                    {
+                        currentLineLength++;
+                        i++;
+                        linefeed = "\r\n";
+                    }
+                    else
+                    {
+                        linefeed = "\r";
+                    }
+                }
+                if (linefeed != string.Empty || (maxCharCount != -1 && currentLineLength >= maxCharCount))
+                {
+                    linefeed = string.Empty;
                     UnicodeCategory uc = CharUnicodeInfo.GetUnicodeCategory(c);
                     if (uc != UnicodeCategory.NonSpacingMark &&
                     uc != UnicodeCategory.SpacingCombiningMark &&
@@ -632,14 +651,15 @@ namespace FooEditEngine
                     {
                         if (currentLineLength > Int32.MaxValue - 1)
                             throw new InvalidOperationException("Line length is too large. It must be within Int32.MaxValue - 1");
-                        yield return new Tuple<long, long>(currentLineHeadIndex, currentLineLength);
+                        yield return new Tuple<long, long,string>(currentLineHeadIndex, currentLineLength,linefeed);
                         currentLineHeadIndex += currentLineLength;
                         currentLineLength = 0;
                     }
                 }
+                i++;
             }
             if (currentLineLength > 0)
-                yield return new Tuple<long, long>(currentLineHeadIndex, currentLineLength);
+                yield return new Tuple<long, long,string>(currentLineHeadIndex, currentLineLength,linefeed);
         }
 
         IList<LineToIndexTableData> CreateLineList(long index, long length,bool setdirtyflag = false, int lineLimitLength = -1)
@@ -648,12 +668,12 @@ namespace FooEditEngine
             long endIndex = index + length - 1;
             List<LineToIndexTableData> output = new List<LineToIndexTableData>();
 
-            foreach (Tuple<long, long> range in this.ForEachLines(startIndex, endIndex, lineLimitLength))
+            foreach (var range in this.ForEachLines(startIndex, endIndex, lineLimitLength))
             {
                 long lineHeadIndex = range.Item1;
                 long lineLength = range.Item2;
                 char c = this.Document[lineHeadIndex + lineLength - 1];
-                bool hasNewLine = c == Document.NewLine;
+                bool hasNewLine = range.Item3 != string.Empty;
                 LineToIndexTableData result = new LineToIndexTableData(lineHeadIndex, lineLength, hasNewLine, setdirtyflag, null);
                 output.Add(result);
             }

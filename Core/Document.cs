@@ -9,16 +9,18 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using SharpDX;
 using System;
-using System.IO;
-using System.ComponentModel;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace FooEditEngine
 {
@@ -708,6 +710,7 @@ namespace FooEditEngine
         /// <summary>
         /// 改行コードの内部表現
         /// </summary>
+        [Obsolete]
         public const char NewLine = '\n';
 
         /// <summary>
@@ -921,8 +924,9 @@ namespace FooEditEngine
                 {
                     int length = this.LayoutLines.GetLengthFromLineNumber(i);
                     int leftCol = rect.TopLeft.col, rightCol = rect.TopRight.col, lastCol = length;
-                    if (length > 0 && this.LayoutLines[i][length - 1] == Document.NewLine)
-                        lastCol = length - 1;
+                    int lineFeedLength = Util.GetNewLineLengthInTail(this.LayoutLines[i]);
+                    if (lineFeedLength > 0)
+                        lastCol = length - lineFeedLength;
                     if (lastCol < 0)
                         lastCol = 0;
                     if (rect.TopLeft.col > lastCol)
@@ -958,7 +962,7 @@ namespace FooEditEngine
         /// <param name="changeAnchor">選択の起点となるとインデックスを変更するなら真。そうでなければ偽</param>
         public void SelectLine(long index,bool changeAnchor = false)
         {
-            this.SelectSepartor(index, (c) => c == Document.NewLine, changeAnchor);
+            this.SelectSepartor(index, null, changeAnchor);
         }
 
         /// <summary>
@@ -967,8 +971,42 @@ namespace FooEditEngine
         /// <param name="index">探索を開始するインデックス</param>
         /// <param name="find_sep_func">セパレーターなら真を返し、そうでないなら偽を返す</param>
         /// <returns>開始インデックス、終了インデックス</returns>
+        public Tuple<long, long> GetLineFeedSeparator(long index)
+        {
+            if (this.Length <= 0 || index >= this.Length)
+                return null;
+
+            Document str = this;
+
+            long start = index;
+            while (start > 0 && str[start] != '\r' && str[start] != '\n')
+                start--;
+
+            if (str[start] == '\r')
+            {
+                start++;
+            }
+
+            if (str[start] == '\n')
+            {
+                start++;
+            }
+
+            long end = index;
+            while (end < this.Length && str[start] != '\r' && str[start] != '\n')
+                end++;
+
+            return new Tuple<long, long>(start, end);
+        }
+        /// <summary>
+        /// セパレーターで区切られた領域を取得する
+        /// </summary>
+        /// <param name="index">探索を開始するインデックス</param>
+        /// <param name="find_sep_func">セパレーターなら真を返し、そうでないなら偽を返す</param>
+        /// <returns>開始インデックス、終了インデックス</returns>
         public Tuple<long, long> GetSepartor(long index, Func<char, bool> find_sep_func)
         {
+            //面倒なのでGetLineFeedSeparator()からコピペ
             if (find_sep_func == null)
                 throw new ArgumentNullException("find_sep_func must not be null");
 
@@ -978,16 +1016,21 @@ namespace FooEditEngine
             Document str = this;
 
             long start = index;
-            while (start > 0 && !find_sep_func(str[start]))
+            while (start > 0 && str[start] != '\r' && str[start] != '\n' && !find_sep_func(str[start]))
                 start--;
 
-            if (find_sep_func(str[start]))
+            if(str[start] == '\r')
+            {
+                start++;
+            }
+
+            if (str[start] == '\n' && find_sep_func(str[start]))
             {
                 start++;
             }
 
             long end = index;
-            while (end < this.Length && !find_sep_func(str[end]))
+            while (end < this.Length && str[start] != '\r' && str[start] != '\n' && !find_sep_func(str[end]))
                 end++;
 
             return new Tuple<long, long>(start, end);
@@ -1007,11 +1050,23 @@ namespace FooEditEngine
             if (find_sep_func == null)
                 throw new ArgumentNullException("find_sep_func must not be null");
 
-            var t = this.GetSepartor(index, find_sep_func);
-            if (t == null)
-                return;
-
-            long start = t.Item1, end = t.Item2;
+            long start = 0,end = 0;
+            if (find_sep_func == null)
+            {
+                var t = this.GetLineFeedSeparator(index);
+                if (t == null)
+                    return;
+                start = t.Item1;
+                end = t.Item2;
+            }
+            else
+            {
+                var t = this.GetSepartor(index, find_sep_func);
+                if (t == null)
+                    return;
+                start = t.Item1;
+                end = t.Item2;
+            }
 
             this.Select(start, end - start);
 
@@ -1106,30 +1161,6 @@ namespace FooEditEngine
         }
 
         /// <summary>
-        /// インデックスを開始位置とする文字配列を返す
-        /// </summary>
-        /// <param name="index">開始インデックス</param>
-        /// <returns>Stringオブジェクト</returns>
-        public void CopyTo(char[] arrays,long index)
-        {
-            this.CopyTo(arrays, index, this.buffer.Length - index);
-        }
-
-        /// <summary>
-        /// 文字配列を取得する
-        /// </summary>
-        /// <param name="index">開始インデックス</param>
-        /// <param name="length">長さ</param>
-        /// <returns>Stringオブジェクト</returns>
-        public void CopyTo(char[] arrays,long index, long length)
-        {
-            using (this.buffer.GetReaderLock())
-            {
-                this.buffer.CopyTo(arrays, index, length);
-            }
-        }
-
-        /// <summary>
         /// インデックスを開始位置とする文字列を返す
         /// </summary>
         /// <param name="index">開始インデックス</param>
@@ -1148,7 +1179,7 @@ namespace FooEditEngine
         /// <returns>行イテレーターが返される</returns>
         public IEnumerable<string> GetLines(long startIndex, long endIndex, int maxCharCount = -1)
         {
-            foreach (Tuple<long, long> range in this.LayoutLines.ForEachLines(startIndex, endIndex, maxCharCount))
+            foreach (var range in this.LayoutLines.ForEachLines(startIndex, endIndex, maxCharCount))
             {
                 StringBuilder temp = new StringBuilder();
                 temp.Clear();
@@ -1408,12 +1439,46 @@ namespace FooEditEngine
 
             StringBuilder line = new StringBuilder();
             long oldLength = this.Length;
-            for (long i = start; i <= end; i++)
+            long i  = start;
+            var s = this.buffer;
+            while (true)
             {
-                char c = this[i];
-                line.Append(c);
-                if (c == Document.NewLine || i == end)
+                if (i > end)
                 {
+                    break;
+                }
+
+                line.Append(s[i]);
+
+                bool isLineEnd = false;
+                if (i == end)
+                {
+                    isLineEnd = true;
+                }
+                else
+                {
+                    if (s[i] == '\n')
+                    {
+                        isLineEnd = true;
+                    }
+                    else if (s[i] == '\r')
+                    {
+                        if (i + 1 < s.Length && s[i + 1] == '\n')
+                        {
+                            isLineEnd = true;
+                            i++;
+                        }
+                        else
+                        {
+                            isLineEnd = true;
+                        }
+                    }
+                }
+
+                if (isLineEnd)
+                {
+                    isLineEnd = false;
+
                     this.match = this.regex.Match(line.ToString());
                     while (this.match.Success)
                     {
@@ -1432,9 +1497,15 @@ namespace FooEditEngine
                         }
 
                         this.match = this.match.NextMatch();
+
+                        if (i > end)
+                            break;
                     }
+
                     line.Clear();
                 }
+
+                i++;
             }
         }
 
@@ -1504,10 +1575,24 @@ namespace FooEditEngine
                         long fetchedLength = this._LayoutLines.FetchLineWithoutEvent(CaretPostion.row);
 
                         int totalLineCount = this._LayoutLines.Count - 1;
+                        bool hasCR = false;
                         foreach (var c in this.buffer.GetEnumerator(analyzeLength, this.Length - analyzeLength - fetchedLength))
                         {
-                            if (c == Document.NewLine)
-                                totalLineCount++;
+                            if(hasCR == true)
+                            {
+                                if(c == '\n')
+                                    totalLineCount++;
+                                else
+                                    totalLineCount++;
+                                hasCR = false;
+                            }
+                            else
+                            {
+                                if (c == '\r')
+                                    hasCR = true;
+                                if( c == '\n')
+                                    totalLineCount++;
+                            }
                         }
             ;
                         this.TotalLineCount = totalLineCount;

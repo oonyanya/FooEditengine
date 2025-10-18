@@ -150,7 +150,7 @@ namespace FooEditEngine
             }
             if (unit == TextUnit.Line || unit == TextUnit.Paragraph)
             {
-                var t = doc.GetSepartor(this.start, (c) => c == Document.NewLine);
+                var t = doc.GetLineFeedSeparator(this.start);
                 if (t == null)
                     this.start = this.end = 0;
                 else
@@ -202,7 +202,10 @@ namespace FooEditEngine
         {
             LineToIndexTable layoutLineCollection = this.textbox.LayoutLineCollection;
             TextPoint topLeft = layoutLineCollection.GetTextPointFromIndex(this.start);
-            TextPoint bottomRight = this.textbox.LayoutLineCollection.GetTextPointFromIndex(IsNewLine(this.end) ? this.end - 1 : this.end);
+            var indexBeforeLineFeed = GetIndexBeforeLineFeed(this.end);
+            if (indexBeforeLineFeed >= this.textbox.Document.Length)
+                indexBeforeLineFeed = this.textbox.Document.Length - 1;
+            TextPoint bottomRight = this.textbox.LayoutLineCollection.GetTextPointFromIndex(indexBeforeLineFeed);
 
 
 #if METRO || WINDOWS_UWP || WINUI
@@ -246,12 +249,32 @@ namespace FooEditEngine
 #endif
         }
 
-        bool IsNewLine(long index)
+        long GetIndexBeforeLineFeed(long index)
         {
             if (this.textbox.Document.Length > 0)
-                return this.textbox.Document[index == 0 ? 0 : index - 1] == Document.NewLine;
+            {
+                long cursor_index = index == 0 ? 0 : index - 1;
+                var doc = this.textbox.Document;
+                if (doc[cursor_index] == '\n')
+                {
+                    return cursor_index - 1;
+                }
+                else if (doc[cursor_index] == '\r')
+                {
+                    if (doc.Length >= 2 && doc[index] == '\n')
+                        return cursor_index - 1;
+                    else
+                        return cursor_index - 1;
+                }
+                else
+                {
+                    return index;
+                }
+            }
             else
-                return false;
+            {
+                return index;
+            }
         }
 
         public IRawElementProviderSimple[] GetChildren()

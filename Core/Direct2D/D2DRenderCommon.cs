@@ -843,7 +843,7 @@ namespace FooEditEngine
                 this.format.WordWrapping = DW.WordWrapping.NoWrap;
             }
 
-            bool hasNewLine = str.Length > 0 && str[str.Length - 1] == Document.NewLine;
+            bool hasNewLine = Util.IsHasNewLine(str);
             MyTextLayout newLayout = this._factory.GetTextLayout(
                 str,
                 this.format,

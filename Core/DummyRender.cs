@@ -282,6 +282,7 @@ namespace FooEditEngine
             int index = 0;
             foreach(var token in tokens)
             {
+                //面倒なので\n前提
                 if (token[0] == Document.NewLine)
                     break;
                 action(new TokenSpilitEventArgs(index, token.Length, TokenType.Keyword1));

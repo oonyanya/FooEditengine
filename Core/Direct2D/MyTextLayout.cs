@@ -31,7 +31,7 @@ namespace FooEditEngine
             {
                 throw new InvalidOperationException();
             }
-            str = str.Trim(Document.NewLine);   //取り除かないとキャレットの動きがおかしくなる
+            str = str.Trim('\r').Trim('\n');   //取り除かないとキャレットの動きがおかしくなる
             if (showLineBreak)
             {
                 this.lineBreakIndex = str.Length;

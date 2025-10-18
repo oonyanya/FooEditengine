@@ -15,6 +15,7 @@ using System.Globalization;
 using System.Text;
 using System.Reflection;
 using System.Collections;
+using Microsoft.VisualBasic;
 #if WINUI
 using Windows.Foundation.Diagnostics;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -93,17 +94,24 @@ namespace FooEditEngine
             return result.ToString();
         }
 
-        public static IEnumerable<string> EnumrateLine(string s)
+        public static IEnumerable<(string str,string linefeed)> EnumrateLine(string s)
         {
             StringBuilder result = new StringBuilder();
             int i = 0;
             while (true)
             {
                 if (i >= s.Length)
+                {
+                    if(result.Length > 0)
+                    {
+                        yield return (result.ToString(), string.Empty);
+                        result.Clear();
+                    }
                     break;
+                }
                 if (s[i] == '\n')
                 {
-                    yield return result.ToString();
+                    yield return (result.ToString(), "\n");
                     result.Clear();
                     i++;
                 }
@@ -111,13 +119,13 @@ namespace FooEditEngine
                 {
                     if (i + 1 < s.Length && s[i + 1] == '\n')
                     {
-                        yield return result.ToString();
+                        yield return (result.ToString(), "\r\n");
                         result.Clear();
                         i += 2;
                     }
                     else
                     {
-                        yield return result.ToString();
+                        yield return (result.ToString(), "\r");
                         result.Clear();
                         i++;
                     }
@@ -128,12 +136,40 @@ namespace FooEditEngine
             }
         }
 
+        public static bool IsHasNewLine(string s)
+        {
+            return GetNewLineLengthInTail(s) > 0;
+        }
+
+        public static int GetNewLineLengthInTail(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return 0;
+            int lastIndex = s.Length - 2;
+            if (lastIndex >= 0)
+            {
+                if (s[lastIndex] == '\r')
+                {
+                    if (lastIndex + 1 < s.Length && s[lastIndex + 1] == '\n')
+                        return 2;
+                    else
+                        return 1;
+                }
+            }
+            lastIndex = s.Length - 1;
+            if (lastIndex >= 0) {
+                if (s[lastIndex] == '\n' || s[lastIndex] == '\r')
+                    return 1;
+            }
+            return 0;
+        }
+
         public static string[] SpilitByLineFeed(string s)
         {
             List<string> result = new List<string>();
             foreach(var item in EnumrateLine(s))
             {
-                result.Add(new string(item));
+                result.Add(new string(item.str));
             }
             return result.ToArray();
         }
@@ -365,7 +401,7 @@ namespace FooEditEngine
 
         public static bool IsWordSeparator(char c)
         {
-            if (c == Document.NewLine || char.IsSeparator(c) || char.IsPunctuation(c) || CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.MathSymbol)
+            if (c == '\r' || c == '\n' || char.IsSeparator(c) || char.IsPunctuation(c) || CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.MathSymbol)
                 return true;
             else
                 return false;
