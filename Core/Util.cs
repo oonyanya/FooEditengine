@@ -58,6 +58,86 @@ namespace FooEditEngine
     }
     class Util
     {
+        public static string NormalizeLineFeed(string s, string linefeed)
+        {
+            StringBuilder result = new StringBuilder(); 
+            int i = 0;
+            while (true)
+            {
+                if (i >= s.Length)
+                    break;
+                if (s[i] == '\n')
+                {
+                    result.Append(linefeed);
+                    i++;
+                }
+                else if (s[i] == '\r')
+                {
+                    if (i + 1 < s.Length && s[i + 1] == '\n')
+                    {
+                        result.Append(linefeed);
+                        i += 2;
+                    }
+                    else
+                    {
+                        result.Append(linefeed);
+                        i++;
+                    }
+                }
+                else
+                {
+                    result.Append(s[i]);
+                    i++;
+                }
+            }
+            return result.ToString();
+        }
+
+        public static IEnumerable<string> EnumrateLine(string s)
+        {
+            StringBuilder result = new StringBuilder();
+            int i = 0;
+            while (true)
+            {
+                if (i >= s.Length)
+                    break;
+                if (s[i] == '\n')
+                {
+                    yield return result.ToString();
+                    result.Clear();
+                    i++;
+                }
+                else if (s[i] == '\r')
+                {
+                    if (i + 1 < s.Length && s[i + 1] == '\n')
+                    {
+                        yield return result.ToString();
+                        result.Clear();
+                        i += 2;
+                    }
+                    else
+                    {
+                        yield return result.ToString();
+                        result.Clear();
+                        i++;
+                    }
+                }else {
+                    result.Append(s[i]);
+                    i++;
+                }
+            }
+        }
+
+        public static string[] SpilitByLineFeed(string s)
+        {
+            List<string> result = new List<string>();
+            foreach(var item in EnumrateLine(s))
+            {
+                result.Add(new string(item));
+            }
+            return result.ToArray();
+        }
+
 #if METRO || WINDOWS_UWP
         static float? _LogicalDpi;
         public static void GetDpi(out float dpix, out float dpiy)

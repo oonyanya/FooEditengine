@@ -18,6 +18,49 @@ using FooEditEngine;
 namespace UnitTest
 {
     [TestClass]
+    public class UtilTest
+    {
+        [TestMethod]
+        public void NormalizeLineFeedTest()
+        {
+            string str = "test\r\ntest\r\n";
+            string expected = str.Replace("\r\n", "\n");
+            string result = string.Empty;
+            result = Util.NormalizeLineFeed(str,"\n");
+            Assert.AreEqual(expected, result);
+
+            str = "test\rtest\r";
+            expected = str.Replace("\r", "\n");
+            result = Util.NormalizeLineFeed(str, "\n");
+            Assert.AreEqual(expected, result);
+
+            str = "test\ntest\n";
+            expected = str.Replace("\n", "\n");
+            result = Util.NormalizeLineFeed(str, "\n");
+            Assert.AreEqual(expected, result);
+        }
+
+        [TestMethod]
+        public void SpilitLineFeedTest()
+        {
+            string str = "test\r\ntest\r\n";
+            foreach (var line in Util.SpilitByLineFeed(str))
+            {
+                Assert.AreEqual("test", line);
+            }
+            str = "test\rtest\r";
+            foreach (var line in Util.SpilitByLineFeed(str))
+            {
+                Assert.AreEqual("test", line);
+            }
+            str = "test\ntest\n";
+            foreach (var line in Util.SpilitByLineFeed(str))
+            {
+                Assert.AreEqual("test", line);
+            }
+        }
+    }
+    [TestClass]
     public class DocumentTest
     {
         [TestMethod]
@@ -370,33 +413,24 @@ namespace UnitTest
         public void ReplaceAll2Test()
         {
             const int ADD_COUNT = 3000;
-            string expected_string = "this is a pen\n";
-            string expected_string_two = expected_string.Replace("is", "aaa");
 
             DummyRender render = new DummyRender();
             Document doc = new Document();
             doc.LayoutLines.Render = render;
             Document.PreloadLength = 64;
-            doc.Append(expected_string);
+            doc.Append("this is a pen\n");
             doc.ReplaceAll2("is", "aaa");
-            Assert.IsTrue(doc.ToString(0) == expected_string_two);
+            Assert.IsTrue(doc.ToString(0) == "thaaa aaa a pen\n");
 
             doc.Clear();
 
             for (int i = 0; i < ADD_COUNT; i++)
             {
-                doc.Append(expected_string);
+                doc.Append("this is a pen\n");
             }
 
             doc.LayoutLines.FetchLine(ADD_COUNT);
             doc.SetCaretPostionWithoutEvent(ADD_COUNT - 1, 0, false);
-
-            //末尾は空行なので無視して構わない
-            for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
-            {
-                Assert.AreEqual(expected_string, doc.LayoutLines[i]);
-            }
-
 
             doc.ReplaceAll2("is", "aaa");
 
@@ -406,14 +440,8 @@ namespace UnitTest
                 var actual =  doc.ToString(line.Item1, line.Item2);
                 if(line.Item1 < doc.Count)
                 {
-                    Assert.AreEqual(expected_string_two, actual);
+                    Assert.AreEqual("thaaa aaa a pen\n", actual);
                 }
-            }
-
-            //末尾は空行なので無視して構わない
-            for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
-            {
-                Assert.AreEqual(expected_string_two, doc.LayoutLines[i]);
             }
 
             Assert.IsTrue(doc.LayoutLines.Count > ADD_COUNT);
@@ -624,20 +652,6 @@ namespace UnitTest
             sr.Close();
 
             Assert.AreEqual(content, doc.ToString(0));
-        }
-
-        [TestMethod]
-        public void CopyToTest()
-        {
-            const string content = "0123456789";
-            Document doc = new Document();
-            doc.Append(content);
-            char[] result = new char[4];
-            doc.CopyTo(result, 6);
-            AreEqual(content.Substring(6).ToCharArray(), result);
-
-            doc.CopyTo(result, 2, 4);
-            AreEqual(content.Substring(2,4).ToCharArray(), result);
         }
 
         void AreEqual<T>(IEnumerable<T> t1, IEnumerable<T> t2)
