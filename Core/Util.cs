@@ -174,6 +174,11 @@ namespace FooEditEngine
             return result.ToArray();
         }
 
+        public static string TrimLineFeed(string s)
+        {
+            return s.Trim(Document.LF_CHAR).Trim(Document.CR_CHAR);
+        }
+
 #if METRO || WINDOWS_UWP
         static float? _LogicalDpi;
         public static void GetDpi(out float dpix, out float dpiy)

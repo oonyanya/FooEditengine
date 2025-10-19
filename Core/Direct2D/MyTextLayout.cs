@@ -31,7 +31,7 @@ namespace FooEditEngine
             {
                 throw new InvalidOperationException();
             }
-            str = str.Trim(Document.CR_CHAR).Trim(Document.LF_CHAR);   //取り除かないとキャレットの動きがおかしくなる
+            str = Util.TrimLineFeed(str);   //取り除かないとキャレットの動きがおかしくなる
             if (showLineBreak)
             {
                 this.lineBreakIndex = str.Length;

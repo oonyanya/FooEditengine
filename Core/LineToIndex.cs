@@ -753,10 +753,24 @@ namespace FooEditEngine
             long lastLineHeadIndex = this.GetLongIndexFromLineNumber(lastLineRow);
             long lastLineLength = this.GetLengthFromLineNumber(lastLineRow);
 
-            if (lastLineLength != 0 && (this.Document[Document.Length - 1] == Document.CR_CHAR || this.Document[Document.Length - 1] == Document.LF_CHAR))
+            bool hasLastNewLine = false;
+            if (this.Document.Length > 1 && this.Document[this.Document.Count - 2] == Document.CR_CHAR){
+                if (this.Document[this.Document.Length - 1] == Document.LF_CHAR) {
+                    hasLastNewLine = true;
+                }
+            }
+            else if(this.Document.Length > 0){
+                if (this.Document[this.Document.Length - 1] == Document.CR_CHAR){
+                    hasLastNewLine = true;
+                }else if (this.Document[Document.Length - 1] == Document.LF_CHAR){
+                    hasLastNewLine = true;
+                }
+            }
+
+            if (lastLineLength != 0 && hasLastNewLine)
             {
                 long realIndex = lastLineHeadIndex + lastLineLength;
-                dummyLine = new LineToIndexTableData(realIndex, 0, true,false, null);
+                dummyLine = new LineToIndexTableData(realIndex, 0, true, false, null);
                 this._Lines.Add(dummyLine);
                 return true;
             }
