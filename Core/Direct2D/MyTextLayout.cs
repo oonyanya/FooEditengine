@@ -31,11 +31,23 @@ namespace FooEditEngine
             {
                 throw new InvalidOperationException();
             }
+            var (linefeedlen, linefeedtype) = Util.GetNewLineLengthInTailWithType(str);
             str = Util.TrimLineFeed(str);   //取り除かないとキャレットの動きがおかしくなる
             if (showLineBreak)
             {
                 this.lineBreakIndex = str.Length;
-                str = str + "↵";
+                switch(linefeedtype)
+                {
+                    case Document.CRLF_STR:
+                        str = str + "↵";
+                        break;
+                    case Document.CR_STR:
+                        str = str + "↓";
+                        break;
+                    case Document.LF_STR:
+                        str = str + "→";
+                        break;
+                }
             }
             this.layout = new DW.TextLayout(dwFactory,
                 str,

@@ -45,6 +45,18 @@ namespace UnitTest
             Assert.AreEqual(0, Util.GetNewLineLengthInTail("a"));
             Assert.AreEqual(0, Util.GetNewLineLengthInTail(string.Empty));
         }
+        [TestMethod]
+        public void GetNewLineLengthInTailWithTypeTest()
+        {
+            Assert.AreEqual((2, Document.CRLF_STR), Util.GetNewLineLengthInTailWithType("test\r\n"));
+            Assert.AreEqual((1, Document.LF_STR), Util.GetNewLineLengthInTailWithType("test\n"));
+            Assert.AreEqual((1, Document.CR_STR), Util.GetNewLineLengthInTailWithType("test\r"));
+            Assert.AreEqual((2, Document.CRLF_STR), Util.GetNewLineLengthInTailWithType("\r\n"));
+            Assert.AreEqual((1, Document.LF_STR), Util.GetNewLineLengthInTailWithType("\n"));
+            Assert.AreEqual((1, Document.CR_STR), Util.GetNewLineLengthInTailWithType("\r"));
+            Assert.AreEqual((0, null), Util.GetNewLineLengthInTailWithType("a"));
+            Assert.AreEqual((0, null), Util.GetNewLineLengthInTailWithType(string.Empty));
+        }
 
         [TestMethod]
         public void NormalizeLineFeedTest()

@@ -140,28 +140,34 @@ namespace FooEditEngine
         {
             return GetNewLineLengthInTail(s) > 0;
         }
-
         public static int GetNewLineLengthInTail(string s)
         {
+            var (len,type) =GetNewLineLengthInTailWithType(s);
+            return len;
+        }
+        public static (int linefeedlen,string linefeedtype) GetNewLineLengthInTailWithType(string s)
+        {
             if (string.IsNullOrEmpty(s))
-                return 0;
+                return (0,null);
             int lastIndex = s.Length - 2;
             if (lastIndex >= 0)
             {
                 if (s[lastIndex] == Document.CR_CHAR)
                 {
                     if (lastIndex + 1 < s.Length && s[lastIndex + 1] == Document.LF_CHAR)
-                        return 2;
+                        return (2,Document.CRLF_STR);
                     else
-                        return 1;
+                        return (1,Document.LF_STR);
                 }
             }
             lastIndex = s.Length - 1;
             if (lastIndex >= 0) {
-                if (s[lastIndex] == Document.LF_CHAR || s[lastIndex] == Document.CR_CHAR)
-                    return 1;
+                if (s[lastIndex] == Document.LF_CHAR)
+                    return (1,Document.LF_STR);
+                if (s[lastIndex] == Document.CR_CHAR)
+                    return (1, Document.CR_STR);
             }
-            return 0;
+            return (0,null);
         }
 
         public static string[] SpilitByLineFeed(string s)
