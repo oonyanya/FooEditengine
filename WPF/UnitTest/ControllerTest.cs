@@ -260,7 +260,7 @@ namespace UnitTest
             doc.Append("1234");
             ctrl.JumpCaret(1);
             ctrl.DoEnterAction();
-            Assert.IsTrue(doc[1] == '\n');
+            Assert.IsTrue(doc.NewLine == doc.ToString(1,doc.NewLine.Length));
         }
 
         [TestMethod()]
@@ -302,6 +302,8 @@ namespace UnitTest
             doc.LayoutLines.Render = render;
             EditView view = new EditView(doc, render);
             Controller ctrl = new Controller(doc, view);
+
+            //\nテスト
             doc.Clear();
             doc.Append("abc\nef");
             ctrl.JumpCaret(1);
@@ -330,6 +332,74 @@ namespace UnitTest
             ctrl.JumpCaret(0);
             ctrl.MoveCaretVertical(1, false);
             Assert.IsTrue(ctrl.SelectionStart == 4);
+            ctrl.MoveCaretVertical(-1, false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);
+            ctrl.MoveCaretVertical(-1, false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);    //ドキュメントの先端を超えることはないはず
+
+            //\rテスト
+            doc.Clear();
+            doc.Append("abc\ref");
+            ctrl.JumpCaret(1);
+            Assert.IsTrue(ctrl.SelectionStart == 1);
+            ctrl.JumpToLineHead(0, false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);
+            ctrl.JumpToLineEnd(0, false);
+            Assert.IsTrue(ctrl.SelectionStart == 3);
+            ctrl.JumpToHead(false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);
+            ctrl.JumpToEnd(false);
+            Assert.IsTrue(ctrl.SelectionStart == 4);
+
+            doc.Clear();
+            doc.Append("a c\rdef");
+            ctrl.JumpCaret(0);
+            ctrl.MoveCaretHorizontical(4, false, false);
+            Assert.IsTrue(ctrl.SelectionStart == 4);
+            ctrl.MoveCaretHorizontical(-4, false, false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);
+            ctrl.MoveCaretHorizontical(-1, false, false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);    //ドキュメントの先端を超えることはないはず
+            ctrl.MoveCaretHorizontical(1, false, true);
+            Assert.IsTrue(ctrl.SelectionStart == 2);
+
+            ctrl.JumpCaret(0);
+            ctrl.MoveCaretVertical(1, false);
+            Assert.IsTrue(ctrl.SelectionStart == 4);
+            ctrl.MoveCaretVertical(-1, false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);
+            ctrl.MoveCaretVertical(-1, false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);    //ドキュメントの先端を超えることはないはず
+
+            //\r\nテスト
+            doc.Clear();
+            doc.Append("abc\r\nef");
+            ctrl.JumpCaret(1);
+            Assert.IsTrue(ctrl.SelectionStart == 1);
+            ctrl.JumpToLineHead(0, false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);
+            ctrl.JumpToLineEnd(0, false);
+            Assert.IsTrue(ctrl.SelectionStart == 4);
+            ctrl.JumpToHead(false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);
+            ctrl.JumpToEnd(false);
+            Assert.IsTrue(ctrl.SelectionStart == 5);
+
+            doc.Clear();
+            doc.Append("a c\r\ndef");
+            ctrl.JumpCaret(0);
+            ctrl.MoveCaretHorizontical(4, false, false);
+            Assert.IsTrue(ctrl.SelectionStart == 5);
+            ctrl.MoveCaretHorizontical(-4, false, false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);
+            ctrl.MoveCaretHorizontical(-1, false, false);
+            Assert.IsTrue(ctrl.SelectionStart == 0);    //ドキュメントの先端を超えることはないはず
+            ctrl.MoveCaretHorizontical(1, false, true);
+            Assert.IsTrue(ctrl.SelectionStart == 2);
+
+            ctrl.JumpCaret(0);
+            ctrl.MoveCaretVertical(1, false);
+            Assert.IsTrue(ctrl.SelectionStart == 5);
             ctrl.MoveCaretVertical(-1, false);
             Assert.IsTrue(ctrl.SelectionStart == 0);
             ctrl.MoveCaretVertical(-1, false);

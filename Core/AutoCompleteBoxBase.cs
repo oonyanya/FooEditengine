@@ -181,7 +181,7 @@ namespace FooEditEngine
                 AutoCompleteBoxBase box = (AutoCompleteBoxBase)s;
                 CompleteHelper.AddCompleteWords(box.Items, box.Operators, e.textbox.LayoutLines[e.InputedRow]);
             };
-            this.Operators = new char[] { ' ', '\t', Document.NewLine };
+            this.Operators = new char[] { ' ', '\t', '\r','\n' };
             this.Document = document;
         }
 
@@ -192,7 +192,7 @@ namespace FooEditEngine
                 (this.IsCloseCompleteBox == false && input_text == "\b"))
                 return;
 
-            if (input_text == "\r" || input_text == "\n")
+            if (input_text == Document.NewLine)
             {
                 this.CollectItems(this, new CollectCompleteItemEventArgs(this.Document));
                 return;

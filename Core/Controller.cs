@@ -656,9 +656,17 @@ namespace FooEditEngine
             long lineHeadIndex = this.View.LayoutLines.GetLongIndexFromLineNumber(CaretPostion.row);
             long next = this.View.LayoutLines.GetLayout(CaretPostion.row).AlignIndexToNearestCluster(CaretPostion.col, AlignDirection.Forward) + lineHeadIndex;
 
-            if (this.Document[index] == Document.NewLine)
+            if(this.Document[index] == '\n')
+            {
                 next = index + 1;
-
+            }
+            else if (this.Document[index] == '\r')
+            {
+                if(index + 1 < this.Document.Length && this.Document[index + 1] == '\n')
+                    next = index + 2;
+                else
+                    next = index + 1;
+            }
             this.Document.Replace(index, next - index, "", true);
         }
 
@@ -720,8 +728,8 @@ namespace FooEditEngine
         /// キャレット位置で行を分割する
         /// </summary>
         public void DoEnterAction()
-        {            
-            this.DoInputChar('\n');
+        {
+            this.DoInputString(Document.NewLine);
         }
 
         /// <summary>
@@ -1075,7 +1083,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="caret">キャレット</param>
         /// <param name="isMoveNext">真なら１文字すすめ、そうでなければ戻す</param>
-        /// <remarks>このメソッドを呼び出した後でScrollToCaretメソッドとSelectWithMoveCaretメソッドを呼び出す必要があります</remarks>
+        /// <remarks>このメソッドを呼び出した後でScrollToCaretメソッドとSelectWithMoveCaretメソッドを呼び出す必要があります。また、\r\nは1文字と扱われます。</remarks>
         TextPoint MoveCaretHorizontical(TextPoint caret,bool isMoveNext)
         {
             if (this.Document.FireUpdateEvent == false)
@@ -1094,12 +1102,29 @@ namespace FooEditEngine
                 caret = this.MoveCaretVertical(caret,false);
                 caret.col = this.View.LayoutLines.GetLengthFromLineNumber(caret.row) - 1;  //最終行以外はすべて改行コードが付くはず
             }
-            else if (col >= lineString.Length || lineString[col] == Document.NewLine)
+            else if (col >= lineString.Length || lineString[col] == '\n' || lineString[col] == '\r')
             {
-                if (caret.row < this.View.LayoutLines.Count - 1)
+                if (isMoveNext)
                 {
-                    caret = this.MoveCaretVertical(caret, true);
-                    caret.col = 0;
+                    if (caret.row < this.View.LayoutLines.Count - 1)
+                    {
+                        caret = this.MoveCaretVertical(caret, true);
+                        caret.col = 0;
+                    }
+                }
+                else if (lineString[col] == '\n')
+                {
+                    if (col > 1 && lineString[col - 1] == '\r')
+                    {
+                        caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 2, AlignDirection.Back);
+                    }
+                    else
+                    {
+                        caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
+                    }
+                }else if (lineString[col] == '\r')
+                {
+                    caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
                 }
             }
             else

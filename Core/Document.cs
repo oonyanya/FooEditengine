@@ -159,10 +159,10 @@ namespace FooEditEngine
         Match match;
         StringBuffer buffer;
         LineToIndexTable _LayoutLines;
-        bool _EnableFireUpdateEvent = true,_UrlMark = false, _DrawLineNumber = false, _HideRuler = true, _RightToLeft = false;
+        bool _EnableFireUpdateEvent = true, _UrlMark = false, _DrawLineNumber = false, _HideRuler = true, _RightToLeft = false;
         LineBreakMethod _LineBreak;
         int _TabStops, _LineBreakCharCount = 80;
-        bool _ShowFullSpace, _ShowHalfSpace, _ShowTab, _ShowLineBreak,_InsertMode, _HideCaret, _HideLineMarker, _RectSelection;
+        bool _ShowFullSpace, _ShowHalfSpace, _ShowTab, _ShowLineBreak, _InsertMode, _HideCaret, _HideLineMarker, _RectSelection;
         IndentMode _IndentMode;
 
         /// <summary>
@@ -191,7 +191,7 @@ namespace FooEditEngine
         /// <param name="workfile_path">ワークファイルのパスを指定します。メモリーに保存する場合、この値は無視されます。</param>
         /// <param name="cache_size">4の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します。</param>
         /// <remarks>docが複製されますが、プロパティは引き継がれません。また、workfile_pathとcache_sizeはdocがnullの場合だけ反映されます。そうでない場合はdocに指定した値がそのまま引き継がれます。</remarks>
-        public Document(Document doc,string workfile_path = null,int cache_size = -1)
+        public Document(Document doc, string workfile_path = null, int cache_size = -1)
         {
             if (doc == null)
                 this.buffer = new StringBuffer(workfile_path, cache_size);
@@ -201,6 +201,7 @@ namespace FooEditEngine
             this.Update += new DocumentUpdateEventHandler((s, e) => { });
             this.ChangeFireUpdateEvent += new EventHandler((s, e) => { });
             this.PropertyChanged += new PropertyChangedEventHandler((s, e) => { });
+            this.NewLine = Environment.NewLine;
             this.Markers = new MarkerCollection();
             this.UndoManager = new UndoManager();
             this._LayoutLines = new LineToIndexTable(this, this.buffer.CacheSize);
@@ -307,13 +308,13 @@ namespace FooEditEngine
         /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
-        
-        public void OnProperyChanged(bool clearCache = true,[CallerMemberName] string  propertyName = "")
+
+        public void OnProperyChanged(bool clearCache = true, [CallerMemberName] string propertyName = "")
         {
             if (clearCache)
                 this._LayoutLines.ClearLayoutCache();
 
-            if(this.PropertyChanged != null)
+            if (this.PropertyChanged != null)
                 this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
 
@@ -512,7 +513,7 @@ namespace FooEditEngine
             }
             set
             {
-                if(this._CaretPostion != value)
+                if (this._CaretPostion != value)
                 {
                     if (value.row > this.LayoutLines.Count - 1)
                         this._CaretPostion = new TextPoint(this.LayoutLines.Count - 1, 0);
@@ -709,10 +710,9 @@ namespace FooEditEngine
         public event EventHandler ChangeFireUpdateEvent;
 
         /// <summary>
-        /// 改行コードの内部表現
+        /// 現在使用している改行コードの表現
         /// </summary>
-        [Obsolete]
-        public const char NewLine = '\n';
+        public string NewLine { get; private set; }
 
         /// <summary>
         /// EOFの内部表現
@@ -1250,14 +1250,14 @@ namespace FooEditEngine
             if (this.FireUpdateEvent && UserInput)
             {
                 var input_str = string.Empty;
-                if (s == Document.NewLine.ToString())
+                if (s == this.NewLine)
                     input_str = s;
                 else if (s == string.Empty && length > 0)
                     input_str = "\b";
                 //入力は終わっているので空文字を渡すが処理の都合で一部文字だけはそのまま渡す
                 if (this.AutoComplete != null)
                     this.AutoComplete.ParseInput(input_str);
-                if (s == Document.NewLine.ToString())
+                if (s == this.NewLine)
                     this.AutoIndentHook(this, null);
             }
         }
@@ -1284,6 +1284,8 @@ namespace FooEditEngine
         /// <remarks>
         /// 読み取り操作は別スレッドで行われます。
         /// また、非同期操作中はこのメソッドを実行することはできません。
+        /// なお、すべて読み終わった後でNewLineがファイルの内容に応じて変化します。
+        /// 改行コードが混じっている場合、一番最後に検出した改行コードになります。
         /// </remarks>
         public async Task LoadAsync(TextReader fs, CancellationTokenSource tokenSource = null, long file_size = -1)
         {
@@ -1314,6 +1316,7 @@ namespace FooEditEngine
             char[] str = new char[1024 * 1024];
             int readCount;
             int totalLineCount = 0;
+            string lineFeedType = Environment.NewLine;
             do
             {
                 readCount = await fs.ReadAsync(str, 0, str.Length).ConfigureAwait(false);
@@ -1325,9 +1328,15 @@ namespace FooEditEngine
                     if (hasCR == true)
                     {
                         if (c == '\n')
+                        {
+                            lineFeedType = "\r\n";
                             totalLineCount++;
+                        }
                         else
+                        {
+                            lineFeedType = "\r";
                             totalLineCount++;
+                        }
                         hasCR = false;
                     }
                     else
@@ -1335,10 +1344,14 @@ namespace FooEditEngine
                         if (c == '\r')
                             hasCR = true;
                         if (c == '\n')
+                        {
+                            lineFeedType = "\n";
                             totalLineCount++;
+                        }
                     }
                     return c != '\0';
                 });
+                this.NewLine = lineFeedType;
                 using (await this.buffer.GetWriterLockAsync())
                 {
                     //str.lengthは事前に確保しておくために使用するので影響はない

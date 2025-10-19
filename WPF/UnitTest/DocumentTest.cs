@@ -1083,7 +1083,7 @@ namespace UnitTest
             bool called = false;
             Document doc = new Document();
             doc.AutoIndentHook += (s, e) => { called = true; };
-            doc.Replace(0, 0, Document.NewLine.ToString(), true);
+            doc.Replace(0, 0, doc.NewLine, true);
             Assert.AreEqual(true, called);
 
             called = false;
@@ -1094,12 +1094,16 @@ namespace UnitTest
         [TestMethod]
         public void SaveAndLoadFile()
         {
-            string[] datas = new string[] { "aaaa\naaaa\naaaa", "aaaa\raaa\raaaa", "aaaa\r\naaa\r\naaaa" };
-            foreach (string content in datas) {
+            (string linefeed, string str)[] datas = new (string linefee, string str)[] {
+                new ("\n","aaaa\naaaa\naaaa"),
+                new ("\r", "aaaa\raaa\raaaa"),
+                new ("\r\n", "aaaa\r\naaa\r\naaaa")
+            };
+            foreach (var content in datas) {
                 Document doc = new Document();
-                doc.Append(content);
+                doc.Append(content.str);
 
-                byte[] store = new byte[content.Length];
+                byte[] store = new byte[content.str.Length];
                 System.IO.MemoryStream ms = new System.IO.MemoryStream(store);
                 System.IO.StreamWriter sw = new System.IO.StreamWriter(ms);
                 System.Threading.Tasks.Task t = doc.SaveAsync(sw);
@@ -1114,7 +1118,8 @@ namespace UnitTest
                 sr.Close();
 
                 Assert.AreEqual(2,doc.TotalLineCount);
-                Assert.AreEqual(content, doc.ToString(0));
+                Assert.AreEqual(content.linefeed, doc.NewLine);
+                Assert.AreEqual(content.str, doc.ToString(0));
             }
         }
 
