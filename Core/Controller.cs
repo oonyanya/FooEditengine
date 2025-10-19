@@ -767,7 +767,7 @@ namespace FooEditEngine
 
             long index = this.View.GetIndexFromLayoutLine(CaretPos);
             long length = 0;
-            if (this.View.InsertMode == false && index < this.Document.Length && this.Document[index] != Document.NewLine)
+            if (this.View.InsertMode == false && index < this.Document.Length && this.Document[index] != '\r'&& this.Document[index] != '\n')
             {
                 string lineString = this.View.LayoutLines[CaretPos.row];
                 long end = this.View.LayoutLines.GetLayout(CaretPos.row).AlignIndexToNearestCluster(CaretPos.col + str.Length - 1, AlignDirection.Forward);
@@ -776,7 +776,7 @@ namespace FooEditEngine
                 end += this.View.LayoutLines.GetLongIndexFromLineNumber(CaretPos.row);
                 length = end - index;
             }
-            if (str == Document.NewLine.ToString())
+            if (str == "\n")
             {
                 long lineHeadIndex = this.View.LayoutLines.GetLongIndexFromLineNumber(CaretPos.row);
                 long lineLength = this.View.LayoutLines.GetLengthFromLineNumber(CaretPos.row);
@@ -1317,7 +1317,7 @@ namespace FooEditEngine
                 {
                     Selection sel = Util.NormalizeIMaker<Selection>(Selections[i]);
 
-                    string str = this.Document.ToString(sel.start, sel.length).Replace(Document.NewLine.ToString(), Environment.NewLine);
+                    string str = Util.NormalizeLineFeed(this.Document.ToString(sel.start, sel.length), Environment.NewLine);
                     if (str.IndexOf(Environment.NewLine) == -1)
                         temp.AppendLine(str);
                     else

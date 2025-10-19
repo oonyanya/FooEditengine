@@ -712,11 +712,26 @@ namespace FooEditEngine
             long IndexAnayzed = HeadIndex + analyzeLength - 1;
             if (IndexAnayzed < this.Document.Length -1)
             {
-                long i;
-                for (i = IndexAnayzed; i < this.Document.Length; i++)
+                long i = IndexAnayzed;
+                while (true)
                 {
-                    if (this.Document.StringBuffer[i] == Document.NewLine)
+                    if (i >= this.Document.Length)
                         break;
+                    if (this.Document.StringBuffer[i] == '\n')
+                        break;
+                    if(this.Document.StringBuffer[i] == '\r')
+                    {
+                        if(i + 1 < this.Document.Length && this.Document.StringBuffer[i + 1] == '\n')
+                        {
+                            i++;
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    i++;
                 }
                 analyzeLength = i - HeadIndex + 1;
             }
@@ -738,7 +753,7 @@ namespace FooEditEngine
             long lastLineHeadIndex = this.GetLongIndexFromLineNumber(lastLineRow);
             long lastLineLength = this.GetLengthFromLineNumber(lastLineRow);
 
-            if (lastLineLength != 0 && this.Document[Document.Length - 1] == Document.NewLine)
+            if (lastLineLength != 0 && (this.Document[Document.Length - 1] == '\r' || this.Document[Document.Length - 1] == '\n'))
             {
                 long realIndex = lastLineHeadIndex + lastLineLength;
                 dummyLine = new LineToIndexTableData(realIndex, 0, true,false, null);

@@ -21,6 +21,32 @@ namespace UnitTest
     public class UtilTest
     {
         [TestMethod]
+        public void IsHasLineFeedTest()
+        {
+            Assert.AreEqual(true, Util.IsHasNewLine("test\r\n"));
+            Assert.AreEqual(true, Util.IsHasNewLine("test\n"));
+            Assert.AreEqual(true, Util.IsHasNewLine("test\r"));
+            Assert.AreEqual(true, Util.IsHasNewLine("\r"));
+            Assert.AreEqual(true, Util.IsHasNewLine("\n"));
+            Assert.AreEqual(true, Util.IsHasNewLine("\r\n"));
+            Assert.AreEqual(false, Util.IsHasNewLine("a"));
+            Assert.AreEqual(false, Util.IsHasNewLine(string.Empty));
+        }
+
+        [TestMethod]
+        public void GetNewLineLengthInTailTest()
+        {
+            Assert.AreEqual(2, Util.GetNewLineLengthInTail("test\r\n"));
+            Assert.AreEqual(1, Util.GetNewLineLengthInTail("test\n"));
+            Assert.AreEqual(1, Util.GetNewLineLengthInTail("test\r"));
+            Assert.AreEqual(1, Util.GetNewLineLengthInTail("\r"));
+            Assert.AreEqual(1, Util.GetNewLineLengthInTail("\n"));
+            Assert.AreEqual(2, Util.GetNewLineLengthInTail("\r\n"));
+            Assert.AreEqual(0, Util.GetNewLineLengthInTail("a"));
+            Assert.AreEqual(0, Util.GetNewLineLengthInTail(string.Empty));
+        }
+
+        [TestMethod]
         public void NormalizeLineFeedTest()
         {
             string str = "test\r\ntest\r\n";
@@ -70,6 +96,7 @@ namespace UnitTest
             Document doc = new Document();
             doc.LayoutLines.Render = render;
             DummyView view = new DummyView(doc, render);
+            //\nテスト
             doc.Clear();
             doc.Append("a\nb\nc\nd");
             Assert.IsTrue(view.LayoutLines[0] == "a\n" &&
@@ -101,6 +128,69 @@ namespace UnitTest
                 view.LayoutLines[2] == "xc\n" &&
                 view.LayoutLines[3] == "d");
 
+            //\rテスト
+            doc.Clear();
+            doc.Append("a\rb\rc\rd");
+            Assert.IsTrue(view.LayoutLines[0] == "a\r" &&
+                view.LayoutLines[1] == "b\r" &&
+                view.LayoutLines[2] == "c\r" &&
+                view.LayoutLines[3] == "d");
+
+            doc.Insert(2, "x");
+            Assert.IsTrue(view.LayoutLines[0] == "a\r" &&
+                view.LayoutLines[1] == "xb\r" &&
+                view.LayoutLines[2] == "c\r" &&
+                view.LayoutLines[3] == "d");
+
+            doc.Insert(3, "x");
+            Assert.IsTrue(view.LayoutLines[0] == "a\r" &&
+                view.LayoutLines[1] == "xxb\r" &&
+                view.LayoutLines[2] == "c\r" &&
+                view.LayoutLines[3] == "d");
+
+            doc.Insert(6, "x");
+            Assert.IsTrue(view.LayoutLines[0] == "a\r" &&
+                view.LayoutLines[1] == "xxb\r" &&
+                view.LayoutLines[2] == "xc\r" &&
+                view.LayoutLines[3] == "d");
+
+            doc.Insert(0, "x");
+            Assert.IsTrue(view.LayoutLines[0] == "xa\r" &&
+                view.LayoutLines[1] == "xxb\r" &&
+                view.LayoutLines[2] == "xc\r" &&
+                view.LayoutLines[3] == "d");
+
+            //\r\nテスト
+            doc.Clear();
+            doc.Append("a\r\nb\r\nc\r\nd");
+            Assert.IsTrue(view.LayoutLines[0] == "a\r\n" &&
+                view.LayoutLines[1] == "b\r\n" &&
+                view.LayoutLines[2] == "c\r\n" &&
+                view.LayoutLines[3] == "d");
+
+            doc.Insert(3, "x");
+            Assert.IsTrue(view.LayoutLines[0] == "a\r\n" &&
+                view.LayoutLines[1] == "xb\r\n" &&
+                view.LayoutLines[2] == "c\r\n" &&
+                view.LayoutLines[3] == "d");
+
+            doc.Insert(4, "x");
+            Assert.IsTrue(view.LayoutLines[0] == "a\r\n" &&
+                view.LayoutLines[1] == "xxb\r\n" &&
+                view.LayoutLines[2] == "c\r\n" &&
+                view.LayoutLines[3] == "d");
+
+            doc.Insert(8, "x");
+            Assert.IsTrue(view.LayoutLines[0] == "a\r\n" &&
+                view.LayoutLines[1] == "xxb\r\n" &&
+                view.LayoutLines[2] == "xc\r\n" &&
+                view.LayoutLines[3] == "d");
+
+            doc.Insert(0, "x");
+            Assert.IsTrue(view.LayoutLines[0] == "xa\r\n" &&
+                view.LayoutLines[1] == "xxb\r\n" &&
+                view.LayoutLines[2] == "xc\r\n" &&
+                view.LayoutLines[3] == "d");
         }
 
         [TestMethod]
@@ -111,6 +201,7 @@ namespace UnitTest
             doc.LayoutLines.Render = render;
             DummyView view = new DummyView(doc, render);
 
+            //\nテスト
             doc.Clear();
             doc.Append("a\nb\nc\nd");
 
@@ -140,6 +231,68 @@ namespace UnitTest
                 view.LayoutLines[4] == "eb\n" &&
                 view.LayoutLines[5] == "c\n" &&
                 view.LayoutLines[6] == "d");
+
+            //\rテスト
+            doc.Clear();
+            doc.Append("a\rb\rc\rd");
+
+            doc.Insert(2, "f\re");
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r" &&
+                view.LayoutLines[1] == "f\r" &&
+                view.LayoutLines[2] == "eb\r" &&
+                view.LayoutLines[3] == "c\r" &&
+                view.LayoutLines[4] == "d");
+
+            doc.Insert(3, "g\rh");
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r" &&
+                view.LayoutLines[1] == "fg\r" &&
+                view.LayoutLines[2] == "h\r" &&
+                view.LayoutLines[3] == "eb\r" &&
+                view.LayoutLines[4] == "c\r" &&
+                view.LayoutLines[5] == "d");
+
+            doc.Insert(0, "x\ry");
+            Assert.IsTrue(
+                view.LayoutLines[0] == "x\r" &&
+                view.LayoutLines[1] == "ya\r" &&
+                view.LayoutLines[2] == "fg\r" &&
+                view.LayoutLines[3] == "h\r" &&
+                view.LayoutLines[4] == "eb\r" &&
+                view.LayoutLines[5] == "c\r" &&
+                view.LayoutLines[6] == "d");
+
+            //\r\nテスト
+            doc.Clear();
+            doc.Append("a\r\nb\r\nc\r\nd");
+
+            doc.Insert(3, "f\r\ne");
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r\n" &&
+                view.LayoutLines[1] == "f\r\n" &&
+                view.LayoutLines[2] == "eb\r\n" &&
+                view.LayoutLines[3] == "c\r\n" &&
+                view.LayoutLines[4] == "d");
+
+            doc.Insert(4, "g\r\nh");
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r\n" &&
+                view.LayoutLines[1] == "fg\r\n" &&
+                view.LayoutLines[2] == "h\r\n" &&
+                view.LayoutLines[3] == "eb\r\n" &&
+                view.LayoutLines[4] == "c\r\n" &&
+                view.LayoutLines[5] == "d");
+
+            doc.Insert(0, "x\r\ny");
+            Assert.IsTrue(
+                view.LayoutLines[0] == "x\r\n" &&
+                view.LayoutLines[1] == "ya\r\n" &&
+                view.LayoutLines[2] == "fg\r\n" &&
+                view.LayoutLines[3] == "h\r\n" &&
+                view.LayoutLines[4] == "eb\r\n" &&
+                view.LayoutLines[5] == "c\r\n" &&
+                view.LayoutLines[6] == "d");
         }
 
         [TestMethod]
@@ -149,6 +302,8 @@ namespace UnitTest
             Document doc = new Document();
             doc.LayoutLines.Render = render;
             DummyView view = new DummyView(doc, render);
+
+            //\nテスト
             doc.Clear();
             doc.Append("aa\nbb\ncc\ndd");
 
@@ -175,6 +330,62 @@ namespace UnitTest
                 view.LayoutLines[2] == "cc\n" &&
                 view.LayoutLines[3] == ""
                 );
+
+            //\rテスト
+            doc.Clear();
+            doc.Append("aa\rbb\rcc\rdd");
+
+            doc.Remove(9, 1);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "aa\r" &&
+                view.LayoutLines[1] == "bb\r" &&
+                view.LayoutLines[2] == "cc\r" &&
+                view.LayoutLines[3] == "d"
+                );
+
+            doc.Remove(9, 1);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "aa\r" &&
+                view.LayoutLines[1] == "bb\r" &&
+                view.LayoutLines[2] == "cc\r" &&
+                view.LayoutLines[3] == ""
+                );
+
+            doc.Remove(0, 1);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r" &&
+                view.LayoutLines[1] == "bb\r" &&
+                view.LayoutLines[2] == "cc\r" &&
+                view.LayoutLines[3] == ""
+                );
+
+            //\r\nテスト
+            doc.Clear();
+            doc.Append("aa\r\nbb\r\ncc\r\ndd");
+
+            doc.Remove(12, 1);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "aa\r\n" &&
+                view.LayoutLines[1] == "bb\r\n" &&
+                view.LayoutLines[2] == "cc\r\n" &&
+                view.LayoutLines[3] == "d"
+                );
+
+            doc.Remove(12, 1);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "aa\r\n" &&
+                view.LayoutLines[1] == "bb\r\n" &&
+                view.LayoutLines[2] == "cc\r\n" &&
+                view.LayoutLines[3] == ""
+                );
+
+            doc.Remove(0, 1);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r\n" &&
+                view.LayoutLines[1] == "bb\r\n" &&
+                view.LayoutLines[2] == "cc\r\n" &&
+                view.LayoutLines[3] == ""
+                );
         }
 
         [TestMethod]
@@ -185,6 +396,7 @@ namespace UnitTest
             doc.LayoutLines.Render = render;
             DummyView view = new DummyView(doc, render);
 
+            //\nテスト
             doc.Clear();
             doc.Append("a\n");
             doc.Append("b\n");
@@ -228,6 +440,97 @@ namespace UnitTest
                 view.LayoutLines[1] == "d\n" &&
                 view.LayoutLines[2] == "e\n" &&
                 view.LayoutLines[3] == "f\n");
+
+            //\rテスト
+            doc.Clear();
+            doc.Append("a\r");
+            doc.Append("b\r");
+            doc.Append("c\r");
+            doc.Append("d\r");
+            doc.Append("e\r");
+            doc.Append("f\r");
+
+            doc.Remove(2, 4);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r" &&
+                view.LayoutLines[1] == "d\r" &&
+                view.LayoutLines[2] == "e\r" &&
+                view.LayoutLines[3] == "f\r");
+
+            doc.Remove(4, 4);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r" &&
+                view.LayoutLines[1] == "d\r");
+
+            doc.Clear();
+            doc.Append("a\r");
+            doc.Append("b\r");
+            doc.Append("c\r");
+            doc.Append("d\r");
+
+            doc.Remove(2, 6);
+            Assert.IsTrue(view.LayoutLines[0] == "a\r");
+
+            doc.Clear();
+            doc.Append("a\r");
+            doc.Append("b\r");
+            doc.Append("c\r");
+            doc.Append("d\r");
+            doc.Append("e\r");
+            doc.Append("f\r");
+            doc.Insert(4, "a");
+            doc.Remove(2, 5);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r" &&
+                view.LayoutLines[1] == "d\r" &&
+                view.LayoutLines[2] == "e\r" &&
+                view.LayoutLines[3] == "f\r");
+
+            //\r\nテスト
+            doc.Clear();
+            doc.Append("a\r\n");
+            doc.Append("b\r\n");
+            doc.Append("c\r\n");
+            doc.Append("d\r\n");
+            doc.Append("e\r\n");
+            doc.Append("f\r\n");
+
+            doc.Remove(3, 6);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r\n" &&
+                view.LayoutLines[1] == "d\r\n" &&
+                view.LayoutLines[2] == "e\r\n" &&
+                view.LayoutLines[3] == "f\r\n");
+
+            doc.Remove(6, 6);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r\n" &&
+                view.LayoutLines[1] == "d\r\n");
+
+            doc.Clear();
+            doc.Append("a\r\n");
+            doc.Append("b\r\n");
+            doc.Append("c\r\n");
+            doc.Append("d\r\n");
+
+            doc.Remove(3, 9);
+            Assert.IsTrue(view.LayoutLines[0] == "a\r\n");
+
+            doc.Clear();
+            doc.Append("a\r\n");
+            doc.Append("b\r\n");
+            doc.Append("c\r\n");
+            doc.Append("d\r\n");
+            doc.Append("e\r\n");
+            doc.Append("f\r\n");
+            doc.Insert(6, "a");
+            doc.Remove(3, 7);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r\n" &&
+                view.LayoutLines[1] == "d\r\n" &&
+                view.LayoutLines[2] == "e\r\n" &&
+                view.LayoutLines[3] == "f\r\n");
+
         }
 
         [TestMethod]
@@ -237,6 +540,8 @@ namespace UnitTest
             Document doc = new Document();
             doc.LayoutLines.Render = render;
             DummyView view = new DummyView(doc, render);
+
+            //\nテスト
             doc.Clear();
             doc.Append("a\nb\nc");
 
@@ -262,6 +567,60 @@ namespace UnitTest
             tp = view.LayoutLines.GetTextPointFromIndex(6);
             Assert.IsTrue(tp.row == 2 && tp.col == 0);
             Assert.IsTrue(view.LayoutLines.GetLongIndexFromTextPoint(tp) == 6);
+
+            //\nテスト
+            doc.Clear();
+            doc.Append("a\rb\rc");
+
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromLineNumber(1) == 2);
+            Assert.IsTrue(view.LayoutLines.GetLengthFromLineNumber(1) == 2);
+            Assert.IsTrue(view.LayoutLines.GetLineNumberFromIndex(2) == 1);
+            tp = view.LayoutLines.GetTextPointFromIndex(2);
+            Assert.IsTrue(tp.row == 1 && tp.col == 0);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromTextPoint(tp) == 2);
+
+            doc.Insert(2, "a");
+
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromLineNumber(2) == 5);
+            Assert.IsTrue(view.LayoutLines.GetLineNumberFromIndex(5) == 2);
+            tp = view.LayoutLines.GetTextPointFromIndex(5);
+            Assert.IsTrue(tp.row == 2 && tp.col == 0);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromTextPoint(tp) == 5);
+
+            doc.Insert(0, "a");
+
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromLineNumber(2) == 6);
+            Assert.IsTrue(view.LayoutLines.GetLineNumberFromIndex(6) == 2);
+            tp = view.LayoutLines.GetTextPointFromIndex(6);
+            Assert.IsTrue(tp.row == 2 && tp.col == 0);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromTextPoint(tp) == 6);
+
+            //\r\nテスト
+            doc.Clear();
+            doc.Append("a\r\nb\r\nc");
+
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromLineNumber(1) == 3);
+            Assert.IsTrue(view.LayoutLines.GetLengthFromLineNumber(1) == 3);
+            Assert.IsTrue(view.LayoutLines.GetLineNumberFromIndex(6) == 2);
+            tp = view.LayoutLines.GetTextPointFromIndex(3);
+            Assert.IsTrue(tp.row == 1 && tp.col == 0);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromTextPoint(tp) == 3);
+
+            doc.Insert(3, "a");
+
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromLineNumber(2) == 7);
+            Assert.IsTrue(view.LayoutLines.GetLineNumberFromIndex(7) == 2);
+            tp = view.LayoutLines.GetTextPointFromIndex(7);
+            Assert.IsTrue(tp.row == 2 && tp.col == 0);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromTextPoint(tp) == 7);
+
+            doc.Insert(0, "a");
+
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromLineNumber(2) == 8);
+            Assert.IsTrue(view.LayoutLines.GetLineNumberFromIndex(8) == 2);
+            tp = view.LayoutLines.GetTextPointFromIndex(8);
+            Assert.IsTrue(tp.row == 2 && tp.col == 0);
+            Assert.IsTrue(view.LayoutLines.GetLongIndexFromTextPoint(tp) == 8);
         }
 
         [TestMethod]
@@ -345,10 +704,27 @@ namespace UnitTest
             DummyRender render = new DummyRender();
             Document doc = new Document();
             doc.LayoutLines.Render = render;
+            //\nテスト
             doc.Append("a\nb\nc");
             var result = doc.GetLines(0, doc.Length - 1).ToArray();
             Assert.AreEqual("a\n", result[0]);
             Assert.AreEqual("b\n", result[1]);
+            Assert.AreEqual("c", result[2]);
+
+            //\rテスト
+            doc.Clear();
+            doc.Append("a\rb\rc");
+            result = doc.GetLines(0, doc.Length - 1).ToArray();
+            Assert.AreEqual("a\r", result[0]);
+            Assert.AreEqual("b\r", result[1]);
+            Assert.AreEqual("c", result[2]);
+
+            //\rテスト
+            doc.Clear();
+            doc.Append("a\r\nb\r\nc");
+            result = doc.GetLines(0, doc.Length - 1).ToArray();
+            Assert.AreEqual("a\r\n", result[0]);
+            Assert.AreEqual("b\r\n", result[1]);
             Assert.AreEqual("c", result[2]);
         }
 
@@ -360,6 +736,7 @@ namespace UnitTest
             Document doc = new Document();
             doc.LayoutLines.Render = render;
 
+            //\nテスト
             for (int i = 0; i < 20; i++)
                 doc.Append("01234567890123456789\n");
 
@@ -375,6 +752,40 @@ namespace UnitTest
             doc.LayoutLines.FetchLine(23);
             Assert.AreEqual("a\n", doc.LayoutLines[20]);
             Assert.AreEqual("c", doc.LayoutLines[22]);
+
+            //\rテスト
+            doc.Clear();
+            for (int i = 0; i < 20; i++)
+                doc.Append("01234567890123456789\r");
+
+            //普通に追加すると余計なものがあるので、再構築する
+            doc.PerformLayout(false);
+
+            result = doc.LayoutLines.TryGetRaw(20, out lineData);
+            Assert.AreEqual(false, result);
+            Assert.AreEqual(null, lineData);
+
+            doc.Append("a\rb\rc");
+            doc.LayoutLines.FetchLine(23);
+            Assert.AreEqual("a\r", doc.LayoutLines[20]);
+            Assert.AreEqual("c", doc.LayoutLines[22]);
+
+            //\r\nテスト
+            doc.Clear();
+            for (int i = 0; i < 20; i++)
+                doc.Append("01234567890123456789\r\n");
+
+            //普通に追加すると余計なものがあるので、再構築する
+            doc.PerformLayout(false);
+
+            result = doc.LayoutLines.TryGetRaw(20, out lineData);
+            Assert.AreEqual(false, result);
+            Assert.AreEqual(null, lineData);
+
+            doc.Append("a\r\nb\r\nc");
+            doc.LayoutLines.FetchLine(23);
+            Assert.AreEqual("a\r\n", doc.LayoutLines[20]);
+            Assert.AreEqual("c", doc.LayoutLines[22]);
         }
 
         [TestMethod]
@@ -383,12 +794,35 @@ namespace UnitTest
             DummyRender render = new DummyRender();
             Document doc = new Document();
             doc.LayoutLines.Render = render;
+            //\nテスト
             doc.Append("this is a pen\n");
             doc.Append("this is a pen\n");
             doc.SetCaretPostionWithoutEvent(1, 0);
             doc.SetFindParam("is", false, RegexOptions.None);
             doc.ReplaceAll("aaa", false);
             Assert.IsTrue(doc.ToString(0) == "thaaa aaa a pen\nthaaa aaa a pen\n");
+            Assert.AreEqual(1, doc.CaretPostion.row);
+            Assert.AreEqual(0, doc.CaretPostion.col);
+
+            //\rテスト
+            doc.Clear();
+            doc.Append("this is a pen\r");
+            doc.Append("this is a pen\r");
+            doc.SetCaretPostionWithoutEvent(1, 0);
+            doc.SetFindParam("is", false, RegexOptions.None);
+            doc.ReplaceAll("aaa", false);
+            Assert.IsTrue(doc.ToString(0) == "thaaa aaa a pen\rthaaa aaa a pen\r");
+            Assert.AreEqual(1, doc.CaretPostion.row);
+            Assert.AreEqual(0, doc.CaretPostion.col);
+
+            //\r\nテスト
+            doc.Clear();
+            doc.Append("this is a pen\r\n");
+            doc.Append("this is a pen\r\n");
+            doc.SetCaretPostionWithoutEvent(1, 0);
+            doc.SetFindParam("is", false, RegexOptions.None);
+            doc.ReplaceAll("aaa", false);
+            Assert.IsTrue(doc.ToString(0) == "thaaa aaa a pen\r\nthaaa aaa a pen\r\n");
             Assert.AreEqual(1, doc.CaretPostion.row);
             Assert.AreEqual(0, doc.CaretPostion.col);
         }
@@ -399,6 +833,7 @@ namespace UnitTest
             DummyRender render = new DummyRender();
             Document doc = new Document();
             doc.LayoutLines.Render = render;
+            //\nテスト
             doc.Append("this is a pen\n");
             doc.Append("this is a pen\n");
             doc.SetCaretPostionWithoutEvent(1, 0);
@@ -407,11 +842,34 @@ namespace UnitTest
             Assert.AreEqual("aaa aaa aaa aaa\naaa aaa aaa aaa\n", doc.ToString(0));
             Assert.AreEqual(1, doc.CaretPostion.row);
             Assert.AreEqual(0, doc.CaretPostion.col);
+
+            //\rテスト
+            doc.Clear();
+            doc.Append("this is a pen\r");
+            doc.Append("this is a pen\r");
+            doc.SetCaretPostionWithoutEvent(1, 0);
+            doc.SetFindParam("[a-z]+", true, RegexOptions.None);
+            doc.ReplaceAll("aaa", false);
+            Assert.AreEqual("aaa aaa aaa aaa\raaa aaa aaa aaa\r", doc.ToString(0));
+            Assert.AreEqual(1, doc.CaretPostion.row);
+            Assert.AreEqual(0, doc.CaretPostion.col);
+
+            //\r\nテスト
+            doc.Clear();
+            doc.Append("this is a pen\r\n");
+            doc.Append("this is a pen\r\n");
+            doc.SetCaretPostionWithoutEvent(1, 0);
+            doc.SetFindParam("[a-z]+", true, RegexOptions.None);
+            doc.ReplaceAll("aaa", false);
+            Assert.AreEqual("aaa aaa aaa aaa\r\naaa aaa aaa aaa\r\n", doc.ToString(0));
+            Assert.AreEqual(1, doc.CaretPostion.row);
+            Assert.AreEqual(0, doc.CaretPostion.col);
         }
 
         [TestMethod]
         public void ReplaceAll2Test()
         {
+            //ReplaceAll2()は改行を含めてすべての奴を置き換えるので\nのテストだけで足りる
             const int ADD_COUNT = 3000;
 
             DummyRender render = new DummyRender();
@@ -453,6 +911,7 @@ namespace UnitTest
         [TestMethod]
         public void DiskbaseDocumentTest()
         {
+            //ほかの所で\rや\r\nテキストはテスト済みなので\nだけで足りる
             const int ADD_COUNT = 3000;
             const string text = "this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.\n";
 

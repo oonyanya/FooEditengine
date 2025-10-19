@@ -128,7 +128,35 @@ namespace UnitTest
             Assert.IsTrue(folding.Expand == true);
             folding.Expand = false;
             ctrl.JumpCaret(0);
-            ctrl.JumpCaret(4,false);
+            ctrl.JumpCaret(4, false);
+            Assert.IsTrue(folding.Expand == false);
+            ctrl.JumpCaret(1, 0);
+            Assert.IsTrue(doc.CaretPostion == new TextPoint(1, 0));
+
+            doc.Clear();
+            doc.Append("1\r\n2\r\n3\r\n4");
+            doc.LayoutLines.FoldingCollection.Add(new FoldingItem(3, 8, false));
+            ctrl.JumpCaret(6);
+            Assert.IsTrue(doc.CaretPostion == new TextPoint(2, 0));
+            folding = doc.LayoutLines.FoldingCollection.Get(3, 8);
+            Assert.IsTrue(folding.Expand == true);
+            folding.Expand = false;
+            ctrl.JumpCaret(0);
+            ctrl.JumpCaret(6, false);
+            Assert.IsTrue(folding.Expand == false);
+            ctrl.JumpCaret(1, 0);
+            Assert.IsTrue(doc.CaretPostion == new TextPoint(1, 0));
+
+            doc.Clear();
+            doc.Append("1\r2\r3\r4");
+            doc.LayoutLines.FoldingCollection.Add(new FoldingItem(2, 6, false));
+            ctrl.JumpCaret(4);
+            Assert.IsTrue(doc.CaretPostion == new TextPoint(2, 0));
+            folding = doc.LayoutLines.FoldingCollection.Get(2, 6);
+            Assert.IsTrue(folding.Expand == true);
+            folding.Expand = false;
+            ctrl.JumpCaret(0);
+            ctrl.JumpCaret(4, false);
             Assert.IsTrue(folding.Expand == false);
             ctrl.JumpCaret(1, 0);
             Assert.IsTrue(doc.CaretPostion == new TextPoint(1, 0));
@@ -156,10 +184,40 @@ namespace UnitTest
             doc.LayoutLines.Render = render;
             EditView view = new EditView(doc, render);
             Controller ctrl = new Controller(doc, view);
-            doc.Append("1234\n1234");
-            ctrl.JumpCaret(0);
             TextPoint nextCaret;
             int moved;
+            doc.Append("1234\n1234");
+            ctrl.JumpCaret(0);
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Character, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 1);
+            Assert.IsTrue(moved == 1);
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Word, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 4);
+            Assert.IsTrue(moved == 1);
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Paragraph, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Line, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+
+            doc.Append("1234\r1234");
+            ctrl.JumpCaret(0);
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Character, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 1);
+            Assert.IsTrue(moved == 1);
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Word, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 4);
+            Assert.IsTrue(moved == 1);
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Paragraph, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Line, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+
+            doc.Append("1234\r\n1234");
+            ctrl.JumpCaret(0);
             nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Character, out moved);
             Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 1);
             Assert.IsTrue(moved == 1);
@@ -213,16 +271,20 @@ namespace UnitTest
             doc.LayoutLines.Render = render;
             EditView view = new EditView(doc, render);
             Controller ctrl = new Controller(doc, view);
-            doc.Clear();
-            doc.Append("abc def\nef");
-            ctrl.JumpCaret(0);
-            ctrl.MoveCaretAndSelect(new TextPoint(0, 1));
-            Assert.IsTrue(ctrl.SelectionStart == 0 && ctrl.SelectionLength == 1);
-            Assert.IsTrue(doc.CaretPostion.row == 0 && doc.CaretPostion.col == 1);
-            ctrl.JumpCaret(0);
-            ctrl.MoveCaretAndSelect(new TextPoint(0, 1),true);
-            Assert.IsTrue(ctrl.SelectionStart == 0 && ctrl.SelectionLength == 3);
-            Assert.IsTrue(doc.CaretPostion.row == 0 && doc.CaretPostion.col == 3);
+            var datas = new string[] { "abc def\nef" , "abc def\r\nef", "abc def\ref" };
+            foreach(var data in datas)
+            {
+                doc.Clear();
+                doc.Append(data);
+                ctrl.JumpCaret(0);
+                ctrl.MoveCaretAndSelect(new TextPoint(0, 1));
+                Assert.IsTrue(ctrl.SelectionStart == 0 && ctrl.SelectionLength == 1);
+                Assert.IsTrue(doc.CaretPostion.row == 0 && doc.CaretPostion.col == 1);
+                ctrl.JumpCaret(0);
+                ctrl.MoveCaretAndSelect(new TextPoint(0, 1), true);
+                Assert.IsTrue(ctrl.SelectionStart == 0 && ctrl.SelectionLength == 3);
+                Assert.IsTrue(doc.CaretPostion.row == 0 && doc.CaretPostion.col == 3);
+            }
         }
 
         [TestMethod()]
@@ -299,6 +361,10 @@ namespace UnitTest
             ctrl.JumpCaret(0);
             ctrl.DoInputChar('a');
             Assert.IsTrue(doc.ToString(0) == "ab");
+
+            string save_state = doc.ToString(0);
+
+            //\nのテスト
             doc.Append("\n");
             ctrl.JumpCaret(2);
             ctrl.DoInputChar('a');
@@ -308,9 +374,41 @@ namespace UnitTest
             doc.Append("a\na");
             doc.Select(0, 3);
             ctrl.UpIndent();
-            Assert.IsTrue(doc.ToString(0) == "\ta\n\ta\n");
+            Assert.IsTrue(doc.ToString(0) == "\ta\n\ta");
             ctrl.DownIndent();
-            Assert.IsTrue(doc.ToString(0) == "a\na\n");
+            Assert.IsTrue(doc.ToString(0) == "a\na");
+
+            //\rのテスト
+            doc.Clear();
+            doc.Append(save_state);
+            doc.Append("\r");
+            ctrl.JumpCaret(2);
+            ctrl.DoInputChar('a');
+            Assert.IsTrue(doc.LayoutLines[0] == "aba\r");
+
+            doc.Clear();
+            doc.Append("a\ra");
+            doc.Select(0, 3);
+            ctrl.UpIndent();
+            Assert.IsTrue(doc.ToString(0) == "\ta\r\ta");
+            ctrl.DownIndent();
+            Assert.IsTrue(doc.ToString(0) == "a\ra");
+
+            //\r\nのテスト
+            doc.Clear();
+            doc.Append(save_state);
+            doc.Append("\r\n");
+            ctrl.JumpCaret(2);
+            ctrl.DoInputChar('a');
+            Assert.IsTrue(doc.LayoutLines[0] == "aba\r\n");
+
+            doc.Clear();
+            doc.Append("a\r\na");
+            doc.Select(0, 4);
+            ctrl.UpIndent();
+            Assert.IsTrue(doc.ToString(0) == "\ta\r\n\ta");
+            ctrl.DownIndent();
+            Assert.IsTrue(doc.ToString(0) == "a\r\na");
         }
 
         [TestMethod]
@@ -324,6 +422,16 @@ namespace UnitTest
             doc.Clear();
             doc.Append("a\nb\nc");
             doc.Select(0, 5);
+            Assert.IsTrue(ctrl.SelectedText == "a\r\nb\r\nc");
+
+            doc.Clear();
+            doc.Append("a\rb\rc");
+            doc.Select(0, 5);
+            Assert.IsTrue(ctrl.SelectedText == "a\r\nb\r\nc");
+
+            doc.Clear();
+            doc.Append("a\r\nb\r\nc");
+            doc.Select(0, 7);
             Assert.IsTrue(ctrl.SelectedText == "a\r\nb\r\nc");
         }
 
@@ -357,6 +465,20 @@ namespace UnitTest
             ctrl.RectSelection = true;
             doc.Select(0,7);
             Assert.IsTrue(ctrl.SelectedText == "a\r\nb\r\nc\r\n");
+
+            doc.Clear();
+            str = "aa\rbb\rcc";
+            doc.Append(str);
+            ctrl.RectSelection = true;
+            doc.Select(0, 7);
+            Assert.IsTrue(ctrl.SelectedText == "a\r\nb\r\nc\r\n");
+
+            doc.Clear();
+            str = "aa\r\nbb\r\ncc";
+            doc.Append(str);
+            ctrl.RectSelection = true;
+            doc.Select(0, 9);
+            Assert.IsTrue(ctrl.SelectedText == "a\r\nb\r\nc\r\n");
         }
 
         [TestMethod]
@@ -367,6 +489,8 @@ namespace UnitTest
             doc.LayoutLines.Render = render;
             EditView view = new EditView(doc, render);
             Controller ctrl = new Controller(doc, view);
+
+            //\nのテスト
             doc.Clear();
             doc.Append("a\nb\nc");
             ctrl.RectSelection = true;
@@ -401,6 +525,80 @@ namespace UnitTest
             Assert.IsTrue(
                 view.LayoutLines[0] == "a\n" &&
                 view.LayoutLines[1] == "b\n" &&
+                view.LayoutLines[2] == "c");
+
+            //\rのテスト
+            doc.Clear();
+            doc.Append("a\rb\rc");
+            ctrl.RectSelection = true;
+            doc.Select(0, 5);
+            ctrl.DoInputString("x", true);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "x\r" &&
+                view.LayoutLines[1] == "x\r" &&
+                view.LayoutLines[2] == "x");
+            Assert.IsTrue(
+                view.Selections[0].start == 0 &&
+                view.Selections[1].start == 2 &&
+                view.Selections[2].start == 4);
+
+            ctrl.DoInputString("x", true);
+            Assert.IsTrue(
+                view.Selections[0].start == 1 &&
+                view.Selections[1].start == 4 &&
+                view.Selections[2].start == 7);
+
+            doc.Clear();
+            doc.Append("a\rb\rc");
+            doc.Select(0, 4);
+            Assert.IsTrue(ctrl.IsRectInsertMode() == true);
+            ctrl.DoInputString("x");
+            Assert.IsTrue(
+                view.LayoutLines[0] == "xa\r" &&
+                view.LayoutLines[1] == "xb\r" &&
+                view.LayoutLines[2] == "xc");
+
+            ctrl.DoBackSpaceAction();
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r" &&
+                view.LayoutLines[1] == "b\r" &&
+                view.LayoutLines[2] == "c");
+
+            //\r\nのテスト
+            doc.Clear();
+            doc.Append("a\r\nb\r\nc");
+            ctrl.RectSelection = true;
+            doc.Select(0, 7);
+            ctrl.DoInputString("x", true);
+            Assert.IsTrue(
+                view.LayoutLines[0] == "x\r\n" &&
+                view.LayoutLines[1] == "x\r\n" &&
+                view.LayoutLines[2] == "x");
+            Assert.IsTrue(
+                view.Selections[0].start == 0 &&
+                view.Selections[1].start == 3 &&
+                view.Selections[2].start == 6);
+
+            ctrl.DoInputString("x", true);
+            Assert.IsTrue(
+                view.Selections[0].start == 1 &&
+                view.Selections[1].start == 5 &&
+                view.Selections[2].start == 9);
+
+            doc.Clear();
+            doc.Append("a\r\nb\r\nc");
+            doc.Select(0, 6);
+            Assert.IsTrue(ctrl.IsRectInsertMode() == true);
+            ctrl.DoInputString("x");
+            Assert.IsTrue(
+                view.LayoutLines[0] == "xa\r\n" &&
+                view.LayoutLines[1] == "xb\r\n" &&
+                view.LayoutLines[2] == "xc");
+
+            ctrl.DoBackSpaceAction();
+            Assert.IsTrue(
+                view.LayoutLines[0] == "a\r\n" &&
+                view.LayoutLines[1] == "b\r\n" &&
                 view.LayoutLines[2] == "c");
         }
     }
