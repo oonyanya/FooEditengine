@@ -11,6 +11,7 @@ You should have received a copy of the GNU General Public License along with thi
 
 using SharpDX;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -1318,13 +1319,26 @@ namespace FooEditEngine
                 readCount = await fs.ReadAsync(str, 0, str.Length).ConfigureAwait(false);
 
                 //内部形式に変換する
-                var internal_str = str.Where((s) =>
+                bool hasCR = false;
+                var internal_str = str.Where((c) =>
                 {
-                    if (s == '\n')
-                        totalLineCount++;
-                    return s != '\r' && s != '\0';
+                    if (hasCR == true)
+                    {
+                        if (c == '\n')
+                            totalLineCount++;
+                        else
+                            totalLineCount++;
+                        hasCR = false;
+                    }
+                    else
+                    {
+                        if (c == '\r')
+                            hasCR = true;
+                        if (c == '\n')
+                            totalLineCount++;
+                    }
+                    return c != '\0';
                 });
-
                 using (await this.buffer.GetWriterLockAsync())
                 {
                     //str.lengthは事前に確保しておくために使用するので影響はない
@@ -1357,18 +1371,16 @@ namespace FooEditEngine
 
         async Task SaveAsyncCore(TextWriter fs, CancellationTokenSource tokenSource = null)
         {
+            StringBuilder line = new StringBuilder();
             using (await this.buffer.GetReaderLockAsync())
             {
-                StringBuilder line = new StringBuilder();
                 for (int i = 0; i < this.Length; i++)
                 {
                     char c = this[i];
                     line.Append(c);
-                    if (c == Document.NewLine || i == this.Length - 1)
+                    if(i % 4096 == 0 || i == this.Length - 1)
                     {
-                        string str = line.ToString();
-                        str = str.Replace(Document.NewLine.ToString(), fs.NewLine);
-                        await fs.WriteAsync(str).ConfigureAwait(false);
+                        await fs.WriteAsync(line).ConfigureAwait(false);
                         line.Clear();
                         if (tokenSource != null)
                             tokenSource.Token.ThrowIfCancellationRequested();

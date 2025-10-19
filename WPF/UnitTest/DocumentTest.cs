@@ -1094,23 +1094,28 @@ namespace UnitTest
         [TestMethod]
         public void SaveAndLoadFile()
         {
-            const string content = "aaaa";
-            Document doc = new Document();
-            doc.Append(content);
+            string[] datas = new string[] { "aaaa\naaaa\naaaa", "aaaa\raaa\raaaa", "aaaa\r\naaa\r\naaaa" };
+            foreach (string content in datas) {
+                Document doc = new Document();
+                doc.Append(content);
 
-            System.IO.StreamWriter sw = new System.IO.StreamWriter("test.txt");
-            System.Threading.Tasks.Task t = doc.SaveAsync(sw);
-            t.Wait();
-            sw.Close();
+                byte[] store = new byte[content.Length];
+                System.IO.MemoryStream ms = new System.IO.MemoryStream(store);
+                System.IO.StreamWriter sw = new System.IO.StreamWriter(ms);
+                System.Threading.Tasks.Task t = doc.SaveAsync(sw);
+                t.Wait();
+                sw.Close();
 
-            doc.Clear();
+                doc.Clear();
+                ms = new System.IO.MemoryStream(store);
+                System.IO.StreamReader sr = new System.IO.StreamReader(ms);
+                t = doc.LoadAsync(sr);
+                t.Wait();
+                sr.Close();
 
-            System.IO.StreamReader sr = new System.IO.StreamReader("test.txt");
-            t = doc.LoadAsync(sr);
-            t.Wait();
-            sr.Close();
-
-            Assert.AreEqual(content, doc.ToString(0));
+                Assert.AreEqual(2,doc.TotalLineCount);
+                Assert.AreEqual(content, doc.ToString(0));
+            }
         }
 
         void AreEqual<T>(IEnumerable<T> t1, IEnumerable<T> t2)
