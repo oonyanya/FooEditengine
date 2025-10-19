@@ -9,7 +9,6 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using SharpDX;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -1390,17 +1389,18 @@ namespace FooEditEngine
 
         async Task SaveAsyncCore(TextWriter fs, CancellationTokenSource tokenSource = null)
         {
-            StringBuilder line = new StringBuilder();
+            char[] temp_array = new char[4096];
+            int j = 0;
             using (await this.buffer.GetReaderLockAsync())
             {
                 for (int i = 0; i < this.Length; i++)
                 {
                     char c = this[i];
-                    line.Append(c);
-                    if(i % 4096 == 0 || i == this.Length - 1)
+                    temp_array[j++] = c;
+                    if(j >= temp_array.Length || i == this.Length - 1)
                     {
-                        await fs.WriteAsync(line).ConfigureAwait(false);
-                        line.Clear();
+                        await fs.WriteAsync(temp_array, 0, j).ConfigureAwait(false);
+                        j = 0;
                         if (tokenSource != null)
                             tokenSource.Token.ThrowIfCancellationRequested();
 #if TEST_ASYNC

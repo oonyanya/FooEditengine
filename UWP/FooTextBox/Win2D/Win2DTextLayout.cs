@@ -17,7 +17,7 @@ namespace FooEditEngine.UWP
         int? _lineBreakIndex;
         public Win2DTextLayout(Win2DResourceFactory render, string str, CanvasTextFormat format, double width, double height, float dip, bool showLineBreak, double lineHeight)
         {
-            str = str.Trim(Document.NewLine);   //取り除かないとキャレットの動きがおかしくなる
+            str = str.Trim(Document.CR_CHAR).Trim(Document.LF_CHAR);   //取り除かないとキャレットの動きがおかしくなる
             if (showLineBreak)
             {
                 str += '↵';

@@ -169,7 +169,7 @@ namespace FooEditEngine
             List<string> result = new List<string>();
             foreach(var item in EnumrateLine(s))
             {
-                result.Add(new string(item.str));
+                result.Add(item.str);
             }
             return result.ToArray();
         }

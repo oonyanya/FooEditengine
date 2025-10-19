@@ -451,7 +451,7 @@ namespace FooEditEngine.UWP
                 this._format.WordWrapping = CanvasWordWrapping.NoWrap;
             }
 
-            bool hasNewLine = str.Length > 0 && str[str.Length - 1] == Document.NewLine;
+            bool hasNewLine = Util.IsHasNewLine(str);
             Win2DTextLayout newLayout = new Win2DTextLayout(this._factory, str, this._format, layoutWidth, this.TextArea.Height, dpiy, hasNewLine && this.ShowLineBreak, this.emSize.Height);
 
             if (syntaxCollection != null)
