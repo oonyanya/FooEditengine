@@ -181,7 +181,7 @@ namespace FooEditEngine
                 AutoCompleteBoxBase box = (AutoCompleteBoxBase)s;
                 CompleteHelper.AddCompleteWords(box.Items, box.Operators, e.textbox.LayoutLines[e.InputedRow]);
             };
-            this.Operators = new char[] { ' ', '\t', '\r','\n' };
+            this.Operators = new char[] { ' ', '\t', Document.CR_CHAR,Document.LF_CHAR };
             this.Document = document;
         }
 

@@ -967,7 +967,7 @@ namespace UnitTest
                 {
                     doc.Append('a');
                 }
-                doc.Append('\n');
+                doc.Append(Document.LF_CHAR);
             }
             doc.PerformLayout();
 

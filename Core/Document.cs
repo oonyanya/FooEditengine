@@ -175,6 +175,12 @@ namespace FooEditEngine
         /// <remarks>値を反映させるためにはレイアウト行すべてを削除する必要があります</remarks>
         public static int PreloadLength = 1024 * 1024 * 5;
 
+        public const char CR_CHAR = '\r';
+        public const char LF_CHAR = '\n';
+        public const string CRLF_STR = "\r\n";
+        public const string CR_STR = "\r";
+        public const string LF_STR = "\n";
+
         /// <summary>
         /// コンストラクター
         /// </summary>
@@ -980,21 +986,21 @@ namespace FooEditEngine
             Document str = this;
 
             long start = index;
-            while (start > 0 && str[start] != '\r' && str[start] != '\n')
+            while (start > 0 && str[start] != Document.CR_CHAR && str[start] != Document.LF_CHAR)
                 start--;
 
-            if (str[start] == '\r')
+            if (str[start] == Document.CR_CHAR)
             {
                 start++;
             }
 
-            if (str[start] == '\n')
+            if (str[start] == Document.LF_CHAR)
             {
                 start++;
             }
 
             long end = index;
-            while (end < this.Length && str[start] != '\r' && str[start] != '\n')
+            while (end < this.Length && str[start] != Document.CR_CHAR && str[start] != Document.LF_CHAR)
                 end++;
 
             return new Tuple<long, long>(start, end);
@@ -1017,21 +1023,21 @@ namespace FooEditEngine
             Document str = this;
 
             long start = index;
-            while (start > 0 && str[start] != '\r' && str[start] != '\n' && !find_sep_func(str[start]))
+            while (start > 0 && str[start] != Document.CR_CHAR && str[start] != Document.LF_CHAR && !find_sep_func(str[start]))
                 start--;
 
-            if(str[start] == '\r')
+            if(str[start] == Document.CR_CHAR)
             {
                 start++;
             }
 
-            if (str[start] == '\n' && find_sep_func(str[start]))
+            if (str[start] == Document.LF_CHAR && find_sep_func(str[start]))
             {
                 start++;
             }
 
             long end = index;
-            while (end < this.Length && str[start] != '\r' && str[start] != '\n' && !find_sep_func(str[end]))
+            while (end < this.Length && str[start] != Document.CR_CHAR && str[start] != Document.LF_CHAR && !find_sep_func(str[end]))
                 end++;
 
             return new Tuple<long, long>(start, end);
@@ -1327,25 +1333,25 @@ namespace FooEditEngine
                 {
                     if (hasCR == true)
                     {
-                        if (c == '\n')
+                        if (c == Document.LF_CHAR)
                         {
-                            lineFeedType = "\r\n";
+                            lineFeedType = CRLF_STR;
                             totalLineCount++;
                         }
                         else
                         {
-                            lineFeedType = "\r";
+                            lineFeedType = CR_STR;
                             totalLineCount++;
                         }
                         hasCR = false;
                     }
                     else
                     {
-                        if (c == '\r')
+                        if (c == Document.CR_CHAR)
                             hasCR = true;
-                        if (c == '\n')
+                        if (c == Document.LF_CHAR)
                         {
-                            lineFeedType = "\n";
+                            lineFeedType = LF_STR;
                             totalLineCount++;
                         }
                     }
@@ -1482,13 +1488,13 @@ namespace FooEditEngine
                 }
                 else
                 {
-                    if (s[i] == '\n')
+                    if (s[i] == Document.LF_CHAR)
                     {
                         isLineEnd = true;
                     }
-                    else if (s[i] == '\r')
+                    else if (s[i] == Document.CR_CHAR)
                     {
-                        if (i + 1 < s.Length && s[i + 1] == '\n')
+                        if (i + 1 < s.Length && s[i + 1] == Document.LF_CHAR)
                         {
                             isLineEnd = true;
                             i++;
@@ -1605,7 +1611,7 @@ namespace FooEditEngine
                         {
                             if(hasCR == true)
                             {
-                                if(c == '\n')
+                                if(c == Document.LF_CHAR)
                                     totalLineCount++;
                                 else
                                     totalLineCount++;
@@ -1613,9 +1619,9 @@ namespace FooEditEngine
                             }
                             else
                             {
-                                if (c == '\r')
+                                if (c == Document.CR_CHAR)
                                     hasCR = true;
-                                if( c == '\n')
+                                if( c == Document.LF_CHAR)
                                     totalLineCount++;
                             }
                         }

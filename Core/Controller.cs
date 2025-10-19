@@ -589,9 +589,9 @@ namespace FooEditEngine
             while (caret.col > 0 &&
                 caret.col < str.Length)
             {
-                if (str[caret.col] == '\r')
+                if (str[caret.col] == Document.CR_CHAR)
                 {
-                    if (caret.col + 1 < str.Length && str[caret.col + 1] == '\n')
+                    if (caret.col + 1 < str.Length && str[caret.col + 1] == Document.LF_CHAR)
                     {
                         caret = this.MoveCaretHorizontical(caret, MoveFlow);
                         break;
@@ -600,7 +600,7 @@ namespace FooEditEngine
                     {
                         break;
                     }
-                } else if (str[caret.col] == '\n'){
+                } else if (str[caret.col] == Document.LF_CHAR){
                     break;
                 }
                 else if (!Util.IsWordSeparator(str[caret.col]))
@@ -656,13 +656,13 @@ namespace FooEditEngine
             long lineHeadIndex = this.View.LayoutLines.GetLongIndexFromLineNumber(CaretPostion.row);
             long next = this.View.LayoutLines.GetLayout(CaretPostion.row).AlignIndexToNearestCluster(CaretPostion.col, AlignDirection.Forward) + lineHeadIndex;
 
-            if(this.Document[index] == '\n')
+            if(this.Document[index] == Document.LF_CHAR)
             {
                 next = index + 1;
             }
-            else if (this.Document[index] == '\r')
+            else if (this.Document[index] == Document.CR_CHAR)
             {
-                if(index + 1 < this.Document.Length && this.Document[index + 1] == '\n')
+                if(index + 1 < this.Document.Length && this.Document[index + 1] == Document.LF_CHAR)
                     next = index + 2;
                 else
                     next = index + 1;
@@ -775,7 +775,7 @@ namespace FooEditEngine
 
             long index = this.View.GetIndexFromLayoutLine(CaretPos);
             long length = 0;
-            if (this.View.InsertMode == false && index < this.Document.Length && this.Document[index] != '\r'&& this.Document[index] != '\n')
+            if (this.View.InsertMode == false && index < this.Document.Length && this.Document[index] != Document.CR_CHAR&& this.Document[index] != Document.LF_CHAR)
             {
                 string lineString = this.View.LayoutLines[CaretPos.row];
                 long end = this.View.LayoutLines.GetLayout(CaretPos.row).AlignIndexToNearestCluster(CaretPos.col + str.Length - 1, AlignDirection.Forward);
@@ -874,13 +874,13 @@ namespace FooEditEngine
             {
                 if (this.IsReverseSelect())
                 {
-                    if (this.Document[CaretPostion] == '\r')
+                    if (this.Document[CaretPostion] == Document.CR_CHAR)
                         CaretPostion--;
                     while (CaretPostion >= 0 && CaretPostion < this.Document.Length && !Util.IsWordSeparator(this.Document[CaretPostion])) CaretPostion--;
                 }
                 else
                 {
-                    if (this.Document[CaretPostion] == '\r')
+                    if (this.Document[CaretPostion] == Document.CR_CHAR)
                         CaretPostion++;
                     while (CaretPostion < this.Document.Length && !Util.IsWordSeparator(this.Document[CaretPostion])) CaretPostion++;
                 }
@@ -1102,7 +1102,7 @@ namespace FooEditEngine
                 caret = this.MoveCaretVertical(caret,false);
                 caret.col = this.View.LayoutLines.GetLengthFromLineNumber(caret.row) - 1;  //最終行以外はすべて改行コードが付くはず
             }
-            else if (col >= lineString.Length || lineString[col] == '\n' || lineString[col] == '\r')
+            else if (col >= lineString.Length || lineString[col] == Document.LF_CHAR || lineString[col] == Document.CR_CHAR)
             {
                 if (isMoveNext)
                 {
@@ -1112,9 +1112,9 @@ namespace FooEditEngine
                         caret.col = 0;
                     }
                 }
-                else if (lineString[col] == '\n')
+                else if (lineString[col] == Document.LF_CHAR)
                 {
-                    if (col > 1 && lineString[col - 1] == '\r')
+                    if (col > 1 && lineString[col - 1] == Document.CR_CHAR)
                     {
                         caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 2, AlignDirection.Back);
                     }
@@ -1122,7 +1122,7 @@ namespace FooEditEngine
                     {
                         caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
                     }
-                }else if (lineString[col] == '\r')
+                }else if (lineString[col] == Document.CR_CHAR)
                 {
                     caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
                 }

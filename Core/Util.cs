@@ -67,14 +67,14 @@ namespace FooEditEngine
             {
                 if (i >= s.Length)
                     break;
-                if (s[i] == '\n')
+                if (s[i] == Document.LF_CHAR)
                 {
                     result.Append(linefeed);
                     i++;
                 }
-                else if (s[i] == '\r')
+                else if (s[i] == Document.CR_CHAR)
                 {
-                    if (i + 1 < s.Length && s[i + 1] == '\n')
+                    if (i + 1 < s.Length && s[i + 1] == Document.LF_CHAR)
                     {
                         result.Append(linefeed);
                         i += 2;
@@ -109,23 +109,23 @@ namespace FooEditEngine
                     }
                     break;
                 }
-                if (s[i] == '\n')
+                if (s[i] == Document.LF_CHAR)
                 {
-                    yield return (result.ToString(), "\n");
+                    yield return (result.ToString(), Document.LF_STR);
                     result.Clear();
                     i++;
                 }
-                else if (s[i] == '\r')
+                else if (s[i] == Document.CR_CHAR)
                 {
-                    if (i + 1 < s.Length && s[i + 1] == '\n')
+                    if (i + 1 < s.Length && s[i + 1] == Document.LF_CHAR)
                     {
-                        yield return (result.ToString(), "\r\n");
+                        yield return (result.ToString(), Document.CRLF_STR);
                         result.Clear();
                         i += 2;
                     }
                     else
                     {
-                        yield return (result.ToString(), "\r");
+                        yield return (result.ToString(), Document.CR_STR);
                         result.Clear();
                         i++;
                     }
@@ -148,9 +148,9 @@ namespace FooEditEngine
             int lastIndex = s.Length - 2;
             if (lastIndex >= 0)
             {
-                if (s[lastIndex] == '\r')
+                if (s[lastIndex] == Document.CR_CHAR)
                 {
-                    if (lastIndex + 1 < s.Length && s[lastIndex + 1] == '\n')
+                    if (lastIndex + 1 < s.Length && s[lastIndex + 1] == Document.LF_CHAR)
                         return 2;
                     else
                         return 1;
@@ -158,7 +158,7 @@ namespace FooEditEngine
             }
             lastIndex = s.Length - 1;
             if (lastIndex >= 0) {
-                if (s[lastIndex] == '\n' || s[lastIndex] == '\r')
+                if (s[lastIndex] == Document.LF_CHAR || s[lastIndex] == Document.CR_CHAR)
                     return 1;
             }
             return 0;
@@ -401,7 +401,7 @@ namespace FooEditEngine
 
         public static bool IsWordSeparator(char c)
         {
-            if (c == '\r' || c == '\n' || char.IsSeparator(c) || char.IsPunctuation(c) || CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.MathSymbol)
+            if (c == Document.CR_CHAR || c == Document.LF_CHAR || char.IsSeparator(c) || char.IsPunctuation(c) || CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.MathSymbol)
                 return true;
             else
                 return false;

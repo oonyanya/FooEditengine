@@ -625,19 +625,19 @@ namespace FooEditEngine
                     break;
                 currentLineLength++;
                 char c = this.Document[i];
-                if (c == '\n')
+                if (c == Document.LF_CHAR)
                 {
-                    linefeed = "\n";
-                }else if (c == '\r'){
-                    if (i + 1 <= endIndex && this.Document[i + 1] == '\n')
+                    linefeed = Document.LF_STR;
+                }else if (c == Document.CR_CHAR){
+                    if (i + 1 <= endIndex && this.Document[i + 1] == Document.LF_CHAR)
                     {
                         currentLineLength++;
                         i++;
-                        linefeed = "\r\n";
+                        linefeed = Document.CRLF_STR;
                     }
                     else
                     {
-                        linefeed = "\r";
+                        linefeed = Document.CR_STR;
                     }
                 }
                 if (linefeed != string.Empty || (maxCharCount != -1 && currentLineLength >= maxCharCount))
@@ -717,11 +717,11 @@ namespace FooEditEngine
                 {
                     if (i >= this.Document.Length)
                         break;
-                    if (this.Document.StringBuffer[i] == '\n')
+                    if (this.Document.StringBuffer[i] == Document.LF_CHAR)
                         break;
-                    if(this.Document.StringBuffer[i] == '\r')
+                    if(this.Document.StringBuffer[i] == Document.CR_CHAR)
                     {
-                        if(i + 1 < this.Document.Length && this.Document.StringBuffer[i + 1] == '\n')
+                        if(i + 1 < this.Document.Length && this.Document.StringBuffer[i + 1] == Document.LF_CHAR)
                         {
                             i++;
                             break;
@@ -753,7 +753,7 @@ namespace FooEditEngine
             long lastLineHeadIndex = this.GetLongIndexFromLineNumber(lastLineRow);
             long lastLineLength = this.GetLengthFromLineNumber(lastLineRow);
 
-            if (lastLineLength != 0 && (this.Document[Document.Length - 1] == '\r' || this.Document[Document.Length - 1] == '\n'))
+            if (lastLineLength != 0 && (this.Document[Document.Length - 1] == Document.CR_CHAR || this.Document[Document.Length - 1] == Document.LF_CHAR))
             {
                 long realIndex = lastLineHeadIndex + lastLineLength;
                 dummyLine = new LineToIndexTableData(realIndex, 0, true,false, null);

@@ -255,13 +255,13 @@ namespace FooEditEngine
             {
                 long cursor_index = index == 0 ? 0 : index - 1;
                 var doc = this.textbox.Document;
-                if (doc[cursor_index] == '\n')
+                if (doc[cursor_index] == Document.LF_CHAR)
                 {
                     return cursor_index - 1;
                 }
-                else if (doc[cursor_index] == '\r')
+                else if (doc[cursor_index] == Document.CR_CHAR)
                 {
-                    if (doc.Length >= 2 && doc[index] == '\n')
+                    if (doc.Length >= 2 && doc[index] == Document.LF_CHAR)
                         return cursor_index - 1;
                     else
                         return cursor_index - 1;
