@@ -9,6 +9,7 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 //#define USE_DISK_FOR_DOCUMENT
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
@@ -20,6 +21,7 @@ using FooEditEngine;
 using FooEditEngine.WPF;
 using FooEditEngine.Test;
 using Microsoft.Win32;
+using System.IO;
 
 namespace Test
 {
@@ -129,13 +131,35 @@ namespace Test
             bool result = (bool)ofd.ShowDialog(this);
             if (result == true)
             {
+                System.Diagnostics.Stopwatch time = new System.Diagnostics.Stopwatch();
                 this.fooTextBox.IsEnabled = false;
-                System.IO.FileStream file = System.IO.File.Open(ofd.FileName,System.IO.FileMode.Open);
-                System.IO.StreamReader sr = new System.IO.StreamReader(file, Encoding.Default);
-                await this.fooTextBox.Document.LoadAsync(sr, this.cancleTokenSrc, (int)file.Length);
-                sr.Close();
-                file.Close();
-                this.fooTextBox.IsEnabled = true;
+                try
+                {
+                    time.Start();
+                    using (System.IO.FileStream file = System.IO.File.Open(ofd.FileName, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+                    using (System.IO.StreamReader sr = new System.IO.StreamReader(file, Encoding.Default))
+                    {
+                        await this.fooTextBox.Document.LoadAsync(sr, this.cancleTokenSrc, (int)file.Length);
+                    }
+                    time.Stop();
+                    MessageBox.Show(string.Format("complete elpased time:{0}s", time.ElapsedMilliseconds / 1000.0f));
+                }
+                catch (FileNotFoundException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                catch (IOException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                finally
+                {
+                    this.fooTextBox.IsEnabled = true;
+                }
                 this.fooTextBox.Refresh();
             }
         }
