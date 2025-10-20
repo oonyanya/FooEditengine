@@ -34,10 +34,6 @@ namespace Test
         {
             InitializeComponent();
             this.fooTextBox.MouseDoubleClick += new System.Windows.Input.MouseButtonEventHandler(fooTextBox_MouseDoubleClick);
-            this.fooTextBox.ShowTab = true;
-            this.fooTextBox.ShowHalfSpace = true;
-            this.fooTextBox.ShowFullSpace = true;
-            this.fooTextBox.ShowLineBreak = true;
 
             var complete_collection = new CompleteCollection<ICompleteItem>();
             complete_collection.Add(new CompleteWord("int"));
@@ -59,6 +55,10 @@ namespace Test
             doc.LayoutLines.FoldingStrategy = new CharFoldingMethod('{', '}');
             //doc.LayoutLines.FoldingStrategy = new WZTextFoldingGenerator();
             doc.Update += Document_Update;
+            doc.ShowTab = true;
+            doc.ShowHalfSpace = true;
+            doc.ShowFullSpace = true;
+            doc.ShowLineBreak = true;
             this.fooTextBox.Document = doc;
 
             this.Closed += MainWindow_Closed;
