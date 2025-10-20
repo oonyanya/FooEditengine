@@ -21,6 +21,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 
 namespace FooEditEngine
 {
@@ -153,16 +154,18 @@ namespace FooEditEngine
     /// </summary>
     public class Document : IEnumerable<char>, IRandomEnumrator<char>, IDisposable, INotifyPropertyChanged
     {
-
         Regex regex;
         Match match;
         StringBuffer buffer;
         LineToIndexTable _LayoutLines;
         bool _EnableFireUpdateEvent = true, _UrlMark = false, _DrawLineNumber = false, _HideRuler = true, _RightToLeft = false;
         LineBreakMethod _LineBreak;
-        int _TabStops, _LineBreakCharCount = 80;
+        int _TabStops, _LineBreakCharCount = 80, _BufferSize = -1;
         bool _ShowFullSpace, _ShowHalfSpace, _ShowTab, _ShowLineBreak, _InsertMode, _HideCaret, _HideLineMarker, _RectSelection;
         IndentMode _IndentMode;
+
+        //LOHの関係でこのくらいにしないと解放されない
+        const int _DefaultBufferSize = 32768;
 
         /// <summary>
         /// 一行当たりの最大文字数
@@ -183,9 +186,11 @@ namespace FooEditEngine
         /// <summary>
         /// コンストラクター
         /// </summary>
-        /// <param name="cache_size">4の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します</param>
-        public Document(int cache_size = -1)
-            : this(null, null, cache_size)
+        /// <param name="workfile_path">ワークファイルのパスを指定します。メモリーに保存する場合、この値は無視されます。</param>
+        /// <param name="cache_size">4の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します。</param>
+        /// <param name="buffer_size">バッファーサイズを指定します。-1の場合、デフォルトのサイズとなります。</param>
+        public Document(string workfile_path = null,int cache_size = -1, int buffer_size = -1)
+            : this(null, workfile_path, cache_size, buffer_size)
         {
         }
 
@@ -195,8 +200,9 @@ namespace FooEditEngine
         /// <param name="doc">ドキュメントオブジェクト。nullを指定した場合は空のドキュメントを作成します。</param>
         /// <param name="workfile_path">ワークファイルのパスを指定します。メモリーに保存する場合、この値は無視されます。</param>
         /// <param name="cache_size">4の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します。</param>
+        /// <param name="buffer_size">バッファーサイズを指定します。-1の場合、デフォルトのサイズとなります。</param>
         /// <remarks>docが複製されますが、プロパティは引き継がれません。また、workfile_pathとcache_sizeはdocがnullの場合だけ反映されます。そうでない場合はdocに指定した値がそのまま引き継がれます。</remarks>
-        public Document(Document doc, string workfile_path = null, int cache_size = -1)
+        public Document(Document doc, string workfile_path = null, int cache_size = -1,int buffer_size = -1)
         {
             if (doc == null)
                 this.buffer = new StringBuffer(workfile_path, cache_size);
@@ -221,6 +227,7 @@ namespace FooEditEngine
             this.AutoIndentHook += (s, e) => { };
             this.LineBreakChanged += (s, e) => { };
             this.Dirty = false;
+            this._BufferSize = buffer_size == -1 ? _DefaultBufferSize : buffer_size;
         }
 
         void WacthDogPattern_Updated(object sender, EventArgs e)
@@ -1284,7 +1291,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="fs">IStreamReaderオブジェクト</param>
         /// <param name="tokenSource">キャンセルトークン</param>
-        /// <param name="file_size">ファイルサイズ。-1を指定しても動作しますが、読み取りが遅くなります</param>
+        /// <param name="file_size">ファイルサイズ。-1を指定しても動作しますが、読み取りが遅くなることがあります</param>
         /// <returns>Taskオブジェクト</returns>
         /// <remarks>
         /// 読み取り操作は別スレッドで行われます。
@@ -1318,49 +1325,61 @@ namespace FooEditEngine
             this.Clear();
             if (file_size > 0)
                 this.buffer.Allocate(file_size);
-            char[] str = new char[1024 * 1024];
+            char[] str = new char[_BufferSize];
+            char[] internal_str = new char[_BufferSize]; 
             int readCount;
             int totalLineCount = 0;
+            bool hasCR = false;
             string lineFeedType = Environment.NewLine;
+
             do
             {
                 readCount = await fs.ReadAsync(str, 0, str.Length).ConfigureAwait(false);
 
-                //内部形式に変換する
-                bool hasCR = false;
-                var internal_str = str.Where((c) =>
+                //行の数をカウントする
+                int j = 0;
+                for(int i = 0; i<str.Length; i++)
                 {
-                    if (hasCR == true)
+                    var c = str[i];
+                    if (c != '\0')
                     {
-                        if (c == Document.LF_CHAR)
+                        if (hasCR == true)
                         {
-                            lineFeedType = CRLF_STR;
-                            totalLineCount++;
+                            if (c == Document.LF_CHAR)
+                            {
+                                lineFeedType = CRLF_STR;
+                                totalLineCount++;
+                            }
+                            else
+                            {
+                                lineFeedType = CR_STR;
+                                totalLineCount++;
+                            }
+                            hasCR = false;
                         }
                         else
                         {
-                            lineFeedType = CR_STR;
-                            totalLineCount++;
+                            if (c == Document.CR_CHAR)
+                                hasCR = true;
+                            if (c == Document.LF_CHAR)
+                            {
+                                lineFeedType = LF_STR;
+                                totalLineCount++;
+                            }
                         }
-                        hasCR = false;
+                        internal_str[j++] = c;
                     }
                     else
                     {
-                        if (c == Document.CR_CHAR)
-                            hasCR = true;
-                        if (c == Document.LF_CHAR)
-                        {
-                            lineFeedType = LF_STR;
-                            totalLineCount++;
-                        }
+                        break;
                     }
-                    return c != '\0';
-                });
-                this.NewLine = lineFeedType;
+
+                }
+
                 using (await this.buffer.GetWriterLockAsync())
                 {
                     //str.lengthは事前に確保しておくために使用するので影響はない
-                    this.buffer.AddRange(internal_str);
+                    this.buffer.AddRange(internal_str.Take(j));
                 }
 
                 if (tokenSource != null)
@@ -1371,7 +1390,7 @@ namespace FooEditEngine
 #endif
                 Array.Clear(str, 0, str.Length);
             } while (readCount > 0);
-
+            this.NewLine = lineFeedType;
             this.TotalLineCount = totalLineCount;
         }
 

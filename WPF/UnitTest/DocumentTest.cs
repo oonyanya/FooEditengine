@@ -9,6 +9,8 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
+using System.Threading.Tasks;
+using System.Text;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
@@ -928,7 +930,7 @@ namespace UnitTest
             const string text = "this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.\n";
 
             DummyRender render = new DummyRender();
-            Document olddoc = new Document(4);
+            Document olddoc = new Document(cache_size:4);
             Document doc = new Document(olddoc);
             olddoc.Dispose();
             doc.LayoutLines.Hilighter =new DummyHilighter('.');
@@ -1104,34 +1106,48 @@ namespace UnitTest
         }
 
         [TestMethod]
-        public void SaveAndLoadFile()
+        public async Task SaveAndLoadFile()
         {
-            (string linefeed, string str)[] datas = new (string linefee, string str)[] {
-                new ("\n","aaaa\naaaa\naaaa"),
-                new ("\r", "aaaa\raaa\raaaa"),
-                new ("\r\n", "aaaa\r\naaa\r\naaaa")
-            };
-            foreach (var content in datas) {
-                Document doc = new Document();
-                doc.Append(content.str);
+            const int BUFFER_SIZE = 1024;
+            const int TEST_SIZE = BUFFER_SIZE * 2;
+            string[] linefeeds = new string[] { "\n", "\r", "\r\n" };
+            foreach (var linefeed in linefeeds)
+            {
+                int lineCount = 0;
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < TEST_SIZE; i++)
+                {
+                    if (i > 0 && i % (BUFFER_SIZE -1) == 0)
+                    {
+                        sb.Append(linefeed);
+                        lineCount++;
+                    }
+                    else
+                    {
+                        sb.Append(i % 10);
+                    }
+                }
 
-                byte[] store = new byte[content.str.Length];
+                string str = sb.ToString();
+
+                Document doc = new Document(buffer_size: BUFFER_SIZE);
+                doc.Append(str);
+
+                byte[] store = new byte[str.Length];
                 System.IO.MemoryStream ms = new System.IO.MemoryStream(store);
                 System.IO.StreamWriter sw = new System.IO.StreamWriter(ms);
-                System.Threading.Tasks.Task t = doc.SaveAsync(sw);
-                t.Wait();
+                await doc.SaveAsync(sw);
                 sw.Close();
 
                 doc.Clear();
                 ms = new System.IO.MemoryStream(store);
                 System.IO.StreamReader sr = new System.IO.StreamReader(ms);
-                t = doc.LoadAsync(sr);
-                t.Wait();
+                await doc.LoadAsync(sr);
                 sr.Close();
 
-                Assert.AreEqual(2,doc.TotalLineCount);
-                Assert.AreEqual(content.linefeed, doc.NewLine);
-                Assert.AreEqual(content.str, doc.ToString(0));
+                Assert.AreEqual(lineCount, doc.TotalLineCount);
+                Assert.AreEqual(linefeed, doc.NewLine);
+                Assert.AreEqual(str, doc.ToString(0));
             }
         }
 
