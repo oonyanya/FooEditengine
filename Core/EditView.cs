@@ -948,7 +948,6 @@ namespace FooEditEngine
                 long lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
 
                 LineToIndexTableData lineData = null;
-                this.LayoutLines.FetchLine(row);
                 if (this.LayoutLines.FoldingCollection.IsHidden(lineHeadIndex) && this.LayoutLines.TryGetRaw(row,out lineData))
                     continue;
 

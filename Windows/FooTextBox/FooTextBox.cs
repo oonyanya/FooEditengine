@@ -934,6 +934,8 @@ namespace FooEditEngine.Windows
             {
                 this.initScrollBars();
                 this.OnMouseMove(new MouseEventArgs(MouseButtons.None, 0, MousePosition.X, MousePosition.Y, 0));
+                int need_line_count = (int)(this.View.render.TextArea.Height / this.View.render.emSize.Height);
+                this.Document.LayoutLines.FetchLine(need_line_count);
                 this.View.CalculateLineCountOnScreen();
                 this.Enabled = true;
             }
@@ -1312,6 +1314,10 @@ namespace FooEditEngine.Windows
                     this.Refresh();
                     break;
                 case Keys.Down:
+                    if (this.Document.LayoutLines.IsRequireFetchLine(CaretPostion.row + 1, CaretPostion.col))
+                    {
+                        this.Document.LayoutLines.FetchLine(CaretPostion.row + 1);
+                    }
                     this.Controller.MoveCaretVertical(+1, e.Shift);
                     this.Refresh();
                     break;
@@ -1320,6 +1326,10 @@ namespace FooEditEngine.Windows
                     this.Refresh();
                     break;
                 case Keys.Right:
+                    if (this.Document.LayoutLines.IsRequireFetchLine(CaretPostion.row, CaretPostion.col + 1))
+                    {
+                        this.Document.LayoutLines.FetchLine(CaretPostion.row + 1);
+                    }
                     this.Controller.MoveCaretHorizontical(1, e.Shift, e.Control);
                     this.Refresh();
                     break;
@@ -1328,6 +1338,11 @@ namespace FooEditEngine.Windows
                     this.Refresh();
                     break;
                 case Keys.PageDown:
+                    var result = this.Controller.IsRequireFetchLine(ScrollDirection.Down, alignedPage);
+                    if (result.isRequire)
+                    {
+                        this.Document.LayoutLines.FetchLine(result.need_row_count);
+                    }
                     this.Controller.ScrollByPixel(ScrollDirection.Down, alignedPage, e.Shift, true);
                     this.Refresh();
                     break;
@@ -1443,6 +1458,10 @@ namespace FooEditEngine.Windows
 
         void VScrollBar_Scroll(object sender, ScrollEventArgs e)
         {
+            if (this.Document.LayoutLines.IsRequireFetchLine(e.NewValue, 0))
+            {
+                this.Document.LayoutLines.FetchLine(e.NewValue);
+            }
             this.View.TryScroll(this.View.Src.X, e.NewValue);
             this.Refresh();
         }

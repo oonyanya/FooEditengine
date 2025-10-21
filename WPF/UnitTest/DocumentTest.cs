@@ -763,7 +763,9 @@ namespace UnitTest
             Assert.AreEqual(null, lineData);
 
             doc.Append("a\nb\nc");
+            Assert.AreEqual(true, doc.LayoutLines.IsRequireFetchLine(23, 0));
             doc.LayoutLines.FetchLine(23);
+            Assert.AreEqual(false, doc.LayoutLines.IsRequireFetchLine(23, 0));
             Assert.AreEqual("a\n", doc.LayoutLines[20]);
             Assert.AreEqual("c", doc.LayoutLines[22]);
 
@@ -780,7 +782,9 @@ namespace UnitTest
             Assert.AreEqual(null, lineData);
 
             doc.Append("a\rb\rc");
+            Assert.AreEqual(true, doc.LayoutLines.IsRequireFetchLine(23, 0));
             doc.LayoutLines.FetchLine(23);
+            Assert.AreEqual(false, doc.LayoutLines.IsRequireFetchLine(23, 0));
             Assert.AreEqual("a\r", doc.LayoutLines[20]);
             Assert.AreEqual("c", doc.LayoutLines[22]);
 
@@ -797,7 +801,9 @@ namespace UnitTest
             Assert.AreEqual(null, lineData);
 
             doc.Append("a\r\nb\r\nc");
+            Assert.AreEqual(true, doc.LayoutLines.IsRequireFetchLine(23, 0));
             doc.LayoutLines.FetchLine(23);
+            Assert.AreEqual(false, doc.LayoutLines.IsRequireFetchLine(23, 0));
             Assert.AreEqual("a\r\n", doc.LayoutLines[20]);
             Assert.AreEqual("c", doc.LayoutLines[22]);
         }

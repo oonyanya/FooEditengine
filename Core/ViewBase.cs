@@ -321,7 +321,6 @@ namespace FooEditEngine
             if (row < 0)
                 return true;
             LineToIndexTableData lineData;
-            this.LayoutLines.FetchLine(row);
             this.LayoutLines.TryGetRaw(row, out lineData);
             if (lineData == null)
                 return true;

@@ -358,13 +358,19 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="index"></param>
         /// <param name="autoExpand">折り畳みを展開するなら真</param>
-        public void JumpCaret(long index,bool autoExpand = true)
+        /// <returns>成功したら、真。そうでなければ偽を返す。</returns>
+        public bool JumpCaret(long index,bool autoExpand = true)
         {
             if (index < 0 || index > this.Document.Length)
                 throw new ArgumentOutOfRangeException("indexが設定できる範囲を超えています");
-            TextPoint tp = this.View.GetLayoutLineFromIndex(index);
+
+            TextPoint tp = this.View.LayoutLines.TryGetTextPointFromIndex(index);
+
+            if (tp == TextPoint.Null)
+                return false;
 
             this.JumpCaret(tp.row, tp.col,autoExpand);
+            return true;
          }
 
         /// <summary>
@@ -436,6 +442,39 @@ namespace FooEditEngine
             this.Document.SetCaretPostionWithoutEvent(this.View.LayoutLines.Count - 1, 0);
             this.View.AdjustCaretAndSrc();
             this.SelectWithMoveCaret(isSelected);
+        }
+
+        /// <summary>
+        /// 行の読み取りが必要かどうか取得する
+        /// </summary>
+        /// <param name="dir">方向</param>
+        /// <param name="delta">移動量</param>
+        /// <param name="is_ignore_scrool_noti">スクロールに必要な最低量を超えていなくても必要かどうか判定したいなら、真。そうでないなら、偽を指定する。</param>
+        /// <returns></returns>
+        public (bool isRequire, int need_row_count) IsRequireFetchLine(ScrollDirection dir, double delta, bool is_ignore_scrool_noti = true)
+        {
+            if (dir == ScrollDirection.Left || dir == ScrollDirection.Right)
+            {
+                return (false,0);
+            }
+
+            if (is_ignore_scrool_noti)
+            {
+                double lineHeight = this.View.render.emSize.Height * this.View.render.LineEmHeight;
+                int numRow = (int)(delta / lineHeight);
+                int needRowCount = this.View.LineCountOnScreenWithInVisible + numRow;
+                if (this.View.LayoutLines.IsRequireFetchLine(this.Document.Src.Row + needRowCount, 0))
+                    return (true, needRowCount);
+            }
+            else if (totalDelta > this.View.ScrollNoti)
+            {
+                double lineHeight = this.View.render.emSize.Height * this.View.render.LineEmHeight;
+                int numRow = (int)(totalDelta / lineHeight);
+                int needRowCount = this.View.LineCountOnScreenWithInVisible + numRow;
+                if (this.View.LayoutLines.IsRequireFetchLine(this.Document.Src.Row + needRowCount, 0))
+                    return (true, needRowCount);
+            }
+            return (false,0);
         }
 
         /// <summary>
@@ -979,8 +1018,6 @@ namespace FooEditEngine
             {
                 int row = current.row + count;
 
-                this.Document.LayoutLines.FetchLine(row);
-
                 if (row < 0)
                     row = 0;
                 else if (row >= this.View.LayoutLines.Count)
@@ -994,8 +1031,6 @@ namespace FooEditEngine
             }
             else
             {
-                this.Document.LayoutLines.FetchLine(current.row + 1);
-
                 Point current_pos = this.View.LayoutLines.GetLayout(current.row).GetPostionFromIndex(current.col);
                 //この値を足さないとうまく動作しない
                 double offset_y = this.View.render.emSize.Height * count + this.View.render.emSize.Height / 2;

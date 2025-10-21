@@ -410,6 +410,8 @@ namespace FooEditEngine.WPF
                 if (this.verticalScrollBar != null)
                     this.verticalScrollBar.Maximum = this._View.LayoutLines.Count;
                 this._View.CalculateWhloeViewPort();
+                int need_line_count = (int)(this.View.render.TextArea.Height / this.View.render.emSize.Height);
+                this.Document.LayoutLines.FetchLine(need_line_count);
                 this._View.CalculateLineCountOnScreen();
                 this.IsEnabled = true;
                 this.Refresh(this._View.PageBound);
@@ -750,6 +752,7 @@ namespace FooEditEngine.WPF
 
             bool movedCaret = false;
             double alignedPage = (int)(this.Render.TextArea.Height / this.Render.emSize.Height) * this.Render.emSize.Height;
+            var CaretPostion = this.Document.CaretPostion;
             switch (e.Key)
             {
                 case Key.Up:
@@ -759,6 +762,10 @@ namespace FooEditEngine.WPF
                     movedCaret = true;
                     break;
                 case Key.Down:
+                    if (this._Document.LayoutLines.IsRequireFetchLine(CaretPostion.row + 1,CaretPostion.col))
+                    {
+                        this._Document.LayoutLines.FetchLine(CaretPostion.row + 1);
+                    }
                     this._Controller.MoveCaretVertical(+1, this.IsPressedModifierKey(modiferKeys, ModifierKeys.Shift));
                     this.Refresh();
                     e.Handled = true;
@@ -771,6 +778,10 @@ namespace FooEditEngine.WPF
                     movedCaret = true;
                     break;
                 case Key.Right:
+                    if (this._Document.LayoutLines.IsRequireFetchLine(CaretPostion.row, CaretPostion.col + 1))
+                    {
+                        this._Document.LayoutLines.FetchLine(CaretPostion.row + 1);
+                    }
                     this._Controller.MoveCaretHorizontical(1, this.IsPressedModifierKey(modiferKeys, ModifierKeys.Shift), this.IsPressedModifierKey(modiferKeys, ModifierKeys.Control));
                     this.Refresh();
                     e.Handled = true;
@@ -782,6 +793,11 @@ namespace FooEditEngine.WPF
                     movedCaret = true;
                     break;
                 case Key.PageDown:
+                    var result = this._Controller.IsRequireFetchLine(ScrollDirection.Down, alignedPage);
+                    if (result.isRequire)
+                    {
+                        this._Document.LayoutLines.FetchLine(result.need_row_count);
+                    }
                     this._Controller.ScrollByPixel(ScrollDirection.Down, alignedPage, this.IsPressedModifierKey(modiferKeys, ModifierKeys.Shift), true);
                     this.Refresh();
                     movedCaret = true;
@@ -1086,9 +1102,18 @@ namespace FooEditEngine.WPF
             {
                 int deltay = (int)Math.Abs(Math.Ceiling(translation.Y));
                 if (translation.Y < 0)
+                {
+                    var result = this._Controller.IsRequireFetchLine(ScrollDirection.Down, deltay, false);
+                    if (result.isRequire)
+                    {
+                        this._View.LayoutLines.FetchLine(result.need_row_count);
+                    }
                     this._Controller.ScrollByPixel(ScrollDirection.Down, deltay, false, false);
+                }
                 else
+                {
                     this._Controller.ScrollByPixel(ScrollDirection.Up, deltay, false, false);
+                }
                 this.touchScrolled = true;
                 this.Refresh();
                 return;
@@ -1207,7 +1232,12 @@ namespace FooEditEngine.WPF
         {
             if (this.verticalScrollBar == null)
                 return;
-            this.Controller.Scroll(this.Document.Src.X, (int)this.verticalScrollBar.Value, false, false);
+            int toRow = (int)this.verticalScrollBar.Value;
+            if (this.Document.LayoutLines.IsRequireFetchLine(toRow, 0))
+            {
+                this.Document.LayoutLines.FetchLine(toRow);
+            }
+            this.Controller.Scroll(this.Document.Src.X, toRow, false, false);
             this.Refresh();
         }
 

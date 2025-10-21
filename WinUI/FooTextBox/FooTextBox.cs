@@ -399,6 +399,9 @@ namespace FooEditEngine.WinUI
                     this.textEditContext.NotifyTextChanged(modified_range, newEndIndex - newStartIndex, modified_range);
                 }
 
+                int need_line_count = (int)(this.View.render.TextArea.Height / this.View.render.emSize.Height);
+                this.Document.LayoutLines.FetchLine(need_line_count);
+
                 if (this.verticalScrollBar != null)
                     this.verticalScrollBar.Maximum = this._View.LayoutLines.Count;
                 this.IsEnabled = true;
@@ -586,6 +589,7 @@ namespace FooEditEngine.WinUI
 
             double lineHeight = this.Render.emSize.Height * this.Render.LineEmHeight;
             double alignedPage = (int)(this.Render.TextArea.Height / lineHeight) * lineHeight;
+            var CaretPostion = this.Document.CaretPostion;
             switch (e.Key)
             {
                 case VirtualKey.Up:
@@ -595,6 +599,10 @@ namespace FooEditEngine.WinUI
                     isMovedCaret = true;
                     break;
                 case VirtualKey.Down:
+                    if (this._Document.LayoutLines.IsRequireFetchLine(CaretPostion.row + 1, CaretPostion.col))
+                    {
+                        this._Document.LayoutLines.FetchLine(CaretPostion.row + 1);
+                    }
                     this._Controller.MoveCaretVertical(+1, isShiftPressed);
                     this.Refresh();
                     e.Handled = true;
@@ -607,6 +615,10 @@ namespace FooEditEngine.WinUI
                     isMovedCaret = true;
                     break;
                 case VirtualKey.Right:
+                    if (this._Document.LayoutLines.IsRequireFetchLine(CaretPostion.row, CaretPostion.col + 1))
+                    {
+                        this._Document.LayoutLines.FetchLine(CaretPostion.row + 1);
+                    }
                     this._Controller.MoveCaretHorizontical(1, isShiftPressed, isControlPressed);
                     this.Refresh();
                     e.Handled = true;
@@ -618,6 +630,11 @@ namespace FooEditEngine.WinUI
                     isMovedCaret = true;
                     break;
                 case VirtualKey.PageDown:
+                    var result = this._Controller.IsRequireFetchLine(ScrollDirection.Down, alignedPage);
+                    if (result.isRequire)
+                    {
+                        this._Document.LayoutLines.FetchLine(result.need_row_count);
+                    }
                     this._Controller.ScrollByPixel(ScrollDirection.Down, alignedPage, isShiftPressed, true);
                     this.Refresh();
                     isMovedCaret = true;
@@ -1090,9 +1107,18 @@ namespace FooEditEngine.WinUI
             {
                 int deltay = (int)Math.Abs(Math.Ceiling(translation.Y));
                 if (translation.Y < 0)
+                {
+                    var result = this._Controller.IsRequireFetchLine(ScrollDirection.Down, deltay, false);
+                    if (result.isRequire)
+                    {
+                        this._View.LayoutLines.FetchLine(result.need_row_count);
+                    }
                     this._Controller.ScrollByPixel(ScrollDirection.Down, deltay, false, false);
+                }
                 else
+                {
                     this._Controller.ScrollByPixel(ScrollDirection.Up, deltay, false, false);
+                }
                 this.Refresh();
                 return;
             }

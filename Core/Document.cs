@@ -21,7 +21,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Controls;
 
 namespace FooEditEngine
 {
@@ -1622,7 +1621,7 @@ namespace FooEditEngine
                             analyzeLength = this.Length;
 
                         this._LayoutLines.UpdateLayoutLine(0, 0, analyzeLength, false);
-                        long fetchedLength = this._LayoutLines.FetchLineWithoutEvent(CaretPostion.row);
+                        long fetchedLength = this._LayoutLines.FetchLineWithoutEventFromAlreadyLoaded(CaretPostion.row);
 
                         int totalLineCount = this._LayoutLines.Count - 1;
                         bool hasCR = false;

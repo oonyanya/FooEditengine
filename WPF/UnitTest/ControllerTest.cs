@@ -163,6 +163,34 @@ namespace UnitTest
         }
 
         [TestMethod()]
+        public void IsRequireFetchLineTest()
+        {
+            DummyRender render = new DummyRender();
+            Document.PreloadLength = 64;
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            EditView view = new EditView(doc, render);
+            Controller ctrl = new Controller(doc, view);
+
+            //\nテスト
+            for (int i = 0; i < 20; i++)
+                doc.Append("01234567890123456789\n");
+
+            ctrl.JumpCaret(0);
+
+            //普通に追加すると余計なものがあるので、再構築する
+            doc.PerformLayout(false);
+
+            doc.Append("a\nb\nc");
+            var result = ctrl.IsRequireFetchLine(ScrollDirection.Down, 1000);
+            Assert.AreEqual(true, result.isRequire);
+            doc.LayoutLines.FetchLine(23);
+            result = ctrl.IsRequireFetchLine(ScrollDirection.Down, 1000);
+            Assert.AreEqual(false, doc.LayoutLines.IsRequireFetchLine(23, 0));
+
+        }
+
+        [TestMethod()]
         [Ignore]
         public void ScrollByPixelTest()
         {

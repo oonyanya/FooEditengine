@@ -812,13 +812,41 @@ namespace FooEditEngine
         }
 
         /// <summary>
+        /// レイアウト行の構築が必要かどうか確認する
+        /// </summary>
+        /// <param name="row">行</param>
+        /// <returns>行の構築が必要なら真を返す。そうでなければ、偽を返す。</returns>
+        public bool IsRequireFetchLine(int row,int col)
+        {
+            int lastRow = this.collection.Count - 1;
+            long LineHeadIndex = this.GetLongIndexFromLineNumber(lastRow);
+            long Length = this.GetLengthFromLineNumber(lastRow);
+            if (row >= lastRow)
+            {
+                if (LineHeadIndex + Length >= this.Document.Length)
+                {
+                    return false;
+                }
+                return true;
+            }
+            if (LineHeadIndex + Length < this.Document.Length && col >= Length)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
         /// 指定された行までレイアウト行を構築します
         /// </summary>
         /// <param name="row">行</param>
         public void FetchLine(int row)
         {
             long startIndex = this.GetLongIndexFromLineNumber(this.collection.Count - 1);
-            long totalAnayzedLength = FetchLineWithoutEvent(row);
+            long totalAnayzedLength = FetchLineWithoutEventFromAlreadyLoaded(row);
             this.Document.FireUpdate(
                 new DocumentUpdateEventArgs(UpdateType.BuildLayout,
                 startIndex,
@@ -826,7 +854,7 @@ namespace FooEditEngine
                 totalAnayzedLength));
         }
 
-        internal long FetchLineWithoutEvent(int row)
+        internal long FetchLineWithoutEventFromAlreadyLoaded(int row)
         {
             long totalAnalyzedLength = 0;
             while (row >= this._Lines.Count - 1)
@@ -1020,6 +1048,25 @@ namespace FooEditEngine
 
             resultRow = result;
             return true;
+        }
+
+        /// <summary>
+        /// インデックスからテキストポイントに変換します
+        /// </summary>
+        /// <param name="index">インデックス</param>
+        /// <returns>TextPoint構造体を返します</returns>
+        /// <returns>対応する行が存在しなければTextPoint.Nullを返す。</returns>
+        public TextPoint TryGetTextPointFromIndex(long index)
+        {
+            int row;
+            var result = TryGetLineNumberFromIndex(index, out row);
+            if (result == false)
+                return TextPoint.Null;
+            TextPoint tp = new TextPoint();
+            tp.row = row;
+            tp.col = (int)(index - this.GetLineHeadLongIndex(tp.row));
+            Debug.Assert(tp.row < this._Lines.Count && tp.col <= this.GetRaw(tp.row).Length);
+            return tp;
         }
 
         /// <summary>
