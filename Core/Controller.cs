@@ -462,9 +462,8 @@ namespace FooEditEngine
             {
                 double lineHeight = this.View.render.emSize.Height * this.View.render.LineEmHeight;
                 int numRow = (int)(delta / lineHeight);
-                int needRowCount = this.View.LineCountOnScreenWithInVisible + numRow;
-                if (this.View.LayoutLines.IsRequireFetchLine(this.Document.Src.Row + needRowCount, 0))
-                    return (true, needRowCount);
+                if (this.View.LayoutLines.IsRequireFetchLine(this.Document.Src.Row + numRow, 0))
+                    return (true, this.Document.Src.Row + numRow);
             }
             else if (totalDelta > this.View.ScrollNoti)
             {
