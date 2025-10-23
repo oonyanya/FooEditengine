@@ -159,12 +159,9 @@ namespace FooEditEngine
         LineToIndexTable _LayoutLines;
         bool _EnableFireUpdateEvent = true, _UrlMark = false, _DrawLineNumber = false, _HideRuler = true, _RightToLeft = false;
         LineBreakMethod _LineBreak;
-        int _TabStops, _LineBreakCharCount = 80, _BufferSize = -1;
+        int _TabStops, _LineBreakCharCount = 80;
         bool _ShowFullSpace, _ShowHalfSpace, _ShowTab, _ShowLineBreak, _InsertMode, _HideCaret, _HideLineMarker, _RectSelection;
         IndentMode _IndentMode;
-
-        //LOHの関係でこのくらいにしないと解放されない
-        const int _DefaultBufferSize = 32768;
 
         /// <summary>
         /// 一行当たりの最大文字数
@@ -187,9 +184,10 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="workfile_path">ワークファイルのパスを指定します。メモリーに保存する場合、この値は無視されます。</param>
         /// <param name="cache_size">4の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します。</param>
-        /// <param name="buffer_size">バッファーサイズを指定します。-1の場合、デフォルトのサイズとなります。</param>
-        public Document(string workfile_path = null,int cache_size = -1, int buffer_size = -1)
-            : this(null, workfile_path, cache_size, buffer_size)
+        /// <param name="use_file_mapping">ファイルマッピングするなら真を指定する</param>
+        /// <param name="mapping_cache_size">ファイルマッピングの時に使用するキャッシュサイズ。-1の場合はデフォルトのサイズとなります。</param>
+        public Document(string workfile_path = null,int cache_size = -1,bool use_file_mapping = false,int mapping_cache_size = -1)
+            : this(null, workfile_path, cache_size, use_file_mapping)
         {
         }
 
@@ -199,15 +197,20 @@ namespace FooEditEngine
         /// <param name="doc">ドキュメントオブジェクト。nullを指定した場合は空のドキュメントを作成します。</param>
         /// <param name="workfile_path">ワークファイルのパスを指定します。メモリーに保存する場合、この値は無視されます。</param>
         /// <param name="cache_size">4の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します。</param>
-        /// <param name="buffer_size">バッファーサイズを指定します。-1の場合、デフォルトのサイズとなります。</param>
+        /// <param name="use_file_mapping">ファイルマッピングするなら真を指定する</param>
+        /// <param name="mapping_cache_size">ファイルマッピングの時に使用するキャッシュサイズ。-1の場合はデフォルトのサイズとなります。</param>
         /// <remarks>docが複製されますが、プロパティは引き継がれません。また、workfile_pathとcache_sizeはdocがnullの場合だけ反映されます。そうでない場合はdocに指定した値がそのまま引き継がれます。</remarks>
-        public Document(Document doc, string workfile_path = null, int cache_size = -1,int buffer_size = -1)
+        public Document(Document doc, string workfile_path = null, int cache_size = -1, bool use_file_mapping = false, int mapping_cache_size = -1)
         {
             if (doc == null)
             {
                 if(workfile_path != null)
                 {
                     this.buffer = new DiskBaseStringBuffer(workfile_path,cache_size);
+                }
+                else if (use_file_mapping)
+                {
+                    this.buffer = new FileMappingStringBuffer(mapping_cache_size);
                 }
                 else
                 {
@@ -237,7 +240,6 @@ namespace FooEditEngine
             this.AutoIndentHook += (s, e) => { };
             this.LineBreakChanged += (s, e) => { };
             this.Dirty = false;
-            this._BufferSize = buffer_size == -1 ? _DefaultBufferSize : buffer_size;
         }
 
         void WacthDogPattern_Updated(object sender, EventArgs e)
@@ -1299,9 +1301,10 @@ namespace FooEditEngine
         /// <summary>
         /// ストリームからドキュメントを非同期的に構築します
         /// </summary>
-        /// <param name="fs">IStreamReaderオブジェクト</param>
+        /// <param name="fs">Streamオブジェクト</param>
         /// <param name="tokenSource">キャンセルトークン</param>
         /// <param name="file_size">ファイルサイズ。-1を指定しても動作しますが、読み取りが遅くなることがあります</param>
+        /// <param name="buffer_size">ファイル読み込みに使用するバッファーサイズ。-1の場合はデフォルトのサイズとなります。</param>
         /// <returns>Taskオブジェクト</returns>
         /// <remarks>
         /// 読み取り操作は別スレッドで行われます。
@@ -1309,9 +1312,9 @@ namespace FooEditEngine
         /// なお、すべて読み終わった後でNewLineがファイルの内容に応じて変化します。
         /// 改行コードが混じっている場合、一番最後に検出した改行コードになります。
         /// </remarks>
-        public async Task LoadAsync(TextReader fs, CancellationTokenSource tokenSource = null, long file_size = -1)
+        public async Task LoadAsync(Stream fs, Encoding encoding, CancellationTokenSource tokenSource = null, long file_size = -1,int buffer_size = -1)
         {
-            if (fs.Peek() == -1)
+            if (fs.Position == -1)
                 return;
 
             if (this.LoadProgress != null)
@@ -1320,7 +1323,7 @@ namespace FooEditEngine
             try
             {
                 //UIスレッドのやつを呼ぶ可能性がある
-                await LoadAsyncCore(fs, tokenSource);
+                await LoadAsyncCore(fs, encoding, tokenSource);
             }
             finally
             {
@@ -1330,25 +1333,20 @@ namespace FooEditEngine
             }
         }
 
-        async Task LoadAsyncCore(TextReader fs, CancellationTokenSource tokenSource = null, long file_size = -1)
+        async Task LoadAsyncCore(Stream fs,Encoding encoding, CancellationTokenSource tokenSource = null, long file_size = -1, int buffer_size = -1)
         {
             this.Clear();
             if (file_size > 0)
                 this.buffer.Allocate(file_size);
-            char[] str = new char[_BufferSize];
-            char[] internal_str = new char[_BufferSize]; 
-            int readCount;
+
             int totalLineCount = 0;
             bool hasCR = false;
             string lineFeedType = Environment.NewLine;
 
-            do
-            {
-                readCount = await fs.ReadAsync(str, 0, str.Length).ConfigureAwait(false);
-
+            await this.StringBuffer.LoadAsync(fs, encoding, async (str) => {
                 //行の数をカウントする
                 int j = 0;
-                for(int i = 0; i<str.Length; i++)
+                for (int i = 0; i < str.Count; i++)
                 {
                     var c = str[i];
                     if (c != '\0')
@@ -1377,29 +1375,24 @@ namespace FooEditEngine
                                 totalLineCount++;
                             }
                         }
-                        internal_str[j++] = c;
                     }
                     else
                     {
                         break;
                     }
-
                 }
-
-                using (await this.buffer.GetWriterLockAsync())
-                {
-                    //str.lengthは事前に確保しておくために使用するので影響はない
-                    this.buffer.AddRange(internal_str.Take(j));
-                }
-
                 if (tokenSource != null)
                     tokenSource.Token.ThrowIfCancellationRequested();
+
 #if TEST_ASYNC
                 DebugLog.WriteLine("waiting now");
                 await Task.Delay(100).ConfigureAwait(false);
+#else
+                await Task.Delay(0).ConfigureAwait(false);
 #endif
-                Array.Clear(str, 0, str.Length);
-            } while (readCount > 0);
+                return true;
+            },buffer_size);
+
             this.NewLine = lineFeedType;
             this.TotalLineCount = totalLineCount;
         }

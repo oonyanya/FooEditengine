@@ -78,6 +78,7 @@ namespace FooEditEngine
         const int MaxSemaphoreCount = 1;
         AsyncReaderWriterLock rwlock = new AsyncReaderWriterLock();
         protected BigList<char> buf { get; private set; }
+        protected CharReader Reader { get; private set; }
 
         public StringBufferBase()
         {
@@ -222,6 +223,34 @@ namespace FooEditEngine
             this.buf.Clear();
         }
 
+        internal virtual async Task LoadAsync(Stream stream, Encoding enc, Func<IComposableList<char>,Task<bool>> action_async,int buffer_size = -1)
+        {
+            var reader = new CharReader(stream, enc, buffer_size);
+
+            while (true) {
+                var readResult = await reader.LoadAsync(this.buf.BlockSize);
+                if (readResult.Value == null)
+                    break;
+
+                var str = new FixedList<char>(this.buf.BlockSize, this.buf.BlockSize);
+                str.AddRange(readResult.Value);
+
+                if (action_async != null)
+                {
+                    //０以下の値なら中断する
+                    if (await action_async(str) == false)
+                        break;
+                }
+
+                var pinableContent = this.buf.CustomBuilder.DataStore.CreatePinableContainer(str);
+
+                using (await this.GetWriterLockAsync())
+                {
+                    this.buf.Add(pinableContent);
+                }
+            }
+        }
+
         internal IEnumerable<char> GetEnumerator(long start, long length)
         {
             if (buf == null)
@@ -336,6 +365,74 @@ namespace FooEditEngine
                 this.diskDataStore.Dispose();
             }
         }
+    }
+
+    sealed class FileMappingStringBuffer : StringBufferBase
+    {
+        //ディスクバッファーを使用しないことを示す値
+        const int NOUSE_CACHE_SIZE = -1;
+
+        ReadOnlyCharDataStore readOnlyCharDataStore = null;
+        DiskPinableContentDataStore<IComposableList<char>> diskDataStore = null;
+        int diskCacheSize = NOUSE_CACHE_SIZE;
+        int mappingCacheSize = NOUSE_CACHE_SIZE;
+        string workfile_path = null;
+
+        public FileMappingStringBuffer(int cache_size = NOUSE_CACHE_SIZE) : base()
+        {
+            this.Init(workfile_path, cache_size);
+        }
+
+        private void Init(string workfile_path = null, int mapping_cache_size = NOUSE_CACHE_SIZE, int disk_cache_size = NOUSE_CACHE_SIZE)
+        {
+            base.Init();
+            if(mapping_cache_size > CacheParameters.MINCACHESIZE)
+            {
+                this.readOnlyCharDataStore = new ReadOnlyCharDataStore(null, mapping_cache_size);
+                this.mappingCacheSize = mapping_cache_size;
+            }
+            else
+            {
+                this.readOnlyCharDataStore = new ReadOnlyCharDataStore(null);
+            }
+            //4以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
+            if (disk_cache_size >= CacheParameters.MINCACHESIZE)
+            {
+                var serializer = new StringBufferSerializer();
+                this.diskDataStore = new DiskPinableContentDataStore<IComposableList<char>>(serializer, workfile_path, disk_cache_size);
+                this.readOnlyCharDataStore.SecondaryDataStore = this.diskDataStore;
+                this.diskCacheSize = disk_cache_size;
+                this.workfile_path = workfile_path;
+            }
+            else
+            {
+                this.readOnlyCharDataStore.SecondaryDataStore = new MemoryPinableContentDataStore<IComposableList<char>>();
+            }
+            buf.CustomBuilder.DataStore = this.readOnlyCharDataStore;
+        }
+
+        internal override Task LoadAsync(Stream stream, Encoding enc, Func<IComposableList<char>, Task<bool>> action_async,int buffer_size)
+        {
+            var r = base.LoadAsync(stream, enc, action_async,buffer_size);
+            this.readOnlyCharDataStore.Reader = this.Reader;
+            return r;
+        }
+
+        internal override StringBufferBase Clone()
+        {
+            throw new NotSupportedException("ファイルマッピングモード時の複製はサポートされていません");
+        }
+
+        internal int CacheSize
+        {
+            get { return this.diskCacheSize; }
+        }
+
+        internal string WorkfilePath
+        {
+            get { return workfile_path; }
+        }
+
     }
 
 }

@@ -1176,7 +1176,7 @@ namespace UnitTest
 
                 string str = sb.ToString();
 
-                Document doc = new Document(buffer_size: BUFFER_SIZE);
+                Document doc = new Document();
                 doc.Append(str);
 
                 byte[] store = new byte[str.Length];
@@ -1188,7 +1188,7 @@ namespace UnitTest
                 doc.Clear();
                 ms = new System.IO.MemoryStream(store);
                 System.IO.StreamReader sr = new System.IO.StreamReader(ms);
-                await doc.LoadAsync(sr);
+                await doc.LoadAsync(sr.BaseStream,sr.CurrentEncoding,null,-1, BUFFER_SIZE);
                 sr.Close();
 
                 Assert.AreEqual(lineCount, doc.TotalLineCount);

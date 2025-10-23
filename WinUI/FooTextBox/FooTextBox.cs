@@ -377,7 +377,7 @@ namespace FooEditEngine.WinUI
         /// <returns>Taskオブジェクト</returns>
         public async Task LoadFileAsync(System.IO.StreamReader sr, System.Threading.CancellationTokenSource token)
         {
-            await this.Document.LoadAsync(sr, token);
+            await this.Document.LoadAsync(sr.BaseStream, sr.CurrentEncoding, token);
         }
 
         private void Document_LoadProgress(object sender, ProgressEventArgs e)

@@ -24,6 +24,7 @@ using DotNetTextStore;
 using DotNetTextStore.UnmanagedAPI.TSF;
 using DotNetTextStore.UnmanagedAPI.WinDef;
 using Microsoft.Win32;
+using System.IO;
 
 namespace FooEditEngine.WPF
 {
@@ -377,9 +378,9 @@ namespace FooEditEngine.WPF
         /// <param name="tr">TextReader</param>
         /// <param name="token">キャンセル用トークン</param>
         /// <returns>Taskオブジェクト</returns>
-        public async Task LoadAsync(System.IO.TextReader tr, System.Threading.CancellationTokenSource token)
+        public async Task LoadAsync(Stream tr, Encoding enc, System.Threading.CancellationTokenSource token)
         {
-            await this.Document.LoadAsync(tr, token);
+            await this.Document.LoadAsync(tr, enc);
         }
 
         /// <summary>
@@ -391,8 +392,8 @@ namespace FooEditEngine.WPF
         /// <returns>Taskオブジェクト</returns>
         public async Task LoadFileAsync(string filepath, Encoding enc,System.Threading.CancellationTokenSource token)
         {
-            var fs = new System.IO.StreamReader(filepath, enc);
-            await this.Document.LoadAsync(fs, token);
+            var fs = new System.IO.FileStream(filepath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+            await this.Document.LoadAsync(fs, enc, token);
             fs.Close();
         }
 

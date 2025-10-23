@@ -905,9 +905,9 @@ namespace FooEditEngine.Windows
         /// <param name="tr">TextReader</param>
         /// <param name="token">キャンセル用トークン</param>
         /// <returns>Taskオブジェクト</returns>
-        public async Task LoadAsync(System.IO.TextReader tr, System.Threading.CancellationTokenSource token)
+        public async Task LoadAsync(System.IO.StreamReader tr, System.Threading.CancellationTokenSource token)
         {
-            await this.Document.LoadAsync(tr, token);
+            await this.Document.LoadAsync(tr.BaseStream, tr.CurrentEncoding, token);
         }
 
         /// <summary>
@@ -920,7 +920,7 @@ namespace FooEditEngine.Windows
         public async Task LoadFileAsync(string filepath, Encoding enc, System.Threading.CancellationTokenSource token)
         {
             var fs = new System.IO.StreamReader(filepath, enc);
-            await this.Document.LoadAsync(fs, token);
+            await this.Document.LoadAsync(fs.BaseStream, fs.CurrentEncoding, token);
             fs.Close();
         }
 

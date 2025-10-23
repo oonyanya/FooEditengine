@@ -139,7 +139,7 @@ namespace Test
                     using (System.IO.FileStream file = System.IO.File.Open(ofd.FileName, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
                     using (System.IO.StreamReader sr = new System.IO.StreamReader(file, Encoding.Default))
                     {
-                        await this.fooTextBox.Document.LoadAsync(sr, this.cancleTokenSrc, (int)file.Length);
+                        await this.fooTextBox.Document.LoadAsync(sr.BaseStream ,sr.CurrentEncoding, this.cancleTokenSrc, (int)file.Length);
                     }
                     time.Stop();
                     MessageBox.Show(string.Format("complete elpased time:{0}s", time.ElapsedMilliseconds / 1000.0f));
