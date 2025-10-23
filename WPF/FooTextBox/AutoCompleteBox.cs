@@ -69,8 +69,11 @@ namespace FooEditEngine.WPF
             set
             {
                 this.popup = value;
-                this.popup.Child = this.listBox1;
-                this.popup.Height = 200;
+                if(value != null)
+                {
+                    this.popup.Child = this.listBox1;
+                    this.popup.Height = 200;
+                }
             }
         }
 
