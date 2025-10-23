@@ -834,7 +834,9 @@ namespace FooEditEngine
             int endRow = this.LayoutLines.Count - 1 - this.LineCountOnScreen;
             if (endRow < 0)
                 endRow = 0;
-            base.TryScroll(x, row);
+            bool result = base.TryScroll(x, row);
+            if (result)
+                base.TryScroll(x, endRow);
         }
 
         /// <summary>

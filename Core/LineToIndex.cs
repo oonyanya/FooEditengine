@@ -803,7 +803,7 @@ namespace FooEditEngine
         /// <remarks>いくつかの値は実態とかけ離れた値を返します。詳しくはLineToIndexTableDataの注意事項を参照すること。</remarks>
         internal bool TryGetRaw(int row,out LineToIndexTableData lineData)
         {
-            if(row > this._Lines.Count)
+            if(row > this._Lines.Count - 1)
             {
                 lineData = null;
                 return false;
