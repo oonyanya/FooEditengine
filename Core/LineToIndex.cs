@@ -357,16 +357,17 @@ namespace FooEditEngine
         const int LAYOUT_CACHE_SIZE_MEMORY_MODE = 128;
         ILineInfoGenerator[] _generators = new ILineInfoGenerator[2];
 
-        internal LineToIndexTable(Document buf, int cache_size = -1)
+        internal LineToIndexTable(Document buf, StringBufferBase bufferparam)
         {
             this.Document = buf;
             this.Document.Markers.Updated += Markers_Updated;
             this.collection = new BigRangeList<LineToIndexTableData>();
             //4以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
-            if (cache_size >= 4)
+            if (bufferparam is DiskBaseStringBuffer)
             {
+                var diskbufferparam = (DiskBaseStringBuffer)bufferparam;
                 var serializer = new LineToIndexTableDataSerializer();
-                this.dataStore = new DiskPinableContentDataStore<IComposableList<LineToIndexTableData>>(serializer, buf.StringBuffer.WorkfilePath, cache_size);
+                this.dataStore = new DiskPinableContentDataStore<IComposableList<LineToIndexTableData>>(serializer, diskbufferparam.WorkfilePath, diskbufferparam.CacheSize);
             }
             else
             {

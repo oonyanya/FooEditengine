@@ -155,7 +155,7 @@ namespace FooEditEngine
     {
         Regex regex;
         Match match;
-        StringBuffer buffer;
+        StringBufferBase buffer;
         LineToIndexTable _LayoutLines;
         bool _EnableFireUpdateEvent = true, _UrlMark = false, _DrawLineNumber = false, _HideRuler = true, _RightToLeft = false;
         LineBreakMethod _LineBreak;
@@ -204,9 +204,20 @@ namespace FooEditEngine
         public Document(Document doc, string workfile_path = null, int cache_size = -1,int buffer_size = -1)
         {
             if (doc == null)
-                this.buffer = new StringBuffer(workfile_path, cache_size);
+            {
+                if(workfile_path != null)
+                {
+                    this.buffer = new DiskBaseStringBuffer(workfile_path,cache_size);
+                }
+                else
+                {
+                    this.buffer = new StringBuffer();
+                }
+            }
             else
-                this.buffer = new StringBuffer(doc.buffer);
+            {
+                this.buffer = doc.buffer.Clone();
+            }
             this.buffer.Update = new DocumentUpdateEventHandler(buffer_Update);
             this.Update += new DocumentUpdateEventHandler((s, e) => { });
             this.ChangeFireUpdateEvent += new EventHandler((s, e) => { });
@@ -214,7 +225,7 @@ namespace FooEditEngine
             this.NewLine = Environment.NewLine;
             this.Markers = new MarkerCollection();
             this.UndoManager = new UndoManager();
-            this._LayoutLines = new LineToIndexTable(this, this.buffer.CacheSize);
+            this._LayoutLines = new LineToIndexTable(this, this.buffer);
             this.MarkerPatternSet = new MarkerPatternSet(this._LayoutLines, this.Markers);
             this.MarkerPatternSet.Updated += WacthDogPattern_Updated;
             this.Selections = new SelectCollection();
@@ -797,7 +808,7 @@ namespace FooEditEngine
             private set;
         }
 
-        internal StringBuffer StringBuffer
+        internal StringBufferBase StringBuffer
         {
             get
             {
@@ -1762,14 +1773,14 @@ namespace FooEditEngine
     /// </summary>
     public class DocumentReader : TextReader
     {
-        StringBuffer document;      
+        StringBufferBase document;      
         int currentIndex;
 
         /// <summary>
         /// コンストラクター
         /// </summary>
         /// <param name="doc"></param>
-        internal DocumentReader(StringBuffer doc)
+        internal DocumentReader(StringBufferBase doc)
         {
             if (doc == null)
                 throw new ArgumentNullException();

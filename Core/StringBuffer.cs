@@ -70,66 +70,34 @@ namespace FooEditEngine
         }
     }
 
-    sealed class StringBuffer : IEnumerable<char>, IRandomEnumrator<char>, IDisposable
+    abstract class StringBufferBase : IEnumerable<char>, IRandomEnumrator<char>, IDisposable
     {
         //LOHの都合上、このくらいの値がちょうどいい
         const int BUF_BLOCKSIZE = 32768;
-        //ディスクバッファーを使用しないことを示す値
-        const int NOUSE_DISKBUFFER_SIZE = -1;
 
-        BigList<char> buf = null;
         const int MaxSemaphoreCount = 1;
         AsyncReaderWriterLock rwlock = new AsyncReaderWriterLock();
-        DiskPinableContentDataStore<IComposableList<char>> diskDataStore = null;
-        int cacheSize = NOUSE_DISKBUFFER_SIZE;
-        string workfile_path = null;
+        protected BigList<char> buf { get; private set; }
 
-        public StringBuffer(string workfile_path = null,int cache_size = NOUSE_DISKBUFFER_SIZE)
+        public StringBufferBase()
         {
-            this.buf = GetBuffer();
-            //4以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
-            if (cache_size >= CacheParameters.MINCACHESIZE)
-            {
-                var serializer = new StringBufferSerializer();
-                this.diskDataStore = new DiskPinableContentDataStore<IComposableList<char>>(serializer, workfile_path, cache_size);
-                buf.CustomBuilder.DataStore = diskDataStore;
-                this.cacheSize = cache_size;
-                this.workfile_path = workfile_path;
-            }
             this.Update = (s, e) => { };
         }
 
-        public StringBuffer(StringBuffer buffer)
-            : this(buffer.workfile_path, buffer.cacheSize)
+        protected void Init()
         {
-            System.Diagnostics.Debug.Assert(buffer.cacheSize == this.cacheSize);
-            System.Diagnostics.Debug.Assert(buffer.workfile_path == this.workfile_path);
-            buf.AddRange(buffer.buf);
-        }
-
-        private static BigList<char> GetBuffer()
-        {
-            var buf = new BigList<char>();
-            buf.BlockSize = BUF_BLOCKSIZE;
+            this.buf = new BigList<char>();
+            this.buf.BlockSize = BUF_BLOCKSIZE;
             //BigList<T>.FIBONACCIに書かれている数値で、Int.MaxValue以外の奴なら設定しても問題はない
-            buf.MaxCapacity = (long)1836311903 * (long)BUF_BLOCKSIZE;
-            return buf;
-        }
-
-        internal int CacheSize
-        {
-            get { return this.cacheSize; }
-        }
-
-        internal string WorkfilePath
-        {
-            get { return workfile_path; }
+            this.buf.MaxCapacity = (long)1836311903 * (long)BUF_BLOCKSIZE;            
         }
 
         public char this[long index]
         {
             get
             {
+                if (buf == null)
+                    throw new InvalidOperationException("must be call Init");
                 char c = buf.Get(index);
                 return c;
             }
@@ -137,6 +105,8 @@ namespace FooEditEngine
 
         public string ToString(long index, long length)
         {
+            if (buf == null)
+                throw new InvalidOperationException("must be call Init");
             StringBuilder temp = new StringBuilder();
             temp.Clear();
             for (long i = index; i < index + length; i++)
@@ -146,9 +116,11 @@ namespace FooEditEngine
 
         public void CopyTo(char[] array, long index, long length)
         {
+            if (buf == null)
+                throw new InvalidOperationException("must be call Init");
             var range = this.buf.GetRangeEnumerable(index, length);
             int i = 0;
-            foreach(var c in range)
+            foreach (var c in range)
             {
                 array[i++] = c;
             }
@@ -156,12 +128,20 @@ namespace FooEditEngine
 
         public long Length
         {
-            get { return this.buf.LongCount; }
+            get {
+                if (buf == null)
+                    throw new InvalidOperationException("must be call Init");
+                return this.buf.LongCount;
+            }
         }
 
         public long Count
         {
-            get { return this.buf.LongCount; }
+            get {
+                if (buf == null)
+                    throw new InvalidOperationException("must be call Init");
+                return this.buf.LongCount;
+            }
         }
 
         internal DocumentUpdateEventHandler Update;
@@ -170,24 +150,40 @@ namespace FooEditEngine
         {
         }
 
-        internal void Replace(StringBuffer buf)
+        internal virtual StringBufferBase Clone()
         {
-            this.Clear();
+            throw new NotImplementedException();
+        }
+
+        internal virtual void Replace(StringBufferBase buf)
+        {
+            if(this.buf != null)
+            {
+                this.Clear();
+            }
             this.buf = buf.buf;
+            this.buf.BlockSize = buf.buf.BlockSize;
+            this.buf.MaxCapacity = buf.buf.MaxCapacity;
         }
 
         internal void AddRange(IEnumerable<char> chars)
         {
+            if (buf == null)
+                throw new InvalidOperationException("must be call Init");
             this.buf.AddRange(chars);
         }
 
         internal void InsertRange(long index, IEnumerable<char> chars)
         {
+            if (buf == null)
+                throw new InvalidOperationException("must be call Init");
             this.buf.InsertRange(index, chars);
         }
 
         internal void RemoveRange(long index, long length)
         {
+            if (buf == null)
+                throw new InvalidOperationException("must be call Init");
             this.buf.RemoveRange(index, length);
         }
 
@@ -216,29 +212,20 @@ namespace FooEditEngine
             this.Update(this, e);
         }
 
-        internal void Flush()
-        {
-            this.diskDataStore.Commit();
-        }
-
         /// <summary>
         /// 文字列を削除する
         /// </summary>
         internal void Clear()
         {
+            if (buf == null)
+                throw new InvalidOperationException("must be call Init");
             this.buf.Clear();
-        }
-
-        public void Dispose()
-        {
-            if (this.diskDataStore != null)
-            {
-                this.diskDataStore.Dispose();
-            }
         }
 
         internal IEnumerable<char> GetEnumerator(long start, long length)
         {
+            if (buf == null)
+                throw new InvalidOperationException("must be call Init");
             return this.buf.GetRangeEnumerable(start, length);
         }
 
@@ -246,6 +233,8 @@ namespace FooEditEngine
 
         public IEnumerator<char> GetEnumerator()
         {
+            if (buf == null)
+                throw new InvalidOperationException("must be call Init");
             for (long i = 0; i < this.Length; i++)
                 yield return this.buf.Get(i);
         }
@@ -256,11 +245,113 @@ namespace FooEditEngine
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
+            if (buf == null)
+                throw new InvalidOperationException("must be call Init");
             for (long i = 0; i < this.Length; i++)
                 yield return this.buf.Get(i);
         }
 
         #endregion
+
+        internal virtual void Flush()
+        {
+        }
+
+        public virtual void Dispose()
+        {
+        }
+    }
+
+    sealed class StringBuffer : StringBufferBase
+    {
+        public StringBuffer() : base()
+        {
+            this.Init();
+        }
+        public StringBuffer(StringBufferBase buffer) : base()
+        {
+            this.Replace(buffer);
+        }
+
+        internal override StringBufferBase Clone()
+        {
+            var newbuf = new StringBuffer();
+            newbuf.buf.AddRange(this.buf);
+            return newbuf;
+        }
+    }
+
+    sealed class DiskBaseStringBuffer : StringBufferBase
+    {
+        //ディスクバッファーを使用しないことを示す値
+        const int NOUSE_DISKBUFFER_SIZE = -1;
+
+        DiskPinableContentDataStore<IComposableList<char>> diskDataStore = null;
+        int cacheSize = NOUSE_DISKBUFFER_SIZE;
+        string workfile_path = null;
+
+        public DiskBaseStringBuffer(string workfile_path = null,int cache_size = NOUSE_DISKBUFFER_SIZE) : base()
+        {
+            this.Init(workfile_path, cache_size);
+        }
+
+        private void Init(string workfile_path = null, int cache_size = NOUSE_DISKBUFFER_SIZE)
+        {
+            base.Init();
+            //4以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
+            if (cache_size >= CacheParameters.MINCACHESIZE)
+            {
+                var serializer = new StringBufferSerializer();
+                this.diskDataStore = new DiskPinableContentDataStore<IComposableList<char>>(serializer, workfile_path, cache_size);
+                buf.CustomBuilder.DataStore = diskDataStore;
+                this.cacheSize = cache_size;
+                this.workfile_path = workfile_path;
+            }
+        }
+
+        public DiskBaseStringBuffer(StringBufferBase buffer) : base()
+        {
+            this.Replace(buffer);
+
+            var diskbuffer = (DiskBaseStringBuffer)buffer;
+            this.diskDataStore = diskbuffer.diskDataStore;
+            buf.CustomBuilder.DataStore = this.diskDataStore;
+            this.cacheSize = diskbuffer.cacheSize;
+            this.workfile_path = diskbuffer.workfile_path;
+
+            System.Diagnostics.Debug.Assert(diskbuffer.cacheSize == this.cacheSize);
+            System.Diagnostics.Debug.Assert(diskbuffer.workfile_path == this.workfile_path);
+        }
+
+        internal int CacheSize
+        {
+            get { return this.cacheSize; }
+        }
+
+        internal string WorkfilePath
+        {
+            get { return workfile_path; }
+        }
+
+        internal override StringBufferBase Clone()
+        {
+            var newbuf = new DiskBaseStringBuffer(this.workfile_path,this.cacheSize);
+            newbuf.buf.AddRange(this.buf);
+            return newbuf;
+        }
+
+        internal override void Flush()
+        {
+            this.diskDataStore.Commit();
+        }
+
+        public override void Dispose()
+        {
+            if (this.diskDataStore != null)
+            {
+                this.diskDataStore.Dispose();
+            }
+        }
     }
 
 }

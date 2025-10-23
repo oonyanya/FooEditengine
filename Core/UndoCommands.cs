@@ -18,12 +18,12 @@ namespace FooEditEngine
 {
     sealed class ReplaceCommand : ICommand
     {
-        StringBuffer Buffer;
+        StringBufferBase Buffer;
         TextRange ReplacementRange, ReplacedRange;
 
         StringBuffer replacement, replaced;   //置き換え後の文字列、置き換え前の文字列
 
-        public ReplaceCommand(StringBuffer buf, long start, long length, string str)
+        public ReplaceCommand(StringBufferBase buf, long start, long length, string str)
         {
             this.Buffer = buf;
             this.ReplacementRange = new TextRange(start,str.Length);
@@ -96,13 +96,13 @@ namespace FooEditEngine
 
     sealed class ReplaceAllCommand : ICommand
     {
-        StringBuffer buffer;
+        StringBufferBase buffer;
         Regex regex;
-        StringBuffer oldBuffer;
+        StringBufferBase oldBuffer;
         string replacePattern;
         bool groupReplace;
         LineToIndexTable layoutLines;
-        public ReplaceAllCommand(StringBuffer buffer, LineToIndexTable layoutlines, Regex regex, string replacePattern,bool groupReplace)
+        public ReplaceAllCommand(StringBufferBase buffer, LineToIndexTable layoutlines, Regex regex, string replacePattern,bool groupReplace)
         {
             this.buffer = buffer;
             this.regex = regex;
@@ -116,7 +116,7 @@ namespace FooEditEngine
             ReplaceBuffer(this.oldBuffer);
         }
 
-        internal void ReplaceBuffer(StringBuffer buf)
+        internal void ReplaceBuffer(StringBufferBase buf)
         {
             using (this.buffer.GetWriterLock())
             {
@@ -128,7 +128,7 @@ namespace FooEditEngine
 
         public void redo()
         {
-            this.oldBuffer = new StringBuffer(this.buffer);
+            this.oldBuffer = this.buffer.Clone();
             this.replaceCore(this.layoutLines, this.regex, this.replacePattern, this.groupReplace);
         }
 
@@ -170,13 +170,13 @@ namespace FooEditEngine
     }
     sealed class FastReplaceAllCommand : ICommand
     {
-        StringBuffer buffer;
-        StringBuffer oldBuffer;
+        StringBufferBase buffer;
+        StringBufferBase oldBuffer;
         string targetPattern;
         string replacePattern;
         bool caseInsensitve;
         LineToIndexTable layoutLines;
-        public FastReplaceAllCommand(StringBuffer buffer,LineToIndexTable layoutlines,string targetPattern, string replacePattern,bool ci)
+        public FastReplaceAllCommand(StringBufferBase buffer,LineToIndexTable layoutlines,string targetPattern, string replacePattern,bool ci)
         {
             this.buffer = buffer;
             this.replacePattern = replacePattern;
@@ -197,7 +197,7 @@ namespace FooEditEngine
 
         public void redo()
         {
-            this.oldBuffer = new StringBuffer(this.buffer);
+            this.oldBuffer = this.buffer.Clone();
             this.ReplaceAllCore(this.layoutLines, this.targetPattern, this.replacePattern,this.caseInsensitve);
         }
 
