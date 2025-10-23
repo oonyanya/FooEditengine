@@ -78,7 +78,7 @@ namespace FooEditEngine
         const int MaxSemaphoreCount = 1;
         AsyncReaderWriterLock rwlock = new AsyncReaderWriterLock();
         protected BigList<char> buf { get; private set; }
-        protected CharReader Reader { get; private set; }
+        protected CharReader Reader { get; set; }
 
         public StringBufferBase()
         {
@@ -378,9 +378,9 @@ namespace FooEditEngine
         int mappingCacheSize = NOUSE_CACHE_SIZE;
         string workfile_path = null;
 
-        public FileMappingStringBuffer(int cache_size = NOUSE_CACHE_SIZE) : base()
+        public FileMappingStringBuffer(string workfile_path = null, int mapping_cache_size = NOUSE_CACHE_SIZE, int disk_cache_size = NOUSE_CACHE_SIZE) : base()
         {
-            this.Init(workfile_path, cache_size);
+            this.Init(workfile_path, mapping_cache_size, disk_cache_size);
         }
 
         private void Init(string workfile_path = null, int mapping_cache_size = NOUSE_CACHE_SIZE, int disk_cache_size = NOUSE_CACHE_SIZE)
@@ -411,11 +411,37 @@ namespace FooEditEngine
             buf.CustomBuilder.DataStore = this.readOnlyCharDataStore;
         }
 
-        internal override Task LoadAsync(Stream stream, Encoding enc, Func<IComposableList<char>, Task<bool>> action_async,int buffer_size)
+        internal async override Task LoadAsync(Stream stream, Encoding enc, Func<IComposableList<char>, Task<bool>> action_async,int buffer_size)
         {
-            var r = base.LoadAsync(stream, enc, action_async,buffer_size);
-            this.readOnlyCharDataStore.Reader = this.Reader;
-            return r;
+            var reader = new CharReader(stream, enc, buffer_size);
+
+            while (true)
+            {
+                var readResult = await reader.LoadAsync(this.buf.BlockSize);
+                if (readResult.Value == null)
+                    break;
+
+                var str = new ReadOnlyComposableList<char>(readResult.Value);
+
+                if (action_async != null)
+                {
+                    //０以下の値なら中断する
+                    if (await action_async(str) == false)
+                        break;
+                }
+
+                var newResult = OnLoadAsyncResult<IComposableList<char>>.Create(str,readResult);
+
+                var pinableContent = this.readOnlyCharDataStore.Load(newResult);
+
+                using (await this.GetWriterLockAsync())
+                {
+                    this.buf.Add(pinableContent);
+                }
+            }
+
+            this.Reader = reader;
+            this.readOnlyCharDataStore.Reader = reader;
         }
 
         internal override StringBufferBase Clone()

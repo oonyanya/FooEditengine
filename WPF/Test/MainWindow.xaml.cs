@@ -37,6 +37,19 @@ namespace Test
             InitializeComponent();
             this.fooTextBox.MouseDoubleClick += new System.Windows.Input.MouseButtonEventHandler(fooTextBox_MouseDoubleClick);
 
+            Document doc;
+#if USE_DISK_FOR_DOCUMENT
+            doc = new Document(16);
+#else
+            doc = new Document();
+#endif
+            this.fooTextBox.Document =  InitDocument(doc);
+
+            this.Closed += MainWindow_Closed;
+        }
+
+        private Document InitDocument(Document doc)
+        {
             var complete_collection = new CompleteCollection<ICompleteItem>();
             complete_collection.Add(new CompleteWord("int"));
             complete_collection.Add(new CompleteWord("float"));
@@ -45,12 +58,6 @@ namespace Test
             complete_collection.Add(new CompleteWord("char"));
             complete_collection.Add(new CompleteWord("var"));
 
-            Document doc;
-#if USE_DISK_FOR_DOCUMENT
-            doc = new Document(16);
-#else
-            doc = new Document();
-#endif
             doc.AutoComplete = new AutoCompleteBox(doc);
             doc.AutoComplete.Items = complete_collection;
             doc.AutoComplete.Enabled = true;
@@ -61,9 +68,7 @@ namespace Test
             doc.ShowHalfSpace = true;
             doc.ShowFullSpace = true;
             doc.ShowLineBreak = true;
-            this.fooTextBox.Document = doc;
-
-            this.Closed += MainWindow_Closed;
+            return doc;
         }
 
         void MainWindow_Closed(object sender, System.EventArgs e)
@@ -306,6 +311,49 @@ namespace Test
         private void Jamp_Click(object sender, RoutedEventArgs e)
         {
             this.fooTextBox.JumpCaret(int.Parse(this.JumpRow.Text), 0);
+        }
+
+        private async void MenuItem_Click_19(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            bool result = (bool)ofd.ShowDialog(this);
+            if (result == true)
+            {
+                System.Diagnostics.Stopwatch time = new System.Diagnostics.Stopwatch();
+                this.fooTextBox.IsEnabled = false;
+                try
+                {
+                    time.Start();
+                    using (System.IO.FileStream file = System.IO.File.Open(ofd.FileName, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
+                    using (System.IO.StreamReader sr = new System.IO.StreamReader(file, Encoding.Default))
+                    {
+                        this.fooTextBox.Document.Update -= this.Document_Update;
+                        var doc = new Document(use_file_mapping: true);
+                        this.fooTextBox.Document = InitDocument(doc);
+                        await this.fooTextBox.Document.LoadAsync(sr.BaseStream, sr.CurrentEncoding, this.cancleTokenSrc, (int)file.Length);
+                    }
+                    time.Stop();
+                    MessageBox.Show(string.Format("complete elpased time:{0}s", time.ElapsedMilliseconds / 1000.0f));
+                }
+                catch (FileNotFoundException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                catch (IOException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                finally
+                {
+                    this.fooTextBox.IsEnabled = true;
+                }
+                this.fooTextBox.Refresh();
+            }
+
         }
     }
     public class FlowDirectionConveter : System.Windows.Data.IValueConverter

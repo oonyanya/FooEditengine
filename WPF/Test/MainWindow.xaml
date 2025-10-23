@@ -17,6 +17,7 @@
         <Menu Grid.Row="0">
             <MenuItem Header="Test">
                 <MenuItem Header="Load" Click="MenuItem_Click_3"/>
+                <MenuItem Header="Load With FileMapping" Click="MenuItem_Click_19"/>
                 <MenuItem Header="Save" Click="MenuItem_Click_10"/>
                 <MenuItem Header="Enable" IsChecked="{Binding IsEnabled,ElementName=fooTextBox,Mode=TwoWay}" IsCheckable="True"/>
                 <MenuItem Header="ShowLineMarker" IsChecked="{Binding DrawCaretLine,ElementName=fooTextBox,Mode=TwoWay}" IsCheckable="True"/>

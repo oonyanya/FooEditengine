@@ -210,7 +210,7 @@ namespace FooEditEngine
                 }
                 else if (use_file_mapping)
                 {
-                    this.buffer = new FileMappingStringBuffer(mapping_cache_size);
+                    this.buffer = new FileMappingStringBuffer(workfile_path, cache_size, mapping_cache_size);
                 }
                 else
                 {
