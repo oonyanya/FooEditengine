@@ -823,6 +823,8 @@ namespace UnitTest
             Assert.IsTrue(doc.ToString(0) == "thaaa aaa a pen\nthaaa aaa a pen\n");
             Assert.AreEqual(1, doc.CaretPostion.row);
             Assert.AreEqual(0, doc.CaretPostion.col);
+            doc.UndoManager.undo();
+            Assert.IsTrue(doc.ToString(0) == "this is a pen\nthis is a pen\n");
 
             //\rテスト
             doc.Clear();
@@ -834,6 +836,8 @@ namespace UnitTest
             Assert.IsTrue(doc.ToString(0) == "thaaa aaa a pen\rthaaa aaa a pen\r");
             Assert.AreEqual(1, doc.CaretPostion.row);
             Assert.AreEqual(0, doc.CaretPostion.col);
+            doc.UndoManager.undo();
+            Assert.IsTrue(doc.ToString(0) == "this is a pen\rthis is a pen\r");
 
             //\r\nテスト
             doc.Clear();
@@ -845,6 +849,8 @@ namespace UnitTest
             Assert.IsTrue(doc.ToString(0) == "thaaa aaa a pen\r\nthaaa aaa a pen\r\n");
             Assert.AreEqual(1, doc.CaretPostion.row);
             Assert.AreEqual(0, doc.CaretPostion.col);
+            doc.UndoManager.undo();
+            Assert.IsTrue(doc.ToString(0) == "this is a pen\r\nthis is a pen\r\n");
         }
 
         [TestMethod]
@@ -862,6 +868,8 @@ namespace UnitTest
             Assert.AreEqual("aaa aaa aaa aaa\naaa aaa aaa aaa\n", doc.ToString(0));
             Assert.AreEqual(1, doc.CaretPostion.row);
             Assert.AreEqual(0, doc.CaretPostion.col);
+            doc.UndoManager.undo();
+            Assert.IsTrue(doc.ToString(0) == "this is a pen\nthis is a pen\n");
 
             //\rテスト
             doc.Clear();
@@ -873,6 +881,8 @@ namespace UnitTest
             Assert.AreEqual("aaa aaa aaa aaa\raaa aaa aaa aaa\r", doc.ToString(0));
             Assert.AreEqual(1, doc.CaretPostion.row);
             Assert.AreEqual(0, doc.CaretPostion.col);
+            doc.UndoManager.undo();
+            Assert.IsTrue(doc.ToString(0) == "this is a pen\rthis is a pen\r");
 
             //\r\nテスト
             doc.Clear();
@@ -884,6 +894,8 @@ namespace UnitTest
             Assert.AreEqual("aaa aaa aaa aaa\r\naaa aaa aaa aaa\r\n", doc.ToString(0));
             Assert.AreEqual(1, doc.CaretPostion.row);
             Assert.AreEqual(0, doc.CaretPostion.col);
+            doc.UndoManager.undo();
+            Assert.IsTrue(doc.ToString(0) == "this is a pen\r\nthis is a pen\r\n");
         }
 
         [TestMethod]
@@ -926,6 +938,17 @@ namespace UnitTest
             Assert.AreEqual(ADD_COUNT, doc.TotalLineCount);
             Assert.AreEqual(ADD_COUNT - 1, doc.CaretPostion.row);
             Assert.AreEqual(0, doc.CaretPostion.col);
+
+            doc.UndoManager.undo();
+            var lines2 = doc.LayoutLines.ForEachLines(0, doc.Count - 1);
+            foreach (var line in lines2)
+            {
+                var actual = doc.ToString(line.Item1, line.Item2);
+                if (line.Item1 < doc.Count)
+                {
+                    Assert.AreEqual("this is a pen\n", actual);
+                }
+            }
         }
 
         [TestMethod]
@@ -966,11 +989,28 @@ namespace UnitTest
 
             var replacedText = text.Replace("pen", "ratking");
             doc.ReplaceAll2("pen", "ratking");
-            for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
+            var lines = doc.LayoutLines.ForEachLines(0, doc.Count - 1);
+            foreach (var line in lines)
             {
-                Assert.AreEqual(replacedText, doc.LayoutLines[i]);
+                var actual = doc.ToString(line.Item1, line.Item2);
+                if (line.Item1 < doc.Count)
+                {
+                    Assert.AreEqual(replacedText, actual);
+                }
             }
-            
+
+            var undedText = text.Replace("ratking", "pen");
+            doc.UndoManager.undo();
+            var lines2 = doc.LayoutLines.ForEachLines(0, doc.Count - 1);
+            foreach (var line in lines2)
+            {
+                var actual = doc.ToString(line.Item1, line.Item2);
+                if (line.Item1 < doc.Count)
+                {
+                    Assert.AreEqual(undedText, actual);
+                }
+            }
+
             doc.Dispose();
         }
 
