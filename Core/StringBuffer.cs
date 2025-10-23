@@ -268,10 +268,6 @@ namespace FooEditEngine
         {
             this.Init();
         }
-        public StringBuffer(StringBufferBase buffer) : base()
-        {
-            this.Replace(buffer);
-        }
 
         internal override StringBufferBase Clone()
         {
@@ -309,20 +305,6 @@ namespace FooEditEngine
             }
         }
 
-        public DiskBaseStringBuffer(StringBufferBase buffer) : base()
-        {
-            this.Replace(buffer);
-
-            var diskbuffer = (DiskBaseStringBuffer)buffer;
-            this.diskDataStore = diskbuffer.diskDataStore;
-            buf.CustomBuilder.DataStore = this.diskDataStore;
-            this.cacheSize = diskbuffer.cacheSize;
-            this.workfile_path = diskbuffer.workfile_path;
-
-            System.Diagnostics.Debug.Assert(diskbuffer.cacheSize == this.cacheSize);
-            System.Diagnostics.Debug.Assert(diskbuffer.workfile_path == this.workfile_path);
-        }
-
         internal int CacheSize
         {
             get { return this.cacheSize; }
@@ -337,6 +319,8 @@ namespace FooEditEngine
         {
             var newbuf = new DiskBaseStringBuffer(this.workfile_path,this.cacheSize);
             newbuf.buf.AddRange(this.buf);
+            System.Diagnostics.Debug.Assert(newbuf.cacheSize == this.cacheSize);
+            System.Diagnostics.Debug.Assert(newbuf.workfile_path == this.workfile_path);
             return newbuf;
         }
 
