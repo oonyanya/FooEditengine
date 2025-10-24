@@ -389,12 +389,20 @@ namespace FooEditEngine.WPF
         /// <param name="filepath">ファイルパス</param>
         /// <param name="enc">エンコード</param>
         /// <param name="token">キャンセル用トークン</param>
-        /// <returns>Taskオブジェクト</returns>
-        public async Task LoadFileAsync(string filepath, Encoding enc,System.Threading.CancellationTokenSource token)
+        /// <returns>Taskオブジェクト。ファイルマッピングモードでドキュメントを作成しているなら作成したストリームをクローズせずに返し、そうでなければ、nullを返す</returns>
+        public async Task<Stream> LoadFileAsync(string filepath, Encoding enc,System.Threading.CancellationTokenSource token)
         {
             var fs = new System.IO.FileStream(filepath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
             await this.Document.LoadAsync(fs, enc, token);
-            fs.Close();
+            if(this.Document.IsFileMapping)
+            {
+                return fs;
+            }
+            else
+            {
+                fs.Close();
+                return null;
+            }
         }
 
         private void Document_LoadProgress(object sender, ProgressEventArgs e)

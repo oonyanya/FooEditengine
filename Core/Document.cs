@@ -202,6 +202,7 @@ namespace FooEditEngine
         /// <remarks>docが複製されますが、プロパティは引き継がれません。また、workfile_pathとcache_sizeはdocがnullの場合だけ反映されます。そうでない場合はdocに指定した値がそのまま引き継がれます。</remarks>
         public Document(Document doc, string workfile_path = null, int cache_size = -1, bool use_file_mapping = false, int mapping_cache_size = -1)
         {
+            this.IsFileMapping = false;
             if (doc == null)
             {
                 if(workfile_path != null)
@@ -211,6 +212,7 @@ namespace FooEditEngine
                 else if (use_file_mapping)
                 {
                     this.buffer = new FileMappingStringBuffer(workfile_path, cache_size, mapping_cache_size);
+                    this.IsFileMapping = true;
                 }
                 else
                 {
@@ -220,6 +222,7 @@ namespace FooEditEngine
             else
             {
                 this.buffer = doc.buffer.Clone();
+                this.IsFileMapping = this.buffer is FileMappingStringBuffer;
             }
             this.buffer.Update = new DocumentUpdateEventHandler(buffer_Update);
             this.Update += new DocumentUpdateEventHandler((s, e) => { });
@@ -547,6 +550,16 @@ namespace FooEditEngine
                 }
             }
         }
+
+        /// <summary>
+        /// ファイルマッピングをしているなら真を返す
+        /// </summary>
+        public bool IsFileMapping
+        {
+            get;
+            private set;
+        }
+
 
         /// <summary>
         /// ドキュメントの行数

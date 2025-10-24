@@ -31,6 +31,7 @@ namespace Test
     public partial class MainWindow : Window
     {
         System.Threading.CancellationTokenSource cancleTokenSrc = new System.Threading.CancellationTokenSource();
+        Stream currentStream = null;
 
         public MainWindow()
         {
@@ -75,6 +76,8 @@ namespace Test
         {
             this.cancleTokenSrc.Cancel();
             this.fooTextBox.Dispose();
+            if (currentStream != null)
+                currentStream.Close();
         }
 
         void fooTextBox_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -324,14 +327,13 @@ namespace Test
                 try
                 {
                     time.Start();
-                    using (System.IO.FileStream file = System.IO.File.Open(ofd.FileName, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read))
-                    using (System.IO.StreamReader sr = new System.IO.StreamReader(file, Encoding.Default))
-                    {
-                        this.fooTextBox.Document.Update -= this.Document_Update;
-                        var doc = new Document(use_file_mapping: true);
-                        this.fooTextBox.Document = InitDocument(doc);
-                        await this.fooTextBox.Document.LoadAsync(sr.BaseStream, sr.CurrentEncoding, this.cancleTokenSrc, (int)file.Length);
-                    }
+                    System.IO.FileStream file = System.IO.File.Open(ofd.FileName, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read);
+
+                    this.fooTextBox.Document.Update -= this.Document_Update;
+                    var doc = new Document(use_file_mapping: true);
+                    this.fooTextBox.Document = InitDocument(doc);
+                    await this.fooTextBox.Document.LoadAsync(file, Encoding.Default, this.cancleTokenSrc, (int)file.Length);
+                    this.currentStream = file;
                     time.Stop();
                     MessageBox.Show(string.Format("complete elpased time:{0}s", time.ElapsedMilliseconds / 1000.0f));
                 }
