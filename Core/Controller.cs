@@ -697,6 +697,10 @@ namespace FooEditEngine
             if(this.Document[index] == Document.LF_CHAR)
             {
                 next = index + 1;
+                if (index > 0 && this.Document[index - 1] == Document.CR_CHAR)
+                {
+                    index--;
+                }
             }
             else if (this.Document[index] == Document.CR_CHAR)
             {
@@ -756,6 +760,12 @@ namespace FooEditEngine
             else
             {
                 newIndex = this.View.GetIndexFromLayoutLine(CurrentPostion);
+                newIndex--;
+            }
+
+            //改行コードがCRLFの時に破壊できてしまうのはよくない
+            if (newIndex > 0 && this.Document[newIndex] == Document.LF_CHAR && this.Document[newIndex - 1] == Document.CR_CHAR)
+            {
                 newIndex--;
             }
 

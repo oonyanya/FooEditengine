@@ -12,6 +12,7 @@ You should have received a copy of the GNU General Public License along with thi
 using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FooEditEngine;
+using System.Linq;
 
 namespace UnitTest
 {
@@ -275,6 +276,32 @@ namespace UnitTest
             doc.Select(0, 1);
             ctrl.DoDeleteAction();
             Assert.IsTrue(doc[0] == '3');
+
+            //\nテスト
+            doc.Clear();
+            doc.Append("aaa\n");
+            ctrl.JumpCaret(3);
+            ctrl.DoDeleteAction();
+            Assert.AreEqual("aaa", doc.ToString(0));
+
+            //\rテスト
+            doc.Clear();
+            doc.Append("aaa\r");
+            ctrl.JumpCaret(3);
+            ctrl.DoDeleteAction();
+            Assert.AreEqual("aaa", doc.ToString(0));
+
+            //\r\nテスト
+            doc.Clear();
+            doc.Append("aaa\r\n");
+            ctrl.JumpCaret(3);
+            ctrl.DoDeleteAction();
+            Assert.AreEqual("aaa", doc.ToString(0));
+            doc.Clear();
+            doc.Append("aaa\r\n");
+            ctrl.JumpCaret(4);
+            ctrl.DoDeleteAction();
+            Assert.AreEqual("aaa", doc.ToString(0));
         }
 
         [TestMethod()]
@@ -467,6 +494,9 @@ namespace UnitTest
             ctrl.JumpCaret(2);
             ctrl.DoInputChar('a');
             Assert.IsTrue(doc.LayoutLines[0] == "aba\n");
+            ctrl.JumpCaret(4);
+            ctrl.DoBackSpaceAction();
+            Assert.IsTrue(doc.LayoutLines[0] == "aba");
 
             doc.Clear();
             doc.Append("a\na");
@@ -483,6 +513,9 @@ namespace UnitTest
             ctrl.JumpCaret(2);
             ctrl.DoInputChar('a');
             Assert.IsTrue(doc.LayoutLines[0] == "aba\r");
+            ctrl.JumpCaret(4);
+            ctrl.DoBackSpaceAction();
+            Assert.IsTrue(doc.LayoutLines[0] == "aba");
 
             doc.Clear();
             doc.Append("a\ra");
@@ -499,6 +532,9 @@ namespace UnitTest
             ctrl.JumpCaret(2);
             ctrl.DoInputChar('a');
             Assert.IsTrue(doc.LayoutLines[0] == "aba\r\n");
+            ctrl.JumpCaret(5);
+            ctrl.DoBackSpaceAction();
+            Assert.IsTrue(doc.LayoutLines[0] == "aba");
 
             doc.Clear();
             doc.Append("a\r\na");
