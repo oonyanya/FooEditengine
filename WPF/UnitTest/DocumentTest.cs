@@ -1133,7 +1133,8 @@ namespace UnitTest
             doc.MarkerPatternSet.Add(MarkerIDs.Defalut, dog);
             doc.Clear();
             doc.Append(str);
-            IEnumerable<Marker> actual = doc.MarkerPatternSet.GetMarkers(new CreateLayoutEventArgs(0, str.Length, str));
+            doc.PerformLayout();
+            IEnumerable<Marker> actual = doc.MarkerPatternSet.GetMarkers(new CreateLayoutEventArgs(0, str.Length, 0));
             this.AreEqual(result, actual);
         }
 

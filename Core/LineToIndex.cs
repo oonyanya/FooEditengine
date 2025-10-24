@@ -327,16 +327,16 @@ namespace FooEditEngine
         /// <summary>
         /// 文字列
         /// </summary>
-        public string Content
+        public int Row
         {
             get;
             private set;
         }
-        public CreateLayoutEventArgs(long index, long length,string content)
+        public CreateLayoutEventArgs(long index, long length,int row)
         {
             this.Index = index;
             this.Length = length;
-            this.Content = content;
+            this.Row = row;
         }
     }
 
@@ -967,10 +967,12 @@ namespace FooEditEngine
                 string lineString = this.Document.ToString(lineHeadIndex, (int)lineData.length);
                 lineData.LineString = lineString;
 
-                if (this.CreateingLayout != null)
-                    this.CreateingLayout(this, new CreateLayoutEventArgs(lineHeadIndex, lineData.Length, lineString));
+                var arg = new CreateLayoutEventArgs(lineHeadIndex, lineData.Length, row);
 
-                var watchedMarker = this.Document.MarkerPatternSet.GetMarkers(new CreateLayoutEventArgs(lineHeadIndex, lineData.Length, lineString));
+                if (this.CreateingLayout != null)
+                    this.CreateingLayout(this, arg);
+
+                var watchedMarker = this.Document.MarkerPatternSet.GetMarkers(arg);
 
                 List<ITextLayout> layouts = new List<ITextLayout>();
                 foreach(var touple in this.ForEachLines(lineHeadIndex, lineHeadIndex + lineData.Length - 1, Document.MaximumLineLength))
