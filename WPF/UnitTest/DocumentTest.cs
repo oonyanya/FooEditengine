@@ -1160,7 +1160,7 @@ namespace UnitTest
             string[] linefeeds = new string[] { "\n", "\r", "\r\n" };
             foreach (var linefeed in linefeeds)
             {
-                int lineCount = 0;
+                int lineCount = 1;
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < TEST_SIZE; i++)
                 {

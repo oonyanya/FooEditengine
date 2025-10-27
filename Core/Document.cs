@@ -1333,6 +1333,8 @@ namespace FooEditEngine
             if (this.LoadProgress != null)
                 this.LoadProgress(this, new ProgressEventArgs(ProgressState.Start));
 
+            this.Clear();
+
             try
             {
                 //UIスレッドのやつを呼ぶ可能性がある
@@ -1340,7 +1342,7 @@ namespace FooEditEngine
             }
             finally
             {
-                this.PerformLayout(false);
+                this.PerformLayout(true);
                 if (this.LoadProgress != null)
                     this.LoadProgress(this, new ProgressEventArgs(ProgressState.Complete));
             }
@@ -1348,11 +1350,10 @@ namespace FooEditEngine
 
         async Task LoadAsyncCore(Stream fs,Encoding encoding, CancellationTokenSource tokenSource = null, long file_size = -1, int buffer_size = -1)
         {
-            this.Clear();
             if (file_size > 0)
                 this.buffer.Allocate(file_size);
 
-            int totalLineCount = 0;
+            int totalLineCount = 1; //ファイル全体の行数。LineToIndexTableData.UpdateLayoutLine()によると常に１行は存在するので、１から始める。
             bool hasCR = false;
             string lineFeedType = Environment.NewLine;
 
@@ -1641,26 +1642,38 @@ namespace FooEditEngine
                         long fetchedLength = this._LayoutLines.FetchLineWithoutEventFromAlreadyLoaded(CaretPostion.row);
 
                         int totalLineCount = this._LayoutLines.Count - 1;
+                        string lineFeedType = Environment.NewLine;
                         bool hasCR = false;
                         foreach (var c in this.buffer.GetEnumerator(analyzeLength, this.Length - analyzeLength - fetchedLength))
                         {
                             if(hasCR == true)
                             {
                                 if(c == Document.LF_CHAR)
+                                {
                                     totalLineCount++;
+                                    lineFeedType = Document.CRLF_STR;
+                                }
                                 else
+                                {
                                     totalLineCount++;
+                                    lineFeedType = Document.CR_STR;
+                                }
                                 hasCR = false;
                             }
                             else
                             {
                                 if (c == Document.CR_CHAR)
+                                {
                                     hasCR = true;
-                                if( c == Document.LF_CHAR)
+                                }
+                                if ( c == Document.LF_CHAR)
+                                {
                                     totalLineCount++;
+                                    lineFeedType = Document.LF_STR;
+                                }
                             }
                         }
-            ;
+                        this.NewLine = lineFeedType;
                         this.TotalLineCount = totalLineCount;
                         break;
                     }
