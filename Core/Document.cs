@@ -1324,6 +1324,7 @@ namespace FooEditEngine
         /// また、非同期操作中はこのメソッドを実行することはできません。
         /// なお、すべて読み終わった後でNewLineがファイルの内容に応じて変化します。
         /// 改行コードが混じっている場合、一番最後に検出した改行コードになります。
+        /// 互換性のためにPerformLayoutedイベントが呼び出されますが、レイアウト行がまったく存在していない可能性があります。LineToIndexTableクラスのIsRequireFetchLine()を呼び出して、レイアウト行が存在していなければ、FetchLine()を呼び出してください。
         /// </remarks>
         public async Task LoadAsync(Stream fs, Encoding encoding, CancellationTokenSource tokenSource = null, long file_size = -1,int buffer_size = -1)
         {
