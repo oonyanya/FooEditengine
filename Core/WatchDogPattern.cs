@@ -56,7 +56,7 @@ namespace FooEditEngine
         /// <returns>Marker—ñ‹“‘Ì‚ð•Ô‚·</returns>
         public IEnumerable<Marker> GetMarker(long lineHeadIndex, long lineLength, int row, LineToIndexTable lti)
         {
-\            var str = lti[row];
+            var str = lti[row];
             foreach (Match m in this.regex.Matches(str))
             {
                 yield return Marker.Create(lineHeadIndex + m.Index, m.Length, this.type,this.color);
