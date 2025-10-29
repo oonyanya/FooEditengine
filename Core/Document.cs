@@ -94,6 +94,14 @@ namespace FooEditEngine
         BuildLayout,
     }
 
+    [Flags]
+    public enum DocumentBufferType
+    {
+        Memory = 0x1,
+        Disk = 0x2,
+        FileMapping = 0x4,
+    }
+
     /// <summary>
     /// 更新タイプを通知するためのイベントデータ
     /// </summary>
@@ -202,7 +210,6 @@ namespace FooEditEngine
         /// <remarks>docが複製されますが、プロパティは引き継がれません。また、workfile_pathとcache_sizeはdocがnullの場合だけ反映されます。そうでない場合はdocに指定した値がそのまま引き継がれます。</remarks>
         public Document(Document doc, string workfile_path = null, int cache_size = -1, bool use_file_mapping = false, int mapping_cache_size = -1)
         {
-            this.IsFileMapping = false;
             if (doc == null)
             {
                 if(workfile_path != null)
@@ -212,7 +219,6 @@ namespace FooEditEngine
                 else if (use_file_mapping)
                 {
                     this.buffer = new FileMappingStringBuffer(workfile_path, cache_size, mapping_cache_size);
-                    this.IsFileMapping = true;
                 }
                 else
                 {
@@ -222,7 +228,6 @@ namespace FooEditEngine
             else
             {
                 this.buffer = doc.buffer.Clone();
-                this.IsFileMapping = this.buffer is FileMappingStringBuffer;
             }
             this.buffer.Update = new DocumentUpdateEventHandler(buffer_Update);
             this.Update += new DocumentUpdateEventHandler((s, e) => { });
@@ -552,12 +557,14 @@ namespace FooEditEngine
         }
 
         /// <summary>
-        /// ファイルマッピングをしているなら真を返す
+        /// 現在使用しているバッファーのタイプ
         /// </summary>
-        public bool IsFileMapping
+        public DocumentBufferType BufferType
         {
-            get;
-            private set;
+            get
+            {
+                return this.buffer.BufferType;
+            }
         }
 
 
@@ -1324,7 +1331,6 @@ namespace FooEditEngine
         /// また、非同期操作中はこのメソッドを実行することはできません。
         /// なお、すべて読み終わった後でNewLineがファイルの内容に応じて変化します。
         /// 改行コードが混じっている場合、一番最後に検出した改行コードになります。
-        /// 互換性のためにPerformLayoutedイベントが呼び出されますが、レイアウト行がまったく存在していない可能性があります。LineToIndexTableクラスのIsRequireFetchLine()を呼び出して、レイアウト行が存在していなければ、FetchLine()を呼び出してください。
         /// </remarks>
         public async Task LoadAsync(Stream fs, Encoding encoding, CancellationTokenSource tokenSource = null, long file_size = -1,int buffer_size = -1)
         {
@@ -1334,8 +1340,6 @@ namespace FooEditEngine
             if (this.LoadProgress != null)
                 this.LoadProgress(this, new ProgressEventArgs(ProgressState.Start));
 
-            this.Clear();
-
             try
             {
                 //UIスレッドのやつを呼ぶ可能性がある
@@ -1343,7 +1347,7 @@ namespace FooEditEngine
             }
             finally
             {
-                this.PerformLayout(true);
+                this.PerformLayout(false);
                 if (this.LoadProgress != null)
                     this.LoadProgress(this, new ProgressEventArgs(ProgressState.Complete));
             }
@@ -1351,10 +1355,11 @@ namespace FooEditEngine
 
         async Task LoadAsyncCore(Stream fs,Encoding encoding, CancellationTokenSource tokenSource = null, long file_size = -1, int buffer_size = -1)
         {
+            this.Clear();
             if (file_size > 0)
                 this.buffer.Allocate(file_size);
 
-            int totalLineCount = 1; //ファイル全体の行数。LineToIndexTableData.UpdateLayoutLine()によると常に１行は存在するので、１から始める。
+            int totalLineCount = 0;
             bool hasCR = false;
             string lineFeedType = Environment.NewLine;
 
@@ -1643,38 +1648,26 @@ namespace FooEditEngine
                         long fetchedLength = this._LayoutLines.FetchLineWithoutEventFromAlreadyLoaded(CaretPostion.row);
 
                         int totalLineCount = this._LayoutLines.Count - 1;
-                        string lineFeedType = Environment.NewLine;
                         bool hasCR = false;
                         foreach (var c in this.buffer.GetEnumerator(analyzeLength, this.Length - analyzeLength - fetchedLength))
                         {
                             if(hasCR == true)
                             {
                                 if(c == Document.LF_CHAR)
-                                {
                                     totalLineCount++;
-                                    lineFeedType = Document.CRLF_STR;
-                                }
                                 else
-                                {
                                     totalLineCount++;
-                                    lineFeedType = Document.CR_STR;
-                                }
                                 hasCR = false;
                             }
                             else
                             {
                                 if (c == Document.CR_CHAR)
-                                {
                                     hasCR = true;
-                                }
-                                if ( c == Document.LF_CHAR)
-                                {
+                                if( c == Document.LF_CHAR)
                                     totalLineCount++;
-                                    lineFeedType = Document.LF_STR;
-                                }
                             }
                         }
-                        this.NewLine = lineFeedType;
+            ;
                         this.TotalLineCount = totalLineCount;
                         break;
                     }

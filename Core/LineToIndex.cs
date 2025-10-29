@@ -363,7 +363,7 @@ namespace FooEditEngine
             this.Document.Markers.Updated += Markers_Updated;
             this.collection = new BigRangeList<LineToIndexTableData>();
             //4以上の値を指定しないとうまく動かないので、それ以外の値はメモリーに保存する
-            if (bufferparam is DiskBaseStringBuffer)
+            if (bufferparam.BufferType.HasFlag(DocumentBufferType.Disk))
             {
                 var diskbufferparam = (DiskBaseStringBuffer)bufferparam;
                 var serializer = new LineToIndexTableDataSerializer();

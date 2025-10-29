@@ -394,7 +394,7 @@ namespace FooEditEngine.WPF
         {
             var fs = new System.IO.FileStream(filepath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
             await this.Document.LoadAsync(fs, enc, token);
-            if(this.Document.IsFileMapping)
+            if(this.Document.BufferType.HasFlag(DocumentBufferType.FileMapping))
             {
                 return fs;
             }

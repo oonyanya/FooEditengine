@@ -85,6 +85,8 @@ namespace FooEditEngine
             this.Update = (s, e) => { };
         }
 
+        public DocumentBufferType BufferType { get; protected set; }
+
         protected void Init()
         {
             this.buf = new BigList<char>();
@@ -295,6 +297,7 @@ namespace FooEditEngine
     {
         public StringBuffer() : base()
         {
+            this.BufferType = DocumentBufferType.Memory;
             this.Init();
         }
 
@@ -317,6 +320,7 @@ namespace FooEditEngine
 
         public DiskBaseStringBuffer(string workfile_path = null,int cache_size = NOUSE_DISKBUFFER_SIZE) : base()
         {
+            this.BufferType = DocumentBufferType.Disk;
             this.Init(workfile_path, cache_size);
         }
 
@@ -403,10 +407,12 @@ namespace FooEditEngine
                 this.readOnlyCharDataStore.SecondaryDataStore = this.diskDataStore;
                 this.diskCacheSize = disk_cache_size;
                 this.workfile_path = workfile_path;
+                this.BufferType = DocumentBufferType.Disk | DocumentBufferType.FileMapping;
             }
             else
             {
                 this.readOnlyCharDataStore.SecondaryDataStore = new MemoryPinableContentDataStore<IComposableList<char>>();
+                this.BufferType = DocumentBufferType.Memory | DocumentBufferType.FileMapping;
             }
             buf.CustomBuilder.DataStore = this.readOnlyCharDataStore;
         }
