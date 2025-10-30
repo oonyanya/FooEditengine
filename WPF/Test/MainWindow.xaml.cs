@@ -11,6 +11,8 @@ You should have received a copy of the GNU General Public License along with thi
 //#define USE_DISK_FOR_DOCUMENT
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,10 +20,9 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
 using FooEditEngine;
-using FooEditEngine.WPF;
 using FooEditEngine.Test;
+using FooEditEngine.WPF;
 using Microsoft.Win32;
-using System.IO;
 
 namespace Test
 {
@@ -214,8 +215,25 @@ namespace Test
             bool result = (bool)sfd.ShowDialog(this);
             if (result == true)
             {
-                await this.fooTextBox.SaveFile(sfd.FileName,Encoding.Default,"\r\n",cancleTokenSrc);
-                MessageBox.Show("complete");
+                System.Diagnostics.Stopwatch time = new System.Diagnostics.Stopwatch();
+                try
+                {
+                    time.Start();
+                    await this.fooTextBox.SaveFile(sfd.FileName, Encoding.Default, "\r\n", cancleTokenSrc);
+                    MessageBox.Show(string.Format("complete elpased time:{0}s", time.ElapsedMilliseconds / 1000.0f));
+                }
+                catch (FileNotFoundException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                catch (IOException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
             }
         }
 
