@@ -1347,7 +1347,7 @@ namespace FooEditEngine
             }
             finally
             {
-                this.PerformLayout(false);
+                this.PerformLayout(true);
                 if (this.LoadProgress != null)
                     this.LoadProgress(this, new ProgressEventArgs(ProgressState.Complete));
             }
