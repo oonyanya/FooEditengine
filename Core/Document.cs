@@ -1359,7 +1359,7 @@ namespace FooEditEngine
             if (file_size > 0)
                 this.buffer.Allocate(file_size);
 
-            int totalLineCount = 0;
+            int totalLineCount = 1; //ファイル全体の行数。LineToIndexTableData.UpdateLayoutLine()によると常に１行は存在するので、１から始める。
             bool hasCR = false;
             string lineFeedType = Environment.NewLine;
 
