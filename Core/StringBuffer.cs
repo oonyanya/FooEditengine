@@ -10,19 +10,19 @@ You should have received a copy of the GNU General Public License along with thi
  */
 //#define TEST_ASYNC
 using System;
-using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Nito.AsyncEx;
 using System.Threading;
 using System.Threading.Tasks;
 using FooProject.Collection;
 using FooProject.Collection.DataStore;
-using System.Collections;
-using System.Runtime.CompilerServices;
+using Nito.AsyncEx;
 
 namespace FooEditEngine
 {
@@ -225,17 +225,34 @@ namespace FooEditEngine
             this.buf.Clear();
         }
 
-        internal virtual async Task LoadAsync(Stream stream, Encoding enc, Func<IComposableList<char>,Task<bool>> action_async,int buffer_size = -1)
+        protected virtual IComposableList<char> CreateList(OnLoadAsyncResult<IEnumerable<char>> load_result, int read_count)
+        {
+            var str = new FixedList<char>(read_count, read_count);
+            str.AddRange(load_result.Value);
+
+            return str;
+        }
+
+        protected virtual IPinableContainer<IComposableList<char>> CreatePin(IComposableList<char> list, OnLoadAsyncResult<IEnumerable<char>> load_result)
+        {
+            var pinableContent = this.buf.CustomBuilder.DataStore.CreatePinableContainer(list);
+            return pinableContent;
+        }
+
+        internal virtual async Task LoadAsync(Stream stream, Encoding enc,Func<IComposableList<char>,Task<bool>> action_async = null, long load_len_bytes = -1, int buffer_size = -1)
         {
             var reader = new CharReader(stream, enc, buffer_size);
 
-            while (true) {
+            long left_load_len = load_len_bytes;
+            while (left_load_len == -1 || left_load_len >= 0) {
                 var readResult = await reader.LoadAsync(this.buf.BlockSize);
                 if (readResult.Value == null)
                     break;
 
-                var str = new FixedList<char>(this.buf.BlockSize, this.buf.BlockSize);
-                str.AddRange(readResult.Value);
+                if(left_load_len >= 0)
+                    left_load_len -= readResult.ReadBytes;
+
+                var str = CreateList(readResult,this.buf.BlockSize);
 
                 if (action_async != null)
                 {
@@ -244,13 +261,15 @@ namespace FooEditEngine
                         break;
                 }
 
-                var pinableContent = this.buf.CustomBuilder.DataStore.CreatePinableContainer(str);
+                var pinableContent = this.CreatePin(str,readResult);
 
                 using (await this.GetWriterLockAsync())
                 {
                     this.buf.Add(pinableContent);
                 }
             }
+
+            this.Reader = reader;
         }
 
         internal IEnumerable<char> GetEnumerator(long start, long length)
@@ -417,37 +436,25 @@ namespace FooEditEngine
             buf.CustomBuilder.DataStore = this.readOnlyCharDataStore;
         }
 
-        internal async override Task LoadAsync(Stream stream, Encoding enc, Func<IComposableList<char>, Task<bool>> action_async,int buffer_size)
+        protected override IComposableList<char> CreateList(OnLoadAsyncResult<IEnumerable<char>> load_result, int read_count)
         {
-            var reader = new CharReader(stream, enc, buffer_size);
+            var str = new ReadOnlyComposableList<char>(load_result.Value);
+            return str;
+        }
 
-            while (true)
-            {
-                var readResult = await reader.LoadAsync(this.buf.BlockSize);
-                if (readResult.Value == null)
-                    break;
+        protected override IPinableContainer<IComposableList<char>> CreatePin(IComposableList<char> list,OnLoadAsyncResult<IEnumerable<char>> load_result)
+        {
+            var newResult = OnLoadAsyncResult<IComposableList<char>>.Create(list, load_result);
 
-                var str = new ReadOnlyComposableList<char>(readResult.Value);
+            var pinableContent = this.readOnlyCharDataStore.Load(newResult);
 
-                if (action_async != null)
-                {
-                    //０以下の値なら中断する
-                    if (await action_async(str) == false)
-                        break;
-                }
+            return pinableContent;
+        }
 
-                var newResult = OnLoadAsyncResult<IComposableList<char>>.Create(str,readResult);
-
-                var pinableContent = this.readOnlyCharDataStore.Load(newResult);
-
-                using (await this.GetWriterLockAsync())
-                {
-                    this.buf.Add(pinableContent);
-                }
-            }
-
-            this.Reader = reader;
-            this.readOnlyCharDataStore.Reader = reader;
+        internal async override Task LoadAsync(Stream stream, Encoding enc, Func<IComposableList<char>, Task<bool>> action_async = null, long load_len_bytes = -1, int buffer_size = -1)
+        {
+            await base.LoadAsync(stream, enc, action_async,load_len_bytes, buffer_size);
+            this.readOnlyCharDataStore.Reader = this.Reader;
         }
 
         internal override StringBufferBase Clone()
