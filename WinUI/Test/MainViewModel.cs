@@ -174,7 +174,7 @@ namespace Test
                 using (var fs = new StreamReader(ws.AsStream()))
                 {
                     var prop = await file.GetBasicPropertiesAsync();
-                    await doc.LoadAsync(fs, null,(int)prop.Size);
+                    await doc.LoadAsync(fs.BaseStream, fs.CurrentEncoding);
                 }
                 doc.RequestRedraw();
                 _list.Add(doc);
