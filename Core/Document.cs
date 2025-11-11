@@ -1348,8 +1348,16 @@ namespace FooEditEngine
             finally
             {
                 this.PerformLayout(true);
+
+                long analyzeLength = PreloadLength;
+                if (analyzeLength > this.Length)
+                    analyzeLength = this.Length;
+                this._LayoutLines.UpdateLayoutLine(0, 0, analyzeLength, false);
+
                 if (this.LoadProgress != null)
+                {
                     this.LoadProgress(this, new ProgressEventArgs(ProgressState.Complete));
+                }
             }
         }
 

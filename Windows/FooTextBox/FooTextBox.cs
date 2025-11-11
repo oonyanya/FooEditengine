@@ -1545,7 +1545,7 @@ namespace FooEditEngine.Windows
         {
             this.VScrollBar.SmallChange = 1;
             this.VScrollBar.LargeChange = this.View.LineCountOnScreen;
-            this.VScrollBar.Maximum = this.View.LayoutLines.Count + this.View.LineCountOnScreen + 1;
+            this.VScrollBar.Maximum = this.Document.TotalLineCount + 1;
             this.HScrollBar.SmallChange = 10;
             this.HScrollBar.LargeChange = (int)this.View.PageBound.Width;
             this.HScrollBar.Maximum = this.HScrollBar.LargeChange + 1;

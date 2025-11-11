@@ -426,7 +426,7 @@ namespace FooEditEngine.UWP
                 this.Document.LayoutLines.FetchLine(need_line_count);
 
                 if (this.verticalScrollBar != null)
-                    this.verticalScrollBar.Maximum = this._View.LayoutLines.Count;
+                    this.verticalScrollBar.Maximum = this.Document.TotalLineCount;
                 this.IsEnabled = true;
                 this.Refresh(false);
             }
@@ -1374,6 +1374,11 @@ namespace FooEditEngine.UWP
                 //変換中に呼び出してはいけない
                 if (this.textEditContext != null)
                     this.textEditContext.NotifyTextChanged(oldTextRange, newTextLength, newSelection);
+            }
+            else if (e.type == UpdateType.RebuildLayout || e.type == UpdateType.RebuildLayout)
+            {
+                if (this.verticalScrollBar != null)
+                    this.verticalScrollBar.Maximum = this.Document.TotalLineCount;
             }
 #if ENABLE_AUTMATION
             if (this.peer != null)
