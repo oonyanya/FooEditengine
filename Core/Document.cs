@@ -179,7 +179,13 @@ namespace FooEditEngine
         /// 事前読み込みを行う長さ
         /// </summary>
         /// <remarks>値を反映させるためにはレイアウト行すべてを削除する必要があります</remarks>
-        public static int PreloadLength = 1024 * 1024 * 5;
+        public static int PreloadLength = 1024 * 1024;
+
+        /// <summary>
+        /// 遅延読み込み時に一度に読み込む長さ
+        /// </summary>
+        /// <remarks>値を反映させるためにはレイアウト行すべてを削除する必要があります</remarks>
+        public static int LazyloadLength = 32768;
 
         public const char CR_CHAR = '\r';
         public const char LF_CHAR = '\n';

@@ -869,7 +869,7 @@ namespace FooEditEngine
                     return 0;
                 }
                 long analyzeStartIndex = LineHeadIndex + Length;
-                long analyzeLength = Document.PreloadLength;
+                long analyzeLength = Document.LazyloadLength;
                 long documentLength = this.Document.Length;
                 if (analyzeStartIndex + analyzeLength > documentLength)
                     analyzeLength = documentLength - analyzeStartIndex;
