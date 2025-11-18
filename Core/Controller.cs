@@ -340,8 +340,8 @@ namespace FooEditEngine
             if (row > this.View.LayoutLines.Count - 1)
                 row = this.View.LayoutLines.Count - 1;
             int col = this.Document.CaretPostion.col;
-            if (col > 0 && col > this.View.LayoutLines[row].Length)
-                col = this.View.LayoutLines[row].Length;
+            if (col > 0 && col > this.View.LayoutLines.GetLengthFromLineNumber(row))
+                col = this.View.LayoutLines.GetLengthFromLineNumber(row);
 
             //選択領域が消えてしまうので覚えておく
             long sel_start = this.SelectionStart;
@@ -410,7 +410,7 @@ namespace FooEditEngine
         /// <param name="isSelected">選択状態にするかどうか</param>
         public void JumpToLineEnd(int row, bool isSelected)
         {
-            this.Document.SetCaretPostionWithoutEvent(row, this.View.LayoutLines[row].Length - 1);
+            this.Document.SetCaretPostionWithoutEvent(row, this.View.LayoutLines.GetLengthFromLineNumber(row) - 1);
             this.View.AdjustCaretAndSrc();
             this.SelectWithMoveCaret(isSelected);
         }
@@ -623,13 +623,14 @@ namespace FooEditEngine
 
         TextPoint AlignNearestWord(TextPoint caret,bool MoveFlow)
         {
-            string str = this.View.LayoutLines[caret.row];
+            long lineHeadIndex = this.View.LayoutLines.GetLineHeadLongIndex(caret.row);
             while (caret.col > 0 &&
-                caret.col < str.Length)
+                caret.col < this.Document.Length)
             {
-                if (str[caret.col] == Document.CR_CHAR)
+                long index = lineHeadIndex + caret.col;
+                if (this.Document[index] == Document.CR_CHAR)
                 {
-                    if (caret.col + 1 < str.Length && str[caret.col + 1] == Document.LF_CHAR)
+                    if (caret.col + 1 < this.Document.Length && this.Document[index + 1] == Document.LF_CHAR)
                     {
                         caret = this.MoveCaretHorizontical(caret, MoveFlow);
                         break;
@@ -638,10 +639,10 @@ namespace FooEditEngine
                     {
                         break;
                     }
-                } else if (str[caret.col] == Document.LF_CHAR){
+                } else if (this.Document[index] == Document.LF_CHAR){
                     break;
                 }
-                else if (!Util.IsWordSeparator(str[caret.col]))
+                else if (!Util.IsWordSeparator(this.Document[index]))
                 {
                     caret = this.MoveCaretHorizontical(caret, MoveFlow);
                 }
@@ -825,10 +826,10 @@ namespace FooEditEngine
             long length = 0;
             if (this.View.InsertMode == false && index < this.Document.Length && this.Document[index] != Document.CR_CHAR&& this.Document[index] != Document.LF_CHAR)
             {
-                string lineString = this.View.LayoutLines[CaretPos.row];
+                int lineLength = this.View.LayoutLines.GetLengthFromLineNumber(CaretPos.row);
                 long end = this.View.LayoutLines.GetLayout(CaretPos.row).AlignIndexToNearestCluster(CaretPos.col + str.Length - 1, AlignDirection.Forward);
-                if (end > lineString.Length - 1)
-                    end = lineString.Length - 1;
+                if (end > lineLength - 1)
+                    end = lineLength - 1;
                 end += this.View.LayoutLines.GetLongIndexFromLineNumber(CaretPos.row);
                 length = end - index;
             }
@@ -1135,7 +1136,8 @@ namespace FooEditEngine
             int delta = isMoveNext ? 0 : -1;
             int prevcol = caret.col;
             int col = caret.col + delta;
-            string lineString = this.View.LayoutLines[caret.row];
+            long colIndexInDocument = this.View.LayoutLines.GetLongIndexFromLineNumber(caret.row) + col;
+            long lineEndIndexInDocument = this.View.LayoutLines.GetLongIndexFromLineNumber(caret.row) + this.View.LayoutLines.GetLengthFromLineNumber(caret.row);
             if (col < 0 || caret.row >= this.View.LayoutLines.Count)
             {
                 if (caret.row == 0)
@@ -1146,7 +1148,7 @@ namespace FooEditEngine
                 caret = this.MoveCaretVertical(caret,false);
                 caret.col = this.View.LayoutLines.GetLengthFromLineNumber(caret.row) - 1;  //最終行以外はすべて改行コードが付くはず
             }
-            else if (col >= lineString.Length || lineString[col] == Document.LF_CHAR || lineString[col] == Document.CR_CHAR)
+            else if (colIndexInDocument >= lineEndIndexInDocument || this.Document[colIndexInDocument] == Document.LF_CHAR || this.Document[colIndexInDocument] == Document.CR_CHAR)
             {
                 if (isMoveNext)
                 {
@@ -1156,9 +1158,9 @@ namespace FooEditEngine
                         caret.col = 0;
                     }
                 }
-                else if (lineString[col] == Document.LF_CHAR)
+                else if (this.Document[colIndexInDocument] == Document.LF_CHAR)
                 {
-                    if (col > 1 && lineString[col - 1] == Document.CR_CHAR)
+                    if (col > 1 && this.Document[colIndexInDocument - 1] == Document.CR_CHAR)
                     {
                         caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 2, AlignDirection.Back);
                     }
@@ -1166,7 +1168,7 @@ namespace FooEditEngine
                     {
                         caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
                     }
-                }else if (lineString[col] == Document.CR_CHAR)
+                }else if (this.Document[colIndexInDocument] == Document.CR_CHAR)
                 {
                     caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
                 }
@@ -1292,8 +1294,9 @@ namespace FooEditEngine
 
                 for (i = 0; i < line.Length && Current.row < this.View.LayoutLines.Count; i++, Current.row++)
                 {
-                    if (Current.col > this.View.LayoutLines[Current.row].Length)
-                        Current.col = this.View.LayoutLines[Current.row].Length;
+                    int lineLength = this.View.LayoutLines.GetLengthFromLineNumber(Current.row);
+                    if (Current.col > lineLength)
+                        Current.col = lineLength;
                     StartIndex = this.View.GetIndexFromLayoutLine(Current);
                     this.Document.Replace(StartIndex, 0, line[i].str);
                     StartIndex += line[i].str.Length;

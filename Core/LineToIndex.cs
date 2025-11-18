@@ -869,7 +869,7 @@ namespace FooEditEngine
                     return 0;
                 }
                 long analyzeStartIndex = LineHeadIndex + Length;
-                long analyzeLength = Document.LazyloadLength;
+                long analyzeLength = Document.PreloadLength;
                 long documentLength = this.Document.Length;
                 if (analyzeStartIndex + analyzeLength > documentLength)
                     analyzeLength = documentLength - analyzeStartIndex;
@@ -963,9 +963,6 @@ namespace FooEditEngine
             else
             {
                 long lineHeadIndex = this.GetLineHeadLongIndex(row);
-
-                string lineString = this.Document.ToString(lineHeadIndex, (int)lineData.length);
-                lineData.LineString = lineString;
 
                 var arg = new CreateLayoutEventArgs(lineHeadIndex, lineData.Length, row);
 

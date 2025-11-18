@@ -715,26 +715,26 @@ namespace FooEditEngine
 
                 if (this.ShowFullSpace || this.ShowHalfSpace || this.ShowTab)
                 {
-                    string str = lti[row];
+                    long lineHeadIndex = lti.GetLineHeadLongIndex(row);
                     D2D.GeometryRealization geo = null;
                     int subLayoutLength = Math.Min(lineLength, Document.MaximumLineLength);
                     for (int i = 0; i < subLayoutLength; i++)
                     {
-                        int indexMainLayout = i + subLayoutStartIndex;
-                        if (indexMainLayout >= str.Length)
+                        long indexMainLayout = i + subLayoutStartIndex + lineHeadIndex;
+                        if (indexMainLayout >= lineHeadIndex + lineLength)
                             break;
                         Point pos = new Point(0, 0);
-                        if (this.ShowTab && str[indexMainLayout] == '\t')
+                        if (this.ShowTab && doc[indexMainLayout] == '\t')
                         {
                             pos = layout.GetPostionFromIndex(i);
                             geo = this._factory.CreateSymbol(ShowSymbol.Tab, this.format);
                         }
-                        else if (this.ShowFullSpace && str[indexMainLayout] == '　')
+                        else if (this.ShowFullSpace && doc[indexMainLayout] == '　')
                         {
                             pos = layout.GetPostionFromIndex(i);
                             geo = this._factory.CreateSymbol(ShowSymbol.FullSpace, this.format);
                         }
-                        else if (this.ShowHalfSpace && str[indexMainLayout] == ' ')
+                        else if (this.ShowHalfSpace && doc[indexMainLayout] == ' ')
                         {
                             pos = layout.GetPostionFromIndex(i);
                             geo = this._factory.CreateSymbol(ShowSymbol.HalfSpace, this.format);
