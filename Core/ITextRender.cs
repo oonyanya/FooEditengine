@@ -622,13 +622,15 @@ namespace FooEditEngine
         /// <summary>
         /// レイアウトを生成する
         /// </summary>
-        /// <param name="str">文字列</param>
         /// <returns>ITextLayoutオブジェクト</returns>
+        /// <param name="doc">ドキュメント</param>
+        /// <param name="index">レイアウトの開始インデックス</param>
+        /// <param name="length">長さ</param>
         /// <param name="syntaxCollection">ハイライト関連の情報を保持しているコレクション</param>
         /// <param name="MarkerRanges">マーカーを保持しているコレクション。マーカーの開始位置は行の先頭を０とする相対位置としてください（位置が-1の場合表示しないこと）</param>
         /// <param name="Selections">選択領域を保持しているコレクション。マーカーの開始位置は行の先頭を０とする相対位置としてください（位置が-1の場合表示しないこと）</param>
         /// <param name="WrapWidth">折り返しの幅</param>
-        ITextLayout CreateLaytout(string str, SyntaxInfo[] syntaxCollection, IEnumerable<Marker> MarkerRanges, IEnumerable<Selection> Selections,double WrapWidth);
+        ITextLayout CreateLaytout(Document doc, long index,long length, SyntaxInfo[] syntaxCollection, IEnumerable<Marker> MarkerRanges, IEnumerable<Selection> Selections, double WrapWidth);
 
         /// <summary>
         /// グリッパーを描く

@@ -153,6 +153,19 @@ namespace FooEditEngine
             throw new NotImplementedException();
         }
 
+        public ITextLayout CreateLaytout(Document doc, long index, long length, SyntaxInfo[] syntaxCollection, IEnumerable<Marker> MarkerRanges, IEnumerable<Selection> SelectRanges, double WrapWidth)
+        {
+            if (doc == null)
+            {
+                return this.CreateLaytout("", syntaxCollection, MarkerRanges, SelectRanges, WrapWidth);
+            }
+            else
+            {
+                var str = doc.ToString(index, length);
+                return this.CreateLaytout(str, syntaxCollection, MarkerRanges, SelectRanges, WrapWidth);
+            }
+        }
+
         public ITextLayout CreateLaytout(string str, SyntaxInfo[] syntaxCollection, IEnumerable<Marker> MarkerRanges, IEnumerable<Selection> SelectRanges, double wrapwidth)
         {
             return new DummyTextLayout(str.Length);

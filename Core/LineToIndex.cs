@@ -957,7 +957,7 @@ namespace FooEditEngine
             LineToIndexTableData lineData = this.GetRaw(row);
             if (lineData.Length == 0)
             {
-                var sublayout = this.render.CreateLaytout("", null, null, null, this.WrapWidth);
+                var sublayout = this.render.CreateLaytout(null, 0, 0, null, null, null, this.WrapWidth);
                 layout = new CombineTextLayout(new ITextLayout[] {sublayout});
             }
             else
@@ -976,7 +976,6 @@ namespace FooEditEngine
                 {
                     long indexSublayout = touple.Item1;
                     long lengthSublayout = touple.Item2;
-                    string content = this.Document.ToString(touple.Item1, touple.Item2);
                     var userMarkerRange = from id in this.Document.Markers.IDs
                                           from s in this.Document.Markers.Get(id, indexSublayout, lengthSublayout)
                                           let n = Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout)
@@ -992,7 +991,7 @@ namespace FooEditEngine
                     {
                         return Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout);
                     }).ToArray();
-                    layout = this.render.CreateLaytout(content, syntaxRnage, markerRange, selectRange, this.WrapWidth);
+                    layout = this.render.CreateLaytout(this.Document, indexSublayout, lengthSublayout, syntaxRnage, markerRange, selectRange, this.WrapWidth);
                     layouts.Add(layout);
                 }
 
