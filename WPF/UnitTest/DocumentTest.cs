@@ -1166,6 +1166,9 @@ namespace UnitTest
             Assert.AreEqual('0', doc[0]);
             Assert.AreEqual('1', doc[1]);
 
+            var seg3 = doc.Slice(0);
+            AreEqual("0123456789", seg3);
+
             try
             {
                 var _ = seg2[int.MaxValue - 1];
