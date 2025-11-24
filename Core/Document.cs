@@ -974,9 +974,11 @@ namespace FooEditEngine
             {
                 for (int i = rect.TopLeft.row; i <= rect.BottomLeft.row; i++)
                 {
+                    long index = this.LayoutLines.GetLongIndexFromLineNumber(i);
                     int length = this.LayoutLines.GetLengthFromLineNumber(i);
                     int leftCol = rect.TopLeft.col, rightCol = rect.TopRight.col, lastCol = length;
-                    int lineFeedLength = Util.GetNewLineLengthInTail(this.LayoutLines[i]);
+                    var docSegment = this.Slice(index, length);
+                    int lineFeedLength = Util.GetNewLineLengthInTail(docSegment);
                     if (lineFeedLength > 0)
                         lastCol = length - lineFeedLength;
                     if (lastCol < 0)
@@ -1849,6 +1851,12 @@ namespace FooEditEngine
                 throw new ArgumentOutOfRangeException();
             return _buffer[absoulteIndex];
         }
+
+        public override string ToString()
+        {
+            return _buffer.ToString(_index, _count);
+        }
+
     }
 
     /// <summary>

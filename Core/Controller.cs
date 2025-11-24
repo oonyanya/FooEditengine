@@ -1095,7 +1095,7 @@ namespace FooEditEngine
             this.Document.Select(selectionStart, text.Length);
         }
 
-        string InsertLineHead(string s, string str)
+        string InsertLineHead(DocumentSegment s, string str)
         {
             var lines = Util.EnumrateLine(s).ToArray();
             StringBuilder output = new StringBuilder();
@@ -1109,7 +1109,7 @@ namespace FooEditEngine
             return output.ToString();
         }
 
-        public string RemoveLineHead(string s, string str,int remove_count)
+        public string RemoveLineHead(DocumentSegment s, string str,int remove_count)
         {
             var lines = Util.EnumrateLine(s).ToArray();
             StringBuilder output = new StringBuilder();
@@ -1358,11 +1358,11 @@ namespace FooEditEngine
                 this.View.Selections = newInsertPoint;
         }
 
-        private string GetTextFromLineSelectArea(SelectCollection Selections)
+        private DocumentSegment GetTextFromLineSelectArea(SelectCollection Selections)
         {
             Selection sel = Util.NormalizeIMaker<Selection>(Selections.First());
 
-            string str = this.Document.ToString(sel.start, sel.length);
+            var str = this.Document.Slice(sel.start, sel.length);
 
             return str;
         }

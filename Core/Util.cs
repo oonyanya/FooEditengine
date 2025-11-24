@@ -59,6 +59,43 @@ namespace FooEditEngine
     }
     class Util
     {
+        public static string NormalizeLineFeed(IReadOnlyList<char> s, string linefeed)
+        {
+            //NormalizeLineFeed()のstringバージョンからコピペ。無理やり一つにまとめると無駄なコピーが発生してしまう
+            //TODO：コピーせずに済む方法があれば、一つにまとめる
+            StringBuilder result = new StringBuilder();
+            int i = 0;
+            while (true)
+            {
+                if (i >= s.Count)
+                    break;
+                if (s[i] == Document.LF_CHAR)
+                {
+                    result.Append(linefeed);
+                    i++;
+                }
+                else if (s[i] == Document.CR_CHAR)
+                {
+                    if (i + 1 < s.Count && s[i + 1] == Document.LF_CHAR)
+                    {
+                        result.Append(linefeed);
+                        i += 2;
+                    }
+                    else
+                    {
+                        result.Append(linefeed);
+                        i++;
+                    }
+                }
+                else
+                {
+                    result.Append(s[i]);
+                    i++;
+                }
+            }
+            return result.ToString();
+        }
+
         public static string NormalizeLineFeed(string s, string linefeed)
         {
             StringBuilder result = new StringBuilder(); 
@@ -92,6 +129,52 @@ namespace FooEditEngine
                 }
             }
             return result.ToString();
+        }
+
+        public static IEnumerable<(string str, string linefeed)> EnumrateLine(IReadOnlyList<char> s)
+        {
+            //EnumrateLine()のstringバージョンからコピペ。無理やり一つにまとめると無駄なコピーが発生してしまう
+            //TODO：コピーせずに済む方法があれば、一つにまとめる
+            StringBuilder result = new StringBuilder();
+            int i = 0;
+            while (true)
+            {
+                if (i >= s.Count)
+                {
+                    if (result.Length > 0)
+                    {
+                        yield return (result.ToString(), string.Empty);
+                        result.Clear();
+                    }
+                    break;
+                }
+                if (s[i] == Document.LF_CHAR)
+                {
+                    yield return (result.ToString(), Document.LF_STR);
+                    result.Clear();
+                    i++;
+                }
+                else if (s[i] == Document.CR_CHAR)
+                {
+                    if (i + 1 < s.Count && s[i + 1] == Document.LF_CHAR)
+                    {
+                        yield return (result.ToString(), Document.CRLF_STR);
+                        result.Clear();
+                        i += 2;
+                    }
+                    else
+                    {
+                        yield return (result.ToString(), Document.CR_STR);
+                        result.Clear();
+                        i++;
+                    }
+                }
+                else
+                {
+                    result.Append(s[i]);
+                    i++;
+                }
+            }
         }
 
         public static IEnumerable<(string str,string linefeed)> EnumrateLine(string s)
@@ -136,17 +219,32 @@ namespace FooEditEngine
             }
         }
 
-        public static bool IsHasNewLine(IEnumerable<char> s)
+        public static bool IsHasNewLine(IList<char> s)
+        {
+            //IsHasNewLine()のstringバージョンからコピペ。無理やり一つにまとめると無駄なコピーが発生してしまう
+            //TODO：コピーせずに済む方法があれば、一つにまとめる
+            return GetNewLineLengthInTail(s) > 0;
+        }
+        public static bool IsHasNewLine(string s)
         {
             return GetNewLineLengthInTail(s) > 0;
         }
-        public static int GetNewLineLengthInTail(IEnumerable<char> s)
+        public static int GetNewLineLengthInTail(IList<char> s)
         {
+            //GetNewLineLengthInTail()のstringバージョンからコピペ。無理やり一つにまとめると無駄なコピーが発生してしまう
+            //TODO：コピーせずに済む方法があれば、一つにまとめる
             var (len,type) =GetNewLineLengthInTailWithType(s);
             return len;
         }
-        public static (int linefeedlen,string linefeedtype) GetNewLineLengthInTailWithType(IEnumerable<char> s)
+        public static int GetNewLineLengthInTail(string s)
         {
+            var (len, type) = GetNewLineLengthInTailWithType(s);
+            return len;
+        }
+        public static (int linefeedlen,string linefeedtype) GetNewLineLengthInTailWithType(IList<char> s)
+        {
+            //GetNewLineLengthInTailWithType()のstringバージョンからコピペ。無理やり一つにまとめると無駄なコピーが発生してしまう
+            //TODO：コピーせずに済む方法があれば、一つにまとめる
             int count;
             if(s.TryGetNonEnumeratedCount(out count) == false)
             {
@@ -175,6 +273,38 @@ namespace FooEditEngine
                     return (1, Document.CR_STR);
             }
             return (0,null);
+        }
+        public static (int linefeedlen, string linefeedtype) GetNewLineLengthInTailWithType(string s)
+        {
+            int count;
+            if (s.TryGetNonEnumeratedCount(out count) == false)
+            {
+                count = s.Count();
+            }
+
+            if (s == null || count == 0)
+                return (0, null);
+            int lastIndex = count - 2;
+            if (lastIndex >= 0)
+            {
+                if (s.ElementAt(lastIndex) == Document.CR_CHAR)
+                {
+                    if (lastIndex + 1 < count && s.ElementAt(lastIndex + 1) == Document.LF_CHAR)
+                        return (2, Document.CRLF_STR);
+                    else
+                        return (1, Document.LF_STR);
+                }
+            }
+            lastIndex = count - 1;
+            if (lastIndex >= 0)
+            {
+                char lastChar = s.ElementAt(lastIndex);
+                if (lastChar == Document.LF_CHAR)
+                    return (1, Document.LF_STR);
+                if (lastChar == Document.CR_CHAR)
+                    return (1, Document.CR_STR);
+            }
+            return (0, null);
         }
 
         public static string[] SpilitByLineFeed(string s)
