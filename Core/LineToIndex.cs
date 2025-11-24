@@ -199,7 +199,10 @@ namespace FooEditEngine
         {
             this.start = index;
             this.length = length;
-            this.Syntax = syntax;
+            if(syntax == null)
+                this.Syntax = Array.Empty<SyntaxInfo>();
+            else
+                this.Syntax = syntax;
             this.EncloserType = EncloserType.None;
             this.Dirty = dirty;
         }
