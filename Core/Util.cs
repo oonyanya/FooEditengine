@@ -136,35 +136,42 @@ namespace FooEditEngine
             }
         }
 
-        public static bool IsHasNewLine(string s)
+        public static bool IsHasNewLine(IEnumerable<char> s)
         {
             return GetNewLineLengthInTail(s) > 0;
         }
-        public static int GetNewLineLengthInTail(string s)
+        public static int GetNewLineLengthInTail(IEnumerable<char> s)
         {
             var (len,type) =GetNewLineLengthInTailWithType(s);
             return len;
         }
-        public static (int linefeedlen,string linefeedtype) GetNewLineLengthInTailWithType(string s)
+        public static (int linefeedlen,string linefeedtype) GetNewLineLengthInTailWithType(IEnumerable<char> s)
         {
-            if (string.IsNullOrEmpty(s))
+            int count;
+            if(s.TryGetNonEnumeratedCount(out count) == false)
+            {
+                count = s.Count();
+            }
+
+            if (s == null || count == 0)
                 return (0,null);
-            int lastIndex = s.Length - 2;
+            int lastIndex = count - 2;
             if (lastIndex >= 0)
             {
-                if (s[lastIndex] == Document.CR_CHAR)
+                if (s.ElementAt(lastIndex) == Document.CR_CHAR)
                 {
-                    if (lastIndex + 1 < s.Length && s[lastIndex + 1] == Document.LF_CHAR)
+                    if (lastIndex + 1 < count && s.ElementAt(lastIndex + 1) == Document.LF_CHAR)
                         return (2,Document.CRLF_STR);
                     else
                         return (1,Document.LF_STR);
                 }
             }
-            lastIndex = s.Length - 1;
+            lastIndex = count - 1;
             if (lastIndex >= 0) {
-                if (s[lastIndex] == Document.LF_CHAR)
+                char lastChar = s.ElementAt(lastIndex);
+                if (lastChar == Document.LF_CHAR)
                     return (1,Document.LF_STR);
-                if (s[lastIndex] == Document.CR_CHAR)
+                if (lastChar == Document.CR_CHAR)
                     return (1, Document.CR_STR);
             }
             return (0,null);
