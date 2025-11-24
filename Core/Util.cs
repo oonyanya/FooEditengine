@@ -245,11 +245,7 @@ namespace FooEditEngine
         {
             //GetNewLineLengthInTailWithType()のstringバージョンからコピペ。無理やり一つにまとめると無駄なコピーが発生してしまう
             //TODO：コピーせずに済む方法があれば、一つにまとめる
-            int count;
-            if(s.TryGetNonEnumeratedCount(out count) == false)
-            {
-                count = s.Count();
-            }
+            int count = s.Count;
 
             if (s == null || count == 0)
                 return (0,null);
@@ -276,11 +272,7 @@ namespace FooEditEngine
         }
         public static (int linefeedlen, string linefeedtype) GetNewLineLengthInTailWithType(string s)
         {
-            int count;
-            if (s.TryGetNonEnumeratedCount(out count) == false)
-            {
-                count = s.Count();
-            }
+            int count = s.Length;
 
             if (s == null || count == 0)
                 return (0, null);
