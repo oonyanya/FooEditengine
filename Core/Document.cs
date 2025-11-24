@@ -21,6 +21,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using FooProject.Collection;
 
 namespace FooEditEngine
 {
@@ -1222,6 +1223,27 @@ namespace FooEditEngine
         }
 
         /// <summary>
+        /// 部分参照を作成する
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>DocumentSegmentのインスタンス</returns>
+        public DocumentSegment Slice(long index)
+        {
+            return new DocumentSegment(this.buffer, index, this.buffer.Count - index);
+        }
+
+        /// <summary>
+        /// 部分参照を作成する
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="count"></param>
+        /// <returns>DocumentSegmentのインスタンス</returns>
+        public DocumentSegment Slice(long index,long count)
+        {
+            return new DocumentSegment(this.buffer, index, count);
+        }
+
+        /// <summary>
         /// 行を取得する
         /// </summary>
         /// <param name="startIndex">開始インデックス</param>
@@ -1792,6 +1814,40 @@ namespace FooEditEngine
             this.Match = m;
             this.Start = start;
             this.End = end;
+        }
+    }
+
+    public class DocumentSegment : ReadOnlyBigList<char>
+    {
+        StringBufferBase _buffer;
+        long _index, _count;
+        internal DocumentSegment(StringBufferBase buf,long index,long count)
+        {
+            if (index < 0 || index >= buf.Count)
+                throw new ArgumentOutOfRangeException("index");
+            if (count < 0 || count > buf.Count - index)
+                throw new ArgumentOutOfRangeException("count");
+
+            this._buffer = buf;
+            this._index = index;
+            this._count = count;
+        }
+
+        public override int Count => (int)_count;
+
+        public long LongCount => _count;
+
+        public override char this[int index] {
+            get => GetAt(index);
+            set => throw new NotSupportedException();
+        }
+
+        public char GetAt(long index)
+        {
+            long absoulteIndex = index + _index;
+            if (absoulteIndex > _buffer.Count)
+                throw new ArgumentOutOfRangeException();
+            return _buffer[absoulteIndex];
         }
     }
 

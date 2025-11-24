@@ -1153,6 +1153,61 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void SliceTest()
+        {
+            Document doc = new Document();
+            doc.Append("0123456789");
+
+            var seg1 = doc.Slice(7);
+            AreEqual("789", seg1);
+
+            var seg2 = doc.Slice(0,2);
+            AreEqual("01", seg2);
+            Assert.AreEqual('0', doc[0]);
+            Assert.AreEqual('1', doc[1]);
+
+            try
+            {
+                var _ = seg2[int.MaxValue - 1];
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(ex is ArgumentOutOfRangeException);
+            }
+
+            try
+            {
+                doc.Slice(-1);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(ex is ArgumentOutOfRangeException);
+            }
+
+            try
+            {
+                doc.Slice(int.MaxValue - 1);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(ex is ArgumentOutOfRangeException);
+            }
+
+            try
+            {
+                doc.Slice(1,int.MaxValue - 1);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(ex is ArgumentOutOfRangeException);
+            }
+        }
+
+        [TestMethod]
         public async Task SaveAndLoadFile()
         {
             const int BUFFER_SIZE = 1024;
