@@ -113,6 +113,7 @@ namespace FooEditEngine.UWP
             this.Disposed = true;
             this.Invaild = true;
             this._layout.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         public double GetColPostionFromIndex(int index)

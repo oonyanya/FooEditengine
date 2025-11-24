@@ -231,6 +231,7 @@ namespace FooEditEngine
         {
             this.layout.Dispose();
             this.Disposed = true;
+            GC.SuppressFinalize(this);
         }
 
         public IList<Marker> Markers;
