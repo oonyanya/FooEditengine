@@ -1048,9 +1048,9 @@ namespace UnitTest
 
             Assert.AreEqual(Document.MaximumLineLength, layout.GetIndexFromPostion(0, 20));
 
-            Assert.AreEqual(1, layout.GetWidthFromIndex(0));
+            Assert.AreEqual(DummyTextLayout.TestCharWidth, layout.GetWidthFromIndex(0));
 
-            Assert.AreEqual(1, layout.GetWidthFromIndex(Document.MaximumLineLength));
+            Assert.AreEqual(DummyTextLayout.TestCharWidth, layout.GetWidthFromIndex(Document.MaximumLineLength));
 
             Assert.AreEqual(1,layout.AlignIndexToNearestCluster(0,AlignDirection.Forward));
 

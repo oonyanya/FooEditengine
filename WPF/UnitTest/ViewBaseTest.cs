@@ -21,6 +21,92 @@ namespace UnitTest
     public class ViewBaseTest
     {
         [TestMethod]
+        public void GetTextPointFromPostionTest()
+        {
+            const int TestLineCount = 4;
+            const string TestText = "0123456789\n0123456789\n0123456789\n0123456789";
+
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            DummyView view = new DummyView(doc, render);
+            view.PageBound = new Rectangle(0, 0, 200, TestLineCount * DummyTextLayout.TestLineHeight);
+            doc.Clear();
+            doc.Append(TestText);
+
+            //DummyTextLayoutなので常に文字の幅と行の幅や高さは固定。以後同じ。
+            var result = view.GetTextPointFromPostion(new Point(0, 0), TextPointSearchRange.Full);
+            Assert.AreEqual(0, result.row);
+            Assert.AreEqual(0, result.col);
+
+            result = view.GetTextPointFromPostion(new Point(25, 0), TextPointSearchRange.Full);
+            Assert.AreEqual(0, result.row);
+            Assert.AreEqual(1, result.col);
+
+            result = view.GetTextPointFromPostion(new Point(195, 0), TextPointSearchRange.Full);
+            Assert.AreEqual(0, result.row);
+            Assert.AreEqual(9, result.col);
+
+            result = view.GetTextPointFromPostion(new Point(0, 80), TextPointSearchRange.Full);
+            Assert.AreEqual(3, result.row);
+            Assert.AreEqual(0, result.col);
+
+            result = view.GetTextPointFromPostion(new Point(195, 80), TextPointSearchRange.Full);
+            Assert.AreEqual(3, result.row);
+            Assert.AreEqual(9, result.col);
+
+            view.PageBound = new Rectangle(0, 0, 50, 4 * DummyTextLayout.TestLineHeight);
+            Document.MaximumLineLength = 5;
+            doc.PerformLayout(false);
+            doc.LayoutLines.FetchLine(TestLineCount);
+
+            result = view.GetTextPointFromPostion(new Point(0, 0), TextPointSearchRange.Full);
+            Assert.AreEqual(0, result.row);
+            Assert.AreEqual(0, result.col);
+
+            result = view.GetTextPointFromPostion(new Point(25, 0), TextPointSearchRange.Full);
+            Assert.AreEqual(0, result.row);
+            Assert.AreEqual(1, result.col);
+
+            result = view.GetTextPointFromPostion(new Point(95, 20), TextPointSearchRange.Full);
+            Assert.AreEqual(0, result.row);
+            Assert.AreEqual(9, result.col);
+
+            result = view.GetTextPointFromPostion(new Point(0, 180), TextPointSearchRange.Full);
+            Assert.AreEqual(3, result.row);
+            Assert.AreEqual(0, result.col);
+
+            result = view.GetTextPointFromPostion(new Point(195, 220), TextPointSearchRange.Full);
+            Assert.AreEqual(3, result.row);
+            Assert.AreEqual(9, result.col);
+
+        }
+
+        [TestMethod]
+        public void GetRectFromIndexTest()
+        {
+            const int TestLineCount = 4;
+            const string TestText = "0123456789\n0123456789\n0123456789\n0123456789";
+
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            DummyView view = new DummyView(doc, render);
+            view.PageBound = new Rectangle(0, 0, 200, TestLineCount * DummyTextLayout.TestLineHeight);
+            doc.Clear();
+            doc.Append(TestText);
+            doc.PerformLayout(false);
+            doc.LayoutLines.FetchLine(TestLineCount);
+            view.CalculateLineCountOnScreen();
+
+            var result = view.GetRectFromIndex(0,20,20);
+            Assert.AreEqual(-10, result.X);
+            Assert.AreEqual(20, result.Y);
+            Assert.AreEqual(DummyTextLayout.TestCharWidth, result.Width);
+            Assert.AreEqual(DummyTextLayout.TestLineHeight, result.Height);
+        }
+
+        [TestMethod]
         public void TryPixelScrollTest()
         {
             DummyRender render = new DummyRender();

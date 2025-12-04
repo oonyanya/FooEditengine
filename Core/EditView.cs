@@ -534,84 +534,6 @@ namespace FooEditEngine
             return updateRect;
         }
 
-        /// <summary>
-        /// 指定した座標の一番近くにあるTextPointを取得する
-        /// </summary>
-        /// <param name="p">ビューエリアを左上とする相対位置</param>
-        /// <param name="searchRange">探索範囲</param>
-        /// <returns>レイアウトラインを指し示すTextPoint</returns>
-        public TextPoint GetTextPointFromPostion(Point p,TextPointSearchRange searchRange = TextPointSearchRange.TextAreaOnly)
-        {
-            if(searchRange == TextPointSearchRange.TextAreaOnly)
-            {
-                if (p.Y < this.render.TextArea.TopLeft.Y ||
-                    p.Y > this.render.TextArea.BottomRight.Y)
-                    return TextPoint.Null;
-            }
-
-            TextPoint tp = new TextPoint();
-
-            if (this.LayoutLines.Count == 0)
-                return tp;
-
-            //表示領域から探索を始めるのでパディングの分だけ引く
-            p.Y -= this.render.TextArea.Y;
-
-            //p.Y に最も近い行を調べる(OffsetY分引かれてるので、その分足す)
-            bool result;
-            SrcPoint t = this.GetNearstRowAndOffsetY(this.Src.Row, p.Y, out result);
-            if (result == false)
-            {
-                if(p.Y > 0)
-                    t.Row = this.LayoutLines.Count - 1;
-                else if(p.Y < 0)
-                    t.Row = 0;
-            }
-            t.OffsetY -= this.Src.OffsetY;
-
-            double relX = 0, relY;
-            tp.row = t.Row;
-            relY = t.OffsetY;    //相対位置がマイナスなので反転させる
-
-            if (searchRange == TextPointSearchRange.TextAreaOnly)
-            {
-                if (p.X < this.render.TextArea.X)
-                    return tp;
-            }
-
-            relX = p.X - this.render.TextArea.X + this.Document.Src.X;
-            tp.col = this.LayoutLines.GetLayout(tp.row).GetIndexFromPostion(relX,relY);
-
-            int lineLength = this.LayoutLines.GetLengthFromLineNumber(tp.row);
-            if (tp.col > lineLength)
-                tp.col = lineLength;
-
-            return tp;
-        }
-
-        /// <summary>
-        /// TextPointに対応する座標を得る
-        /// </summary>
-        /// <param name="tp">レイアウトライン上の位置</param>
-        /// <returns>テキストエリアを左上とする相対位置</returns>
-        public Point GetPostionFromTextPoint(TextPoint tp)
-        {
-            Point p = new Point();
-            //表示上のずれを考慮せずキャレット位置を求める
-            for (int i = this.Src.Row; i < tp.row; i++)
-            {
-                long lineHeadIndex = this.LayoutLines.GetLongIndexFromLineNumber(i);
-                long lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
-                if (this.LayoutLines.FoldingCollection.IsHidden(lineHeadIndex))
-                    continue;
-                p.Y += this.LayoutLines.GetLayout(i).Height;
-            }
-            Point relP = this.LayoutLines.GetLayout(tp.row).GetPostionFromIndex(tp.col);
-            p.X += relP.X - Src.X + this.render.TextArea.X;
-            p.Y += this.render.TextArea.Y + relP.Y + this.Src.OffsetY;  //実際に返す値は表示上のずれを考慮しないといけない
-            return p;
-        }
-
         public Gripper HitGripperFromPoint(Point p)
         {
             if (this.Document.SelectGrippers.BottomLeft.IsHit(p))
@@ -619,33 +541,6 @@ namespace FooEditEngine
             if (this.Document.SelectGrippers.BottomRight.IsHit(p))
                 return this.Document.SelectGrippers.BottomRight;
             return null;
-        }
-
-        public Rectangle GetRectFromIndex(long index,int width,int height)
-        {
-            TextPoint tp = this.LayoutLines.GetTextPointFromIndex(index);
-            return this.GetRectFromTextPoint(tp, width, height);
-        }
-
-        public Rectangle GetRectFromTextPoint(TextPoint tp, int width, int height)
-        {
-            if (tp.row < this.Src.Row)
-                return Rectangle.Empty;
-            //画面外にある時は計算する必要がそもそもない
-            if (tp.row - this.Src.Row > this.LineCountOnScreen)
-                return Rectangle.Empty;
-            double radius = width / 2;
-            Point point = this.GetPostionFromTextPoint(tp);
-            double lineHeight = this.render.emSize.Height;
-
-
-            Rectangle rect =  new Rectangle(point.X - radius, point.Y + lineHeight, width, height);
-
-            if (rect.BottomLeft.Y >= this.render.TextArea.BottomLeft.Y ||
-                rect.BottomRight.X < this.render.TextArea.BottomLeft.X ||
-                rect.BottomLeft.X > this.render.TextArea.BottomRight.X)
-                return Rectangle.Empty;
-            return rect;
         }
 
         /// <summary>

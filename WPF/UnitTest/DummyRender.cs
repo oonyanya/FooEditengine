@@ -43,7 +43,7 @@ namespace UnitTest
 
         public Size emSize
         {
-            get { return new Size(20,20); }
+            get { return new Size(DummyTextLayout.TestCharWidth, DummyTextLayout.TestCharHeight); }
         }
 
         public int TabWidthChar
@@ -154,7 +154,7 @@ namespace UnitTest
 
         public ITextLayout CreateLaytout(string str, SyntaxInfo[] syntaxCollection, IEnumerable<Marker> MarkerRanges, IEnumerable<Selection> Selections, double WrapWidth)
         {
-            return new DummyTextLayout();
+            return new DummyTextLayout(str);
         }
 
         public void DrawCachedBitmap(Rectangle dstRect, Rectangle srcRect)
@@ -163,14 +163,23 @@ namespace UnitTest
     }
     class DummyTextLayout : ITextLayout
     {
+        public const double TestLineHeight = 20;
+        public const double TestCharWidth = 20;
+        public const double TestCharHeight = 20;
+
+        public DummyTextLayout(string str)
+        {
+            this.Width = TestCharWidth * str.Length;
+        }
+
         public double Width
         {
-            get { return 100; }
+            get; private set;
         }
 
         public double Height
         {
-            get { return 20; }
+            get { return TestLineHeight; }
         }
 
         public bool Disposed
@@ -186,12 +195,12 @@ namespace UnitTest
 
         public int GetIndexFromColPostion(double x)
         {
-            return 0;
+            return (int)(x / DummyTextLayout.TestCharWidth);
         }
 
         public double GetWidthFromIndex(int index)
         {
-            return 1;
+            return DummyTextLayout.TestCharWidth;
         }
 
         public double GetColPostionFromIndex(int index)
@@ -215,12 +224,12 @@ namespace UnitTest
 
         public int GetIndexFromPostion(double x, double y)
         {
-            return 0;
+            return (int)(x / DummyTextLayout.TestCharWidth);
         }
 
         public Point GetPostionFromIndex(int index)
         {
-            return new Point(0,0);
+            return new Point(index * DummyTextLayout.TestCharWidth,0);
         }
     }
 }
