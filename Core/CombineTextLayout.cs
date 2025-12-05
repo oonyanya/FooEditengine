@@ -5,24 +5,50 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using FooProject.Collection;
 
 namespace FooEditEngine
 {
+    class SubLineToIndexTableData : LineToIndexTableDataBase
+    {
+        public SubLineToIndexTableData(long startIndex,long length,double height,ITextLayout layout)
+        {
+            this.Layout = layout;
+            this.start = startIndex;
+            this.length = length;
+            this.Height = height;
+        }
+
+        public override FooProject.Collection.IRange DeepCopy()
+        {
+            return new SubLineToIndexTableData(this.start,this.length,this.Height,this.Layout);
+        }
+    }
+
     class CombineTextLayout : ITextLayout
     {
-        List<ITextLayout> TextLayouts;
+        List<SubLineToIndexTableData> TextLayouts;
 
-        public CombineTextLayout(IEnumerable<ITextLayout> textLayouts)
+        public CombineTextLayout()
         {
-            this.TextLayouts = new List<ITextLayout>();
-            this.TextLayouts.AddRange(textLayouts);
-            this.Width = TextLayouts.Max((layout) => layout.Width);
-            this.Height = TextLayouts.Sum((layout) => layout.Height);
+            this.TextLayouts = new List<SubLineToIndexTableData>();
+        }
+
+        public void Add(ITextLayout layout, long startIndex, long length)
+        {
+            var newItem = new SubLineToIndexTableData(startIndex,length,layout.Height,layout);
+            this.TextLayouts.Add(newItem);
+
+            if (layout.Width > this.Width)
+            {
+                this.Width = layout.Width;
+            }
+            this.Height += layout.Height;
         }
 
         public ITextLayout this[int i]
         {
-            get { return TextLayouts[i]; }
+            get { return TextLayouts[i].Layout; }
         }
 
         public int TextLayoutCount
@@ -44,7 +70,7 @@ namespace FooEditEngine
             get; set;
         }
 
-        private (int,int,int, double) GetLayoutNumberFromIndex(int index, int splitLength)
+        private (int, int, int, double) GetLayoutNumberFromIndex(int index, int splitLength)
         {
             int relativeIndex = index;
             int layoutNumber = 0;
@@ -58,7 +84,7 @@ namespace FooEditEngine
             int arrayIndex = layoutNumber;
             if (arrayIndex >= TextLayouts.Count)
                 arrayIndex = TextLayouts.Count - 1;
-            return (relativeIndex, arrayIndex,layoutNumber, pos_y);
+            return (relativeIndex, arrayIndex, layoutNumber, pos_y);
         }
 
         public int AlignIndexToNearestCluster(int index, AlignDirection flow)
@@ -67,15 +93,15 @@ namespace FooEditEngine
             int relativeIndex,layoutNumber,arrayIndex;
             double pos_y;
             (relativeIndex,arrayIndex,layoutNumber, pos_y) = GetLayoutNumberFromIndex(index, splitLength);
-            int result = TextLayouts[arrayIndex].AlignIndexToNearestCluster(relativeIndex, flow);
+            int result = TextLayouts[arrayIndex].Layout.AlignIndexToNearestCluster(relativeIndex, flow);
             result += layoutNumber * splitLength;
             return result;
         }
 
         public void Dispose()
         {
-            foreach (ITextLayout layout in TextLayouts)
-                layout.Dispose();
+            foreach (var sublayout in TextLayouts)
+                sublayout.Layout.Dispose();
             this.Invaild = true;
             this.Disposed = true;
         }
@@ -95,7 +121,7 @@ namespace FooEditEngine
         public int GetIndexFromPostion(double x, double y)
         {
             int splitLength = Document.MaximumLineLength;
-            int index = 0 ;
+            int index = 0;
             int layoutNumber = 0;
             double pos_x = 0, pos_y = 0;
             while (true)
@@ -112,7 +138,7 @@ namespace FooEditEngine
                 index += splitLength;
                 layoutNumber++;
             }
-            int relativeIndex = TextLayouts[layoutNumber].GetIndexFromPostion(x - pos_x,y - pos_y);
+            int relativeIndex = TextLayouts[layoutNumber].Layout.GetIndexFromPostion(x - pos_x, y - pos_y);
             return relativeIndex + index;
         }
 
@@ -122,7 +148,7 @@ namespace FooEditEngine
             int relativeIndex, layoutNumber, arrayIndex;
             double pos_y;
             (relativeIndex, arrayIndex, layoutNumber, pos_y) = GetLayoutNumberFromIndex(index, splitLength);
-            Point relativePointInSublayout = TextLayouts[arrayIndex].GetPostionFromIndex(relativeIndex);
+            Point relativePointInSublayout = TextLayouts[arrayIndex].Layout.GetPostionFromIndex(relativeIndex);
             return new Point(relativePointInSublayout.X, pos_y + relativePointInSublayout.Y);
         }
 
@@ -131,17 +157,17 @@ namespace FooEditEngine
             int relativeIndex, layoutNumber, arrayIndex;
             double pos_y;
             (relativeIndex, arrayIndex, layoutNumber, pos_y) = GetLayoutNumberFromIndex(index, Document.MaximumLineLength);
-            return TextLayouts[arrayIndex].GetWidthFromIndex(relativeIndex);
+            return TextLayouts[arrayIndex].Layout.GetWidthFromIndex(relativeIndex);
         }
 
         public void Draw(double x, double y,Action<ITextLayout,int,double,double> action)
         {
             double pos_x = x,pos_y = y;
             int index_main_layout = 0;
-            foreach (var layout in TextLayouts)
+            foreach (var sublayout in TextLayouts)
             {
-                action(layout, index_main_layout, pos_x, pos_y);
-                pos_y += layout.Height;
+                action(sublayout.Layout, index_main_layout, pos_x, pos_y);
+                pos_y += sublayout.Layout.Height;
                 index_main_layout += Document.MaximumLineLength;
             }
         }

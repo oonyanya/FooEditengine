@@ -158,11 +158,9 @@ namespace FooEditEngine
         bool Generate(Document doc, LineToIndexTable lti, bool force = true);
     }
 
-    public class LineToIndexTableData : IDisposable, FooProject.Collection.IRange
+    public class LineToIndexTableDataBase : IDisposable, FooProject.Collection.IRangeWithHeight
     {
-        public long start { get; set; }
-
-        public long length { get; set; }
+        internal ITextLayout Layout;
 
         /// <summary>
         /// マーカーの開始位置。-1を設定した場合、そのマーカーはレタリングされません。正しい先頭位置を取得するにはGetLineHeadIndex()を使用してください
@@ -175,6 +173,30 @@ namespace FooEditEngine
             set { this.length = Length; }
         }
 
+        public long start { get; set; }
+
+        public long length { get; set; }
+
+        public double sumHeight { get; set; }
+
+        public double Height { get; set; }
+
+        public virtual void Dispose()
+        {
+            if (this.Layout != null)
+            {
+                this.Layout.Dispose();
+            }
+        }
+
+        public virtual FooProject.Collection.IRange DeepCopy()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class LineToIndexTableData : LineToIndexTableDataBase
+    {
         /// <summary>
         /// キャッシュ済みの行文字列を取得する
         /// </summary>
@@ -182,7 +204,6 @@ namespace FooEditEngine
 
         internal SyntaxInfo[] Syntax;
         internal EncloserType EncloserType;
-        internal ITextLayout Layout;
         public bool Dirty = false;
 
         /// <summary>
@@ -207,7 +228,7 @@ namespace FooEditEngine
             this.Dirty = dirty;
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             this.LineString = null;
             if(this.Layout != null)
@@ -216,7 +237,7 @@ namespace FooEditEngine
             }
         }
 
-        public FooProject.Collection.IRange DeepCopy()
+        public override FooProject.Collection.IRange DeepCopy()
         {
             var result = new LineToIndexTableData();
             result.start = this.start;
@@ -956,12 +977,12 @@ namespace FooEditEngine
 
         ITextLayout CreateLayout(int row)
         {
-            ITextLayout layout;
+            CombineTextLayout layout = new CombineTextLayout();
             LineToIndexTableData lineData = this.GetRaw(row);
             if (lineData.Length == 0)
             {
                 var sublayout = this.render.CreateLaytout(null, 0, 0, null, null, null, this.WrapWidth);
-                layout = new CombineTextLayout(new ITextLayout[] {sublayout});
+                layout.Add(sublayout, 0, 0);
             }
             else
             {
@@ -974,7 +995,6 @@ namespace FooEditEngine
 
                 var watchedMarker = this.Document.MarkerPatternSet.GetMarkers(arg);
 
-                List<ITextLayout> layouts = new List<ITextLayout>();
                 foreach(var touple in this.ForEachLines(lineHeadIndex, lineHeadIndex + lineData.Length - 1, Document.MaximumLineLength))
                 {
                     long indexSublayout = touple.Item1;
@@ -994,11 +1014,9 @@ namespace FooEditEngine
                     {
                         return Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout);
                     }).ToArray();
-                    layout = this.render.CreateLaytout(this.Document, indexSublayout, lengthSublayout, syntaxRnage, markerRange, selectRange, this.WrapWidth);
-                    layouts.Add(layout);
+                    var sublayout = this.render.CreateLaytout(this.Document, indexSublayout, lengthSublayout, syntaxRnage, markerRange, selectRange, this.WrapWidth);
+                    layout.Add(sublayout,indexSublayout,lengthSublayout);
                 }
-
-                layout = new CombineTextLayout(layouts);
             }
 
             return layout;
