@@ -27,11 +27,11 @@ namespace FooEditEngine
 
     class CombineTextLayout : ITextLayout
     {
-        List<SubLineToIndexTableData> TextLayouts;
+        BigIndexAndHeightList<SubLineToIndexTableData> TextLayouts;
 
         public CombineTextLayout()
         {
-            this.TextLayouts = new List<SubLineToIndexTableData>();
+            this.TextLayouts = new BigIndexAndHeightList<SubLineToIndexTableData>();
         }
 
         public void Add(ITextLayout layout, long startIndex, long length)
@@ -72,19 +72,21 @@ namespace FooEditEngine
 
         private (int, int, int, double) GetLayoutNumberFromIndex(int index, int splitLength)
         {
-            int relativeIndex = index;
+            long relativeIndex = index;
             int layoutNumber = 0;
             double pos_y = 0.0;
-            while (relativeIndex >= splitLength)
+            layoutNumber = (int)this.TextLayouts.GetIndexFromAbsoluteIndexIntoRange(index, out relativeIndex, out pos_y);
+            if (layoutNumber == -1)
             {
-                relativeIndex -= splitLength;
-                pos_y += TextLayouts[layoutNumber].Height;
-                layoutNumber++;
+                if (this.TextLayouts.Count > 0)
+                    layoutNumber = this.TextLayouts.Count - 1;
+                else
+                    layoutNumber = 0;
             }
-            int arrayIndex = layoutNumber;
-            if (arrayIndex >= TextLayouts.Count)
-                arrayIndex = TextLayouts.Count - 1;
-            return (relativeIndex, arrayIndex, layoutNumber, pos_y);
+
+            relativeIndex = index - this.TextLayouts[layoutNumber].start;
+
+            return ((int)relativeIndex, layoutNumber, layoutNumber, pos_y);
         }
 
         public int AlignIndexToNearestCluster(int index, AlignDirection flow)
@@ -120,24 +122,21 @@ namespace FooEditEngine
 
         public int GetIndexFromPostion(double x, double y)
         {
-            int splitLength = Document.MaximumLineLength;
             int index = 0;
             int layoutNumber = 0;
             double pos_x = 0, pos_y = 0;
-            while (true)
+
+            layoutNumber = (int)this.TextLayouts.GetIndexFromAbsoluteSumHeight(y,out pos_y);
+            if(layoutNumber == - 1)
             {
-                if (layoutNumber >= TextLayouts.Count)
-                {
-                    layoutNumber = TextLayouts.Count - 1;
-                    break;
-                }
-                double layoutHeight = TextLayouts[layoutNumber].Height;
-                if (pos_y + layoutHeight > y)
-                    break;
-                pos_y += layoutHeight;
-                index += splitLength;
-                layoutNumber++;
+                if(this.TextLayouts.Count > 0)
+                    layoutNumber = this.TextLayouts.Count - 1;
+                else
+                    layoutNumber = 0;
             }
+
+            index = (int)this.TextLayouts[layoutNumber].start;
+
             int relativeIndex = TextLayouts[layoutNumber].Layout.GetIndexFromPostion(x - pos_x, y - pos_y);
             return relativeIndex + index;
         }

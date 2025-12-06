@@ -1025,7 +1025,7 @@ namespace UnitTest
                 int testLength = Document.MaximumLineLength * 2;
                 for (int j = 0; j < testLength; j++)
                 {
-                    doc.Append('a');
+                    doc.Append("a");
                 }
                 doc.Append(Document.LF_CHAR);
             }
