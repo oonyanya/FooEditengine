@@ -144,6 +144,7 @@ namespace FooEditEngine.Windows
         /// テキスト描写に使用するアンチエイリアシングモードを表す
         /// </summary>
         [BrowsableAttribute(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public TextAntialiasMode TextAntialiasMode
         {
             get
@@ -191,6 +192,7 @@ namespace FooEditEngine.Windows
         /// シンタックスハイライター
         /// </summary>
         [BrowsableAttribute(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IHilighter Hilighter
         {
             get { return this.View.Hilighter; }
@@ -201,6 +203,7 @@ namespace FooEditEngine.Windows
         /// フォールティングを作成するインターフェイスを表す
         /// </summary>
         [BrowsableAttribute(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IFoldingStrategy FoldingStrategy
         {
             get
@@ -218,6 +221,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// 境界線のスタイルを指定します
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public BorderStyle BorderStyle
         {
             get { return this._BoderStyle; }
@@ -397,6 +401,7 @@ namespace FooEditEngine.Windows
         /// 未選択状態で文字列を代入した場合、キャレット位置に挿入され、そうでないときは置き換えられます。
         /// </remarks>
         [BrowsableAttribute(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string SelectedText
         {
             get { return this.Controller.SelectedText; }
@@ -420,6 +425,7 @@ namespace FooEditEngine.Windows
         /// 矩形選択モードの場合、選択範囲の文字数ではなく、開始位置から終了位置までの長さとなります
         /// </remarks>
         [BrowsableAttribute(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public TextRange Selection
         {
             get { return new TextRange(this.Controller.SelectionStart,this.Controller.SelectionLength); }
@@ -472,6 +478,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// 前景色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color Foreground
         {
             get
@@ -488,6 +495,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// 選択時の前景色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color HilightForeground
         {
             get
@@ -504,6 +512,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// 背景色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color Background
         {
             get
@@ -520,6 +529,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// 挿入モード時のキャレット色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color InsertCaret
         {
             get
@@ -536,6 +546,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// 上書きモード時のキャレット色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color OverwriteCaret
         {
             get
@@ -552,6 +563,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// ラインマーカーの色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color LineMarker
         {
             get
@@ -568,6 +580,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// コントロールの色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color ControlChar
         {
             get
@@ -584,6 +597,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// 編集行フラグの色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color UpdateArea
         {
             get
@@ -600,6 +614,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// 行番号の色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color LineNumber
         {
             get
@@ -616,6 +631,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// URLの色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color Url
         {
             get
@@ -648,6 +664,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// コメントの色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color Comment
         {
             get
@@ -664,6 +681,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// 文字リテラルの色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color Literal
         {
             get
@@ -680,6 +698,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// キーワード1の色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color Keyword1
         {
             get
@@ -696,6 +715,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// キーワード2の色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color Keyword2
         {
             get

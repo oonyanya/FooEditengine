@@ -8,7 +8,7 @@
     <description>Textbox with Hilight and Regex and Folding</description>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows7.0</TargetFramework>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -18,13 +18,13 @@
     <DefineConstants>TRACE;WPF;ENABLE_AUTMATION</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Nito.AsyncEx" Version="5.0.0" />
-    <PackageReference Include="SharpDX" Version="4.0.0" />
-    <PackageReference Include="SharpDX.Direct2D1" Version="4.0.0" />
-    <PackageReference Include="SharpDX.Direct3D11" Version="4.0.0" />
-    <PackageReference Include="SharpDX.Direct3D9" Version="4.0.0" />
-    <PackageReference Include="SharpDX.DXGI" Version="4.0.0" />
-    <PackageReference Include="SharpDX.Mathematics" Version="4.0.0" />
+    <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
+    <PackageReference Include="SharpDX" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Direct2D1" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Direct3D9" Version="4.2.0" />
+    <PackageReference Include="SharpDX.DXGI" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Mathematics" Version="4.2.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\DotNetTextStore\DotNetTextStore.csproj" />

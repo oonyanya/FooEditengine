@@ -187,7 +187,7 @@ namespace FooEditEngine.Windows
 
             this.render.Target = this.bmp_d2d;
 
-            this.textRender = new CustomTextRenderer(this._factory, this.Foreground);
+            //this.textRender = new CustomTextRenderer(this._factory, this.Foreground);
 
             this.renderSize = new Size(width, height);
 
@@ -215,8 +215,6 @@ namespace FooEditEngine.Windows
                 this.bmp_d2d.Dispose();
             if (this.cachedBitMap != null)
                 this.cachedBitMap.Dispose();
-            if (this.textRender != null)
-                this.textRender.Dispose();
             if (this.device2d != null)
                 this.device2d.Dispose();
             if (this.render != null)

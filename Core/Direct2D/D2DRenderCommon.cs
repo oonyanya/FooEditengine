@@ -234,7 +234,6 @@ namespace FooEditEngine
         TextAntialiasMode _TextAntialiasMode;
         Color4 _ControlChar,_Forground,_URL,_Hilight;
         DW.TextFormat format;
-        protected CustomTextRenderer textRender;
         protected D2D.Bitmap cachedBitMap;
         int tabLength = 8;
         bool _RightToLeft;
@@ -382,8 +381,10 @@ namespace FooEditEngine
                 if (this.render == null)
                     return;
                 this._Forground = value;
+                /*
                 if (this.textRender != null)
                     this.textRender.DefaultFore = value;
+                */
                 this.OnChangedRenderResource(this, new ChangedRenderRsourceEventArgs(ResourceType.Brush));
             }
         }
