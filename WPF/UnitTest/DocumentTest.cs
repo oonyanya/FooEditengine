@@ -979,10 +979,21 @@ namespace UnitTest
                 Assert.AreEqual(documentIndex, doc.LayoutLines.GetLongIndexFromLineNumber(i));
                 var lineData = doc.LayoutLines.GetRaw(i);
                 var syntaxs = lineData.Syntax;
-                Assert.AreEqual(6,syntaxs.Length);
-                foreach(var syntax in syntaxs)
+                if(syntaxs.Length == 6)
                 {
-                    Assert.AreEqual(TokenType.Keyword1, syntax.type);
+                    var expected_index = lineData.start;
+                    var expected_tokenLength = 13;
+                    foreach(var s in syntaxs.Take(6))
+                    {
+                        Assert.AreEqual(expected_index, s.index);
+                        Assert.AreEqual(expected_tokenLength, s.length);
+                        Assert.AreEqual(TokenType.Keyword1, s.type);
+                        expected_index += expected_tokenLength;
+                    }
+                }
+                else
+                {
+                    Assert.Fail();
                 }
                 documentIndex += lineData.length;
             }
@@ -1012,6 +1023,53 @@ namespace UnitTest
             }
 
             doc.Dispose();
+        }
+
+        [TestMethod]
+        public void HilightAllTest()
+        {
+            //ほかの所で\rや\r\nテキストはテスト済みなので\nだけで足りる
+            const int ADD_COUNT = 100;
+            const string text = "this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.this is a pen.\n";
+
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Hilighter = new DummyHilighter('.');
+            doc.LayoutLines.Render = render;
+            for (int i = 0; i < ADD_COUNT; i++)
+            {
+                doc.Append(text);
+            }
+            doc.StringBuffer.Flush();
+            doc.LayoutLines.Trim();
+            doc.LayoutLines.HilightAll(true);
+            //最終行は空行なので確かめる必要はない
+            long documentIndex = 0;
+            for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
+            {
+                Assert.AreEqual(text, doc.LayoutLines[i]);
+                Assert.AreEqual(documentIndex, doc.LayoutLines.GetLongIndexFromLineNumber(i));
+                var lineData = doc.LayoutLines.GetRaw(i);
+                var syntaxs = lineData.Syntax;
+                if (syntaxs.Length == 6)
+                {
+                    var expected_index = lineData.start;
+                    var expected_tokenLength = 13;
+                    foreach (var s in syntaxs.Take(6))
+                    {
+                        Assert.AreEqual(expected_index, s.index);
+                        Assert.AreEqual(expected_tokenLength, s.length);
+                        Assert.AreEqual(TokenType.Keyword1, s.type);
+                        expected_index += expected_tokenLength;
+                    }
+                }
+                else
+                {
+                    Assert.Fail();
+                }
+                documentIndex += lineData.length;
+            }
+
         }
 
         [TestMethod]
