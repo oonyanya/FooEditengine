@@ -280,14 +280,14 @@ namespace FooEditEngine
         }
     }
 
-    class DummyHilighter : IHilighter
+    class DummyHilighter : HilighterBase
     {
         char spiliter;
         public DummyHilighter(char spiliter)
         {
             this.spiliter = spiliter;
         }
-        public int DoHilight(string text, int length, TokenSpilitHandeler action)
+        public override int DoHilight(string text, int length, TokenSpilitHandeler action)
         {
             if(text == string.Empty)
                 return 0;
@@ -304,7 +304,7 @@ namespace FooEditEngine
             return 0;
         }
 
-        public void Reset()
+        public override void Reset()
         {
         }
     }

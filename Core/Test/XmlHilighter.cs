@@ -24,7 +24,7 @@ namespace FooEditEngine.Test
     /// <summary>
     /// XMLドキュメント用ハイライター
     /// </summary>
-    public class XmlHilighter : IHilighter
+    public class XmlHilighter : HilighterBase
     {
         private TextParserMode mode;
         private StringBuilder word;
@@ -44,7 +44,7 @@ namespace FooEditEngine.Test
         /// <summary>
         /// 状態をリセットする
         /// </summary>
-        public void Reset()
+        public override void Reset()
         {
             this.mode = TextParserMode.TextPart;
             this.KeyWordType = TokenType.None;
@@ -58,7 +58,7 @@ namespace FooEditEngine.Test
         /// <param name="length"></param>
         /// <param name="action"></param>
         /// <returns></returns>
-        public int DoHilight(string text, int length, TokenSpilitHandeler action)
+        public override int DoHilight(string text, int length, TokenSpilitHandeler action)
         {
             int encloserLevel = 0;
             int i,wordPos = 0;

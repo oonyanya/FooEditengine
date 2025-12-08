@@ -78,6 +78,7 @@ namespace FooEditEngine
         /// <param name="index">開始インデックス</param>
         /// <param name="length">長さ</param>
         /// <param name="type">トークンタイプ</param>
+        /// <remarks>indexは行の開始を0とすること</remarks>
         public TokenSpilitEventArgs(int index,int length, TokenType type)
         {
             this.length = length;
@@ -107,7 +108,8 @@ namespace FooEditEngine
         /// <summary>
         /// ハイライト処理を実行します
         /// </summary>
-        /// <param name="text">対象となる文字列</param>
+        /// <param name="doc">対象となる文字列</param>
+        /// <param name="startIndex">開始インデックス</param>
         /// <param name="length">文字列の長さ</param>
         /// <param name="action">トークンが切り出されたときに呼び出す関数</param>
         /// <returns>
@@ -119,13 +121,35 @@ namespace FooEditEngine
         /// なお、開始エンクロージャーがすでに検出されている状態で検出したことを返した場合、その結果は無視されます。
         /// </returns>
         /// <example>
-        /// int DoHilight(string text,int length, TokenSpilitHandeler action)
+        /// int DoHilight(string text,int startIndex,int length, TokenSpilitHandeler action)
         /// {
-        ///     if(length > 3 &amp;&amp; text == "foo")
+        ///     if(length > 3 &amp;&amp; text.ToString(startIndex,length) == "foo")
         ///         action(new TokenSpilitEventArgs(0,3,TokenType.Keyword1);
         ///     return 0;
         /// }
         /// </example>
-        int DoHilight(string text,int length, TokenSpilitHandeler action);
+        int DoHilight(Document doc,long startIndex,long length, TokenSpilitHandeler action);
+    }
+
+    /// <summary>
+    /// 古いIHilighterと互換性を保つためのクラス
+    /// </summary>
+    public abstract class HilighterBase : IHilighter
+    {
+        public virtual int DoHilight(string text, int length, TokenSpilitHandeler action)
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual int DoHilight(Document doc, long startIndex, long length, TokenSpilitHandeler action)
+        {
+            string text = doc.ToString(startIndex, length);
+            return this.DoHilight(text, (int)length, action);
+        }
+
+        public virtual void Reset()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
