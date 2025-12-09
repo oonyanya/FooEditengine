@@ -753,24 +753,34 @@ namespace FooEditEngine
 
             int newCol;
             long newIndex;
+            long removeLength;
             if (CurrentPostion.col > 0)
             {
                 newCol = this.View.LayoutLines.GetLayout(CurrentPostion.row).AlignIndexToNearestCluster(CurrentPostion.col - 1, AlignDirection.Back);
                 newIndex = this.View.GetIndexFromLayoutLine(new TextPoint(CurrentPostion.row, newCol));
+                //普通は１文字消せばいいが、CRLRの場合は２文字消さないといけない
+                if(newIndex < this.Document.Length && this.Document[newIndex] == Document.CR_CHAR && this.Document[newIndex + 1] == Document.LF_CHAR)
+                {
+                    removeLength = oldIndex - newIndex + 1;
+                }
+                else
+                {
+                    removeLength = oldIndex - newIndex;
+                }
             }
             else
             {
                 newIndex = this.View.GetIndexFromLayoutLine(CurrentPostion);
                 newIndex--;
+                //改行コードがCRLFの時に破壊できてしまうのはよくない
+                if (newIndex > 0 && this.Document[newIndex] == Document.LF_CHAR && this.Document[newIndex - 1] == Document.CR_CHAR)
+                {
+                    newIndex--;
+                }
+                removeLength = oldIndex - newIndex;
             }
 
-            //改行コードがCRLFの時に破壊できてしまうのはよくない
-            if (newIndex > 0 && this.Document[newIndex] == Document.LF_CHAR && this.Document[newIndex - 1] == Document.CR_CHAR)
-            {
-                newIndex--;
-            }
-
-            this.Document.Replace(newIndex, oldIndex - newIndex, "", true);
+            this.Document.Replace(newIndex, removeLength, "", true);
         }
 
         /// <summary>
@@ -824,16 +834,23 @@ namespace FooEditEngine
 
             long index = this.View.GetIndexFromLayoutLine(CaretPos);
             long length = 0;
-            if (this.View.InsertMode == false && index < this.Document.Length && this.Document[index] != Document.CR_CHAR&& this.Document[index] != Document.LF_CHAR)
+            if (this.View.InsertMode == false)
             {
-                int lineLength = this.View.LayoutLines.GetLengthFromLineNumber(CaretPos.row);
-                long end = this.View.LayoutLines.GetLayout(CaretPos.row).AlignIndexToNearestCluster(CaretPos.col + str.Length - 1, AlignDirection.Forward);
-                if (end > lineLength - 1)
-                    end = lineLength - 1;
-                end += this.View.LayoutLines.GetLongIndexFromLineNumber(CaretPos.row);
-                length = end - index;
+                if(str == Document.NewLine)
+                {
+                    //改行なら何もしない（改行の挿入を意図してるので文字を消してはならない）
+                }
+                else if (index < this.Document.Length && this.Document[index] != Document.CR_CHAR && this.Document[index] != Document.LF_CHAR)
+                {
+                    int lineLength = this.View.LayoutLines.GetLengthFromLineNumber(CaretPos.row);
+                    long end = this.View.LayoutLines.GetLayout(CaretPos.row).AlignIndexToNearestCluster(CaretPos.col + str.Length - 1, AlignDirection.Forward);
+                    if (end > lineLength - 1)
+                        end = lineLength - 1;
+                    end += this.View.LayoutLines.GetLongIndexFromLineNumber(CaretPos.row);
+                    length = end - index;
+                }
             }
-            if (str == "\n")
+            if (str == Document.NewLine)
             {
                 long lineHeadIndex = this.View.LayoutLines.GetLongIndexFromLineNumber(CaretPos.row);
                 long lineLength = this.View.LayoutLines.GetLengthFromLineNumber(CaretPos.row);
