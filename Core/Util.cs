@@ -57,7 +57,7 @@ namespace FooEditEngine
             }
         }
     }
-    class Util
+    public class Util
     {
         public static string NormalizeLineFeed(IReadOnlyList<char> s, string linefeed)
         {
@@ -316,7 +316,7 @@ namespace FooEditEngine
 
 #if METRO || WINDOWS_UWP
         static float? _LogicalDpi;
-        public static void GetDpi(out float dpix, out float dpiy)
+        internal static void GetDpi(out float dpix, out float dpiy)
         {
             if(_LogicalDpi == null)
                 _LogicalDpi = Windows.Graphics.Display.DisplayInformation.GetForCurrentView().LogicalDpi;
@@ -324,14 +324,14 @@ namespace FooEditEngine
             dpiy = _LogicalDpi.Value;
         }
 
-        public static double GetScale()
+        internal static double GetScale()
         {
             float dpi;
             Util.GetDpi(out dpi, out dpi);
             return dpi / 96.0;
         }
 
-        public static Point GetClientPoint(Point screen, Windows.UI.Xaml.UIElement element)
+        internal static Point GetClientPoint(Point screen, Windows.UI.Xaml.UIElement element)
         {
             //Windows10以降では補正する必要がある
             Windows.Foundation.Rect win_rect = Windows.UI.Xaml.Window.Current.CoreWindow.Bounds;
@@ -341,14 +341,14 @@ namespace FooEditEngine
             return gt.TransformPoint(screen);
         }
 
-        public static Point GetPointInWindow(Point client, Windows.UI.Xaml.UIElement element)
+        internal static Point GetPointInWindow(Point client, Windows.UI.Xaml.UIElement element)
         {
             //ウィンドウ内での絶対座標を取得する
             var gt = element.TransformToVisual(Windows.UI.Xaml.Window.Current.Content);
             return gt.TransformPoint(client);
         }
 
-        public static Point GetScreentPoint(Point client, Windows.UI.Xaml.UIElement element)
+        internal static Point GetScreentPoint(Point client, Windows.UI.Xaml.UIElement element)
         {
             var gt = element.TransformToVisual(Windows.UI.Xaml.Window.Current.Content);
             Point p = gt.TransformPoint(client);
@@ -358,7 +358,7 @@ namespace FooEditEngine
             var screenPoint = p.Offset(win_rect.X, win_rect.Y);
             return screenPoint;
         }
-        public static Windows.Foundation.Rect GetClientRect(Windows.Foundation.Rect screen, Windows.UI.Xaml.UIElement element)
+        internal static Windows.Foundation.Rect GetClientRect(Windows.Foundation.Rect screen, Windows.UI.Xaml.UIElement element)
         {
             //Windows10以降では補正する必要がある
             Windows.Foundation.Rect win_rect = Windows.UI.Xaml.Window.Current.CoreWindow.Bounds;
@@ -368,7 +368,7 @@ namespace FooEditEngine
             var gt = Windows.UI.Xaml.Window.Current.Content.TransformToVisual(element);
             return gt.TransformBounds(screen);
         }
-        public static Windows.Foundation.Rect GetScreentRect(Windows.Foundation.Rect client, Windows.UI.Xaml.UIElement element)
+        internal static Windows.Foundation.Rect GetScreentRect(Windows.Foundation.Rect client, Windows.UI.Xaml.UIElement element)
         {
             //ウィンドウ内での絶対座標を取得する
             var gt = element.TransformToVisual(Windows.UI.Xaml.Window.Current.Content);
@@ -381,7 +381,7 @@ namespace FooEditEngine
 
             return screenRect;
         }
-        public static IEnumerable<char> GetEnumrator(string s)
+        internal static IEnumerable<char> GetEnumrator(string s)
         {
             char[] chars = s.ToCharArray();
             return chars;
@@ -389,25 +389,25 @@ namespace FooEditEngine
 #elif WINUI
         static float? _LogicalDpi = 96.0f;
 
-        public static void SetDpi(float dpi)
+        internal static void SetDpi(float dpi)
         {
             _LogicalDpi = dpi;
         }
 
-        public static void GetDpi(out float dpix, out float dpiy)
+        internal static void GetDpi(out float dpix, out float dpiy)
         {
             dpix = _LogicalDpi.Value;
             dpiy = _LogicalDpi.Value;
         }
 
-        public static double GetScale()
+        internal static double GetScale()
         {
             float dpi;
             Util.GetDpi(out dpi, out dpi);
             return dpi / 96.0;
         }
 
-        public static Point GetClientPoint(Point screen, Microsoft.UI.Xaml.UIElement element)
+        internal static Point GetClientPoint(Point screen, Microsoft.UI.Xaml.UIElement element)
         {
             //Windows10以降では補正する必要がある
             var appWnd = GetAppWindow(element);
@@ -417,14 +417,14 @@ namespace FooEditEngine
             return gt.TransformPoint(screen);
         }
 
-        public static Point GetPointInWindow(Point client, Microsoft.UI.Xaml.UIElement element)
+        internal static Point GetPointInWindow(Point client, Microsoft.UI.Xaml.UIElement element)
         {
             //ウィンドウ内での絶対座標を取得する
             var gt = element.TransformToVisual(element.XamlRoot.Content);
             return gt.TransformPoint(client);
         }
 
-        public static Point GetScreentPoint(Point client, Microsoft.UI.Xaml.UIElement element)
+        internal static Point GetScreentPoint(Point client, Microsoft.UI.Xaml.UIElement element)
         {
             double scale = GetScale();
             var gt = element.TransformToVisual(element.XamlRoot.Content);
@@ -436,7 +436,7 @@ namespace FooEditEngine
             var screenPoint = p.Offset(appWnd.Position.X + appWnd.Size.Width - appWnd.ClientSize.Width, appWnd.Position.Y + appWnd.Size.Height - appWnd.ClientSize.Height);
             return screenPoint;
         }
-        public static Windows.Foundation.Rect GetClientRect(Windows.Foundation.Rect screen, Microsoft.UI.Xaml.UIElement element)
+        internal static Windows.Foundation.Rect GetClientRect(Windows.Foundation.Rect screen, Microsoft.UI.Xaml.UIElement element)
         {
             //Windows10以降では補正する必要がある
             var appWnd = GetAppWindow(element);
@@ -446,7 +446,7 @@ namespace FooEditEngine
             var gt = element.XamlRoot.Content.TransformToVisual(element);
             return gt.TransformBounds(screen);
         }
-        public static Windows.Foundation.Rect GetScreentRect(Windows.Foundation.Rect client, Microsoft.UI.Xaml.UIElement element)
+        internal static Windows.Foundation.Rect GetScreentRect(Windows.Foundation.Rect client, Microsoft.UI.Xaml.UIElement element)
         {
             //ウィンドウ内での絶対座標を取得する
             var gt = element.TransformToVisual(element.XamlRoot.Content);
@@ -459,7 +459,7 @@ namespace FooEditEngine
 
             return screenRect;
         }
-        public static Microsoft.UI.Windowing.AppWindow GetAppWindow(Microsoft.UI.Xaml.UIElement element)
+        internal static Microsoft.UI.Windowing.AppWindow GetAppWindow(Microsoft.UI.Xaml.UIElement element)
         {
             var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(FooEditEngine.WinUI.FooTextBox.OwnerWindow);
             var windowID = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
@@ -467,7 +467,7 @@ namespace FooEditEngine
             return appWnd;
         }
 #elif WPF
-        public static void GetDpi(out float dpix, out float dpiy)
+        internal static void GetDpi(out float dpix, out float dpiy)
         {
             var dpiXProperty = typeof(System.Windows.SystemParameters).GetProperty("DpiX", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             var dpiYProperty = typeof(System.Windows.SystemParameters).GetProperty("Dpi", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
@@ -476,29 +476,29 @@ namespace FooEditEngine
             dpiy = (int)dpiYProperty.GetValue(null, null);
         }
 
-        public static double GetScale()
+        internal static double GetScale()
         {
             float dpi;
             Util.GetDpi(out dpi, out dpi);
             return dpi / 96.0;
         }
 
-        public static Point GetClientPoint(Point screen, System.Windows.FrameworkElement element)
+        internal static Point GetClientPoint(Point screen, System.Windows.FrameworkElement element)
         {
             return element.PointFromScreen(screen);
         }
 
-        public static Point GetScreentPoint(Point client, System.Windows.FrameworkElement element)
+        internal static Point GetScreentPoint(Point client, System.Windows.FrameworkElement element)
         {
             return element.PointFromScreen(client);
         }
 
-        public static IEnumerable<char> GetEnumrator(string s)
+        internal static IEnumerable<char> GetEnumrator(string s)
         {
             return s;
         }
 #else
-        public static IEnumerable<char> GetEnumrator(string s)
+        internal static IEnumerable<char> GetEnumrator(string s)
         {
             return s;
         }
@@ -546,14 +546,15 @@ namespace FooEditEngine
             else
                 return false;
         }
-        public static void Swap<T>(ref T a, ref T b)
+
+        internal static void Swap<T>(ref T a, ref T b)
         {
             T c = b;
             b = a;
             a = c;
         }
 
-        public static string Generate(char c, int count)
+        internal static string Generate(char c, int count)
         {
             StringBuilder tabstr = new StringBuilder();
             for (int j = count; j > 0; j--)
@@ -561,7 +562,7 @@ namespace FooEditEngine
             return tabstr.ToString();
         }
 
-        public static Rectangle OffsetAndDeflate(Rectangle r, Size s)
+        internal static Rectangle OffsetAndDeflate(Rectangle r, Size s)
         {
             return new Rectangle(r.X + s.Width,r.Y + s.Height, r.Width - s.Width, r.Height - s.Height);
         }
