@@ -1163,7 +1163,17 @@ namespace FooEditEngine
                     return caret;
                 }
                 caret = this.MoveCaretVertical(caret,false);
-                caret.col = this.View.LayoutLines.GetLengthFromLineNumber(caret.row) - 1;  //最終行以外はすべて改行コードが付くはず
+                caret.col = this.View.LayoutLines.GetLengthFromLineNumber(caret.row) - 1; //最終行以外は改行コードがつくはず
+
+                long newColIndexInDocument = this.View.LayoutLines.GetLongIndexFromLineNumber(caret.row) + caret.col;
+
+                if (this.Document[newColIndexInDocument] == Document.LF_CHAR)
+                {
+                    if (caret.col > 1 && this.Document[newColIndexInDocument - 1] == Document.CR_CHAR)
+                    {
+                        caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(caret.col - 1, AlignDirection.Back);
+                    }
+                }
             }
             else if (colIndexInDocument >= lineEndIndexInDocument || this.Document[colIndexInDocument] == Document.LF_CHAR || this.Document[colIndexInDocument] == Document.CR_CHAR)
             {
