@@ -482,6 +482,13 @@ namespace FooEditEngine
             ITextLayout layout = this.LayoutLines.GetLayout(row);
             double lineHeight = render.emSize.Height * render.LineEmHeight;
             double charWidth = layout.GetWidthFromIndex(this.Document.CaretPostion.col);
+            var caretIndex = this.LayoutLines.GetLongIndexFromTextPoint(this.Document.CaretPostion);
+            if(this.Document.Length > 0)
+            {
+                var caretChar = this.Document[caretIndex];
+                if(caretChar == Document.CR_CHAR || caretChar == Document.LF_CHAR)
+                    charWidth = 0;
+            }
 
             if (this.InsertMode || charWidth == 0)
             {
