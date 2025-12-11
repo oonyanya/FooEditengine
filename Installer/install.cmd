@@ -1,7 +1,7 @@
 setlocal
 
-set IDE_PATH=C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE
-set BUILD_PATH=C:\Program Files\Microsoft Visual Studio\2022\Community\Msbuild\Current\Bin
+set IDE_PATH=C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE
+set BUILD_PATH=C:\Program Files\Microsoft Visual Studio\18\Community\Msbuild\Current\Bin
 set BUILD_TYPE=%1
 set CPU_TYPE=Any CPU
 set BATCH_FILE_FOLDER=%~dp0
