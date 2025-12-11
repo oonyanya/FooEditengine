@@ -485,7 +485,7 @@ namespace FooEditEngine
             var caretIndex = this.LayoutLines.GetLongIndexFromTextPoint(this.Document.CaretPostion);
             if(this.Document.Length > 0)
             {
-                var caretChar = this.Document[caretIndex];
+                var caretChar = (caretIndex >= 0 && caretIndex < this.Document.Length) ? this.Document[caretIndex] : ' ';
                 if(caretChar == Document.CR_CHAR || caretChar == Document.LF_CHAR)
                     charWidth = 0;
             }
