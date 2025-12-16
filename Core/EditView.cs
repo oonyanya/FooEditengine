@@ -279,6 +279,7 @@ namespace FooEditEngine
                 pos.X -= this.Src.X;
                 //画面上では行をずらして表示する
                 pos.Y += this.Src.OffsetY;
+                long caretIndex = this.Document.LayoutLines.GetLongIndexFromTextPoint(this.Document.CaretPostion);
 
                 using (this.render.BeginClipRect(this.render.TextArea))
                 {
@@ -302,7 +303,7 @@ namespace FooEditEngine
                         }
 
                         if (i == this.Document.CaretPostion.row)
-                            this.DrawLineMarker(pos, layout);
+                            this.DrawLineMarker(pos, layout, (int)(caretIndex - lineIndex));
 
                         this.render.DrawOneLine(this.Document, this.LayoutLines, i, pos.X, pos.Y);
 
@@ -511,15 +512,16 @@ namespace FooEditEngine
             return ms * 10000;
         }
 
-        public void DrawLineMarker(Point pos, ITextLayout layout)
+        public void DrawLineMarker(Point pos, ITextLayout layout, int  relativeIndex)
         {
-            if (this.HideLineMarker)
+            if (this.HideLineMarker || relativeIndex < 0)
                 return;
             IEditorRender render = (IEditorRender)base.render;
             Point p = this.CaretLocation;
-            double height = layout.Height;
+            double height = layout.GetColHeightFromIndex(relativeIndex);
             double width = this.render.TextArea.Width;
-            render.FillRectangle(new Rectangle(this.PageBound.X + this.render.TextArea.X, pos.Y, width, height), FillRectType.LineMarker);
+            var relatviePos = layout.GetPostionFromIndex(relativeIndex);
+            render.FillRectangle(new Rectangle(this.PageBound.X + this.render.TextArea.X, pos.Y + relatviePos.Y, width, height), FillRectType.LineMarker);
         }
 
         /// <summary>

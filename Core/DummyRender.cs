@@ -278,6 +278,11 @@ namespace FooEditEngine
         {
             return (int)x;
         }
+
+        public double GetColHeightFromIndex(int index)
+        {
+            return 10;
+        }
     }
 
     class DummyHilighter : HilighterBase

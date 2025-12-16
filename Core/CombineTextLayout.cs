@@ -170,5 +170,13 @@ namespace FooEditEngine
                 index_main_layout += Document.MaximumLineLength;
             }
         }
+
+        public double GetColHeightFromIndex(int index)
+        {
+            int relativeIndex, layoutNumber, arrayIndex;
+            double pos_y;
+            (relativeIndex, arrayIndex, layoutNumber, pos_y) = GetLayoutNumberFromIndex(index, Document.MaximumLineLength);
+            return this.TextLayouts[layoutNumber].Layout.GetColHeightFromIndex(relativeIndex);
+        }
     }
 }

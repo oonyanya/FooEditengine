@@ -262,6 +262,14 @@ namespace FooEditEngine
         {
             this.layout.SetInlineObject(o, range);
         }
+
+        public double GetColHeightFromIndex(int index)
+        {
+            float x, y;
+            DW.HitTestMetrics metrics;
+            metrics = this.layout.HitTestTextPosition(index, false, out x, out y);
+            return metrics.Height;
+        }
     }
 }
 #endif

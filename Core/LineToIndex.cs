@@ -70,6 +70,13 @@ namespace FooEditEngine
         double GetWidthFromIndex(int index);
 
         /// <summary>
+        /// インデックスに対応する文字の高さを返す
+        /// </summary>
+        /// <param name="index">インデックス</param>
+        /// <returns>文字の高さ</returns>
+        double GetColHeightFromIndex(int index);
+
+        /// <summary>
         /// インデックスに対応する桁方向の座標を得る
         /// </summary>
         /// <param name="index">インデックス</param>

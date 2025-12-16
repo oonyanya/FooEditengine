@@ -215,6 +215,11 @@ namespace FooEditEngine.WPF
         {
             return this.Lines[0].GetTextBounds(start, length);
         }
+
+        public double GetColHeightFromIndex(int index)
+        {
+            return this.Lines[0].Height;
+        }
     }
 
     class WPFSquilleLineMarker : SquilleLineMarker

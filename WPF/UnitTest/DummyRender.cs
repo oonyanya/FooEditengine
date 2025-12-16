@@ -14,6 +14,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FooEditEngine;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTest
 {
@@ -230,6 +231,11 @@ namespace UnitTest
         public Point GetPostionFromIndex(int index)
         {
             return new Point(index * DummyTextLayout.TestCharWidth,0);
+        }
+
+        public double GetColHeightFromIndex(int index)
+        {
+            return TestLineHeight;
         }
     }
 }
