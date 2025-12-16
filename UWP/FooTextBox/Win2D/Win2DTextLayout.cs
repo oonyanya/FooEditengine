@@ -151,5 +151,11 @@ namespace FooEditEngine.UWP
                 this._layout.SetBrush(this._lineBreakIndex.Value, 1, this._factory.CreateSolidColorBrush(ctrlColor));
         }
 
+        public double GetColHeightFromIndex(int index)
+        {
+            CanvasTextLayoutRegion r;
+            this._layout.GetCaretPosition(index, false, out r);
+            return r.LayoutBounds.Height;
+        }
     }
 }
