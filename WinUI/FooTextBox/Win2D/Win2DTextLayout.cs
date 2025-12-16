@@ -152,5 +152,11 @@ namespace FooEditEngine.WinUI
                 this._layout.SetBrush(this._lineBreakIndex.Value, 1, this._factory.CreateSolidColorBrush(ctrlColor));
         }
 
+        public double GetColHeightFromIndex(int index)
+        {
+            var chr_regions = this._layout.GetCharacterRegions(index, 1);
+            var v = chr_regions[0].LayoutBounds;
+            return v.Height;
+        }
     }
 }
