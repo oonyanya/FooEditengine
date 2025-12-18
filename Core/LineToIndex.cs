@@ -656,7 +656,7 @@ namespace FooEditEngine
                 if (i > endIndex)
                     break;
                 currentLineLength++;
-                char c = this.Document[i];
+                char c = this.Document.StringBuffer[i];
                 if (c == Document.LF_CHAR)
                 {
                     linefeed = Document.LF_STR;
