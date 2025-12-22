@@ -350,7 +350,7 @@ namespace FooEditEngine
             if (cache_size >= CacheParameters.MINCACHESIZE)
             {
                 var serializer = new StringBufferSerializer();
-                this.diskDataStore = new DiskPinableContentDataStore<IComposableList<char>>(serializer, workfile_path, cache_size);
+                this.diskDataStore = DiskPinableContentDataStore<IComposableList<char>>.Create(serializer, workfile_path, cache_size);
                 buf.CustomBuilder.DataStore = diskDataStore;
                 this.cacheSize = cache_size;
                 this.workfile_path = workfile_path;
@@ -422,7 +422,7 @@ namespace FooEditEngine
             if (disk_cache_size >= CacheParameters.MINCACHESIZE)
             {
                 var serializer = new StringBufferSerializer();
-                this.diskDataStore = new DiskPinableContentDataStore<IComposableList<char>>(serializer, workfile_path, disk_cache_size);
+                this.diskDataStore = DiskPinableContentDataStore<IComposableList<char>>.Create(serializer, workfile_path, disk_cache_size);
                 this.readOnlyCharDataStore.SecondaryDataStore = this.diskDataStore;
                 this.diskCacheSize = disk_cache_size;
                 this.workfile_path = workfile_path;

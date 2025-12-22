@@ -398,7 +398,7 @@ namespace FooEditEngine
             {
                 var diskbufferparam = (DiskBaseStringBuffer)bufferparam;
                 var serializer = new LineToIndexTableDataSerializer();
-                this.dataStore = new DiskPinableContentDataStore<IComposableList<LineToIndexTableData>>(serializer, diskbufferparam.WorkfilePath, diskbufferparam.CacheSize);
+                this.dataStore = DiskPinableContentDataStore<IComposableList<LineToIndexTableData>>.Create(serializer, diskbufferparam.WorkfilePath, diskbufferparam.CacheSize);
             }
             else
             {
