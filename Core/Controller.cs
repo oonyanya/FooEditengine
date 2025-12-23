@@ -499,7 +499,8 @@ namespace FooEditEngine
             if (totalDelta > this.View.ScrollNoti)
             {
                 double lineHeight = this.View.render.emSize.Height * this.View.render.LineEmHeight;
-                int numRow = (int)(totalDelta / lineHeight) ;
+                int numRow = (int)(totalDelta / lineHeight);
+                this.Document.LayoutLines.FetchLine(this.Document.Src.Row + numRow);
                 this.Scroll(dir, numRow, isSelected, withCaret);
                 totalDelta = 0;
             }
