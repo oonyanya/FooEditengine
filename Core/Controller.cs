@@ -439,6 +439,7 @@ namespace FooEditEngine
                 srcRow = 0;
             if (this.View.TryScroll(0, srcRow))
                 return;
+            this.Document.LayoutLines.FetchLine(this.Document.TotalLineCount);
             this.Document.SetCaretPostionWithoutEvent(this.View.LayoutLines.Count - 1, 0);
             this.View.AdjustCaretAndSrc();
             this.SelectWithMoveCaret(isSelected);
