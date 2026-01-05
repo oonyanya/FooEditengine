@@ -210,7 +210,6 @@ namespace FooEditEngine
         public string LineString { get; internal set; }
 
         internal SyntaxInfo[] Syntax;
-        internal EncloserType EncloserType;
         public bool Dirty = false;
 
         /// <summary>
@@ -231,7 +230,6 @@ namespace FooEditEngine
                 this.Syntax = Array.Empty<SyntaxInfo>();
             else
                 this.Syntax = syntax;
-            this.EncloserType = EncloserType.None;
             this.Dirty = dirty;
         }
 
@@ -252,7 +250,6 @@ namespace FooEditEngine
             result.Syntax = this.Syntax;
             result.Layout = this.Layout;
             result.Dirty = this.Dirty;
-            result.EncloserType = this.EncloserType;
             return result;
         }
     }
@@ -272,7 +269,6 @@ namespace FooEditEngine
                 item.start = reader.ReadInt64();
                 item.length = reader.ReadInt64();
                 item.Dirty = reader.ReadBoolean();
-                item.EncloserType = (EncloserType)reader.ReadInt64();
                 var syntax_item_count = reader.ReadInt64();
                 if (syntax_item_count > 0)
                 {
@@ -312,7 +308,6 @@ namespace FooEditEngine
                 writer.Write(item.start);
                 writer.Write(item.length);
                 writer.Write(item.Dirty);
-                writer.Write((long)item.EncloserType);
                 if(item.Syntax == null)
                 {
                     writer.Write(0L);
