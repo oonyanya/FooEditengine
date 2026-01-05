@@ -165,7 +165,7 @@ namespace FooEditEngine
         bool Generate(Document doc, LineToIndexTable lti, bool force = true);
     }
 
-    public class LineToIndexTableDataBase : IDisposable, FooProject.Collection.IRangeWithHeight
+    public class LineToIndexTableDataBase : IDisposable, FooProject.Collection.IRange
     {
         internal ITextLayout Layout;
 
@@ -183,10 +183,6 @@ namespace FooEditEngine
         public long start { get; set; }
 
         public long length { get; set; }
-
-        public double sumHeight { get; set; }
-
-        public double Height { get; set; }
 
         public virtual void Dispose()
         {

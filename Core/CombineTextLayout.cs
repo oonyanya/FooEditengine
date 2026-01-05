@@ -9,7 +9,7 @@ using FooProject.Collection;
 
 namespace FooEditEngine
 {
-    class SubLineToIndexTableData : LineToIndexTableDataBase
+    class SubLineToIndexTableData : LineToIndexTableDataBase, FooProject.Collection.IRangeWithHeight
     {
         public SubLineToIndexTableData(long startIndex,long length,double height,ITextLayout layout)
         {
@@ -18,6 +18,10 @@ namespace FooEditEngine
             this.length = length;
             this.Height = height;
         }
+
+        public double sumHeight { get; set; }
+
+        public double Height { get; set; }
 
         public override FooProject.Collection.IRange DeepCopy()
         {
