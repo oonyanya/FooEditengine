@@ -467,6 +467,8 @@ namespace FooEditEngine.UWP
             bool hasNewLine = Util.IsHasNewLine(str);
             Win2DTextLayout newLayout = new Win2DTextLayout(this._factory, str, this._format, layoutWidth, this.TextArea.Height, dpiy, hasNewLine && this.ShowLineBreak, this.emSize.Height);
 
+            newLayout.SetLineBreakBrush(this.ControlChar);
+
             if (syntaxCollection != null)
             {
                 foreach (SyntaxInfo s in syntaxCollection)

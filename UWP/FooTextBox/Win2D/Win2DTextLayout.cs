@@ -33,7 +33,7 @@ namespace FooEditEngine.UWP
                         str = str + "→";
                         break;
                 }
-                _lineBreakIndex = str.Length;
+                _lineBreakIndex = Math.Max(0, str.Length - 1);
             }
 
             this._layout = new CanvasTextLayout(render.Device, str, format, (float)width, (float)height);
