@@ -12,9 +12,9 @@ using Windows.Storage;
 
 namespace Test
 {
-    class TestHilighter : IHilighter
+    class TestHilighter : HilighterBase
     {
-        public int DoHilight(string text, int length, TokenSpilitHandeler action)
+        public override int DoHilight(string text, int length, TokenSpilitHandeler action)
         {
             string target = "test";
             int index = text.IndexOf(target);
@@ -23,7 +23,7 @@ namespace Test
             return 0;
         }
 
-        public void Reset()
+        public override void Reset()
         {
         }
     }
