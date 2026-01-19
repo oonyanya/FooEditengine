@@ -310,7 +310,7 @@ namespace FooEditEngine
                 }
                 else
                 {
-                    writer.Write((long)item.Syntax.Length);
+                    writer.Write((long)item.Syntax.LongLength);
                     foreach (var s in item.Syntax)
                     {
                         writer.Write((long)s.type);
