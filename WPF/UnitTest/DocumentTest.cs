@@ -962,6 +962,9 @@ namespace UnitTest
             Document olddoc = new Document(cache_size:4);
             Document doc = new Document(olddoc);
             olddoc.Dispose();
+
+            Assert.IsTrue(doc.BufferType.HasFlag(DocumentBufferType.Disk));
+
             doc.LayoutLines.Hilighter =new DummyHilighter('.');
             doc.LayoutLines.Render = render;
             for (int i = 0; i < ADD_COUNT; i++)

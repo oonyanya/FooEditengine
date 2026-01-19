@@ -22,6 +22,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using FooProject.Collection;
+using FooProject.Collection.DataStore;
 
 namespace FooEditEngine
 {
@@ -213,7 +214,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="doc">ドキュメントオブジェクト。nullを指定した場合は空のドキュメントを作成します。</param>
         /// <param name="workfile_path">ワークファイルのパスを指定します。メモリーに保存する場合、この値は無視されます。</param>
-        /// <param name="cache_size">4の以上値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します。</param>
+        /// <param name="cache_size">0より大きな値を指定した場合はディスクに保存します。そうでない場合はメモリーに保存します。</param>
         /// <param name="use_file_mapping">ファイルマッピングするなら真を指定する</param>
         /// <param name="mapping_cache_size">ファイルマッピングの時に使用するキャッシュサイズ。-1の場合はデフォルトのサイズとなります。</param>
         /// <remarks>docが複製されますが、プロパティは引き継がれません。また、workfile_pathとcache_sizeはdocがnullの場合だけ反映されます。そうでない場合はdocに指定した値がそのまま引き継がれます。</remarks>
@@ -221,13 +222,13 @@ namespace FooEditEngine
         {
             if (doc == null)
             {
-                if(workfile_path != null)
-                {
-                    this.buffer = new DiskBaseStringBuffer(workfile_path,cache_size);
-                }
-                else if (use_file_mapping)
+                if (use_file_mapping)
                 {
                     this.buffer = new FileMappingStringBuffer(workfile_path, cache_size, mapping_cache_size);
+                }
+                else if (workfile_path != null || cache_size > 0)
+                {
+                    this.buffer = new DiskBaseStringBuffer(workfile_path,cache_size);
                 }
                 else
                 {
