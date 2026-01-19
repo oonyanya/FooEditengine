@@ -15,56 +15,68 @@ using System.Text;
 
 namespace FooEditEngine
 {
-    class ResourceManager<TKey, TValue> : Dictionary<TKey, TValue>
+    class ResourceManager<TKey, TValue>
     {
+        Dictionary<TKey, TValue> collection = new Dictionary<TKey, TValue>();
         /// <summary>
         /// 任意のキーに関連付けられている値を取得・設定する
         /// </summary>
         /// <param name="key">キー</param>
         /// <returns>関連付けられている値</returns>
-        public new TValue this[TKey key]
+        public TValue this[TKey key]
         {
             get
             {
-                return base[key];
+                return collection[key];
             }
             set
             {
-                if (value is IDisposable && base.ContainsKey(key))
-                    ((IDisposable)base[key]).Dispose();
-                base[key] = value;
+                if (value is IDisposable && collection.ContainsKey(key))
+                    ((IDisposable)collection[key]).Dispose();
+                collection[key] = value;
             }
         }
+
+        public void Add(TKey key,TValue value)
+        {
+            collection.Add(key, value);
+        }
+
+        public bool TryGetValue(TKey key,out TValue value)
+        {
+            return collection.TryGetValue(key, out value);
+        }
+
         /// <summary>
         /// 任意のキーに関連づけられてる値を削除する
         /// </summary>
         /// <param name="key">キー</param>
         /// <returns>IDispseableを継承している場合、Dispose()が呼び出されます</returns>
-        public new bool Remove(TKey key)
+        public bool Remove(TKey key)
         {
             TValue value;
-            bool result = base.TryGetValue(key, out value);
+            bool result = collection.TryGetValue(key, out value);
             if (value is IDisposable)
                 ((IDisposable)value).Dispose();
             if (result)
-                base.Remove(key);
+                collection.Remove(key);
             return result;
         }
         /// <summary>
         /// すべて削除する
         /// </summary>
         /// <remarks>IDispseableを継承している場合、Dispose()が呼び出されます</remarks>
-        public new void Clear()
+        public void Clear()
         {
-            if (this.Count == 0)
+            if (this.collection.Count == 0)
                 return;
-            TValue first = this.Values.First();
+            TValue first = this.collection.Values.First();
             if (first is IDisposable)
             {
-                foreach (IDisposable v in this.Values)
+                foreach (IDisposable v in this.collection.Values)
                     v.Dispose();
             }
-            base.Clear();
+            collection.Clear();
         }
     }
 }
