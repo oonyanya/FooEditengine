@@ -12,12 +12,28 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using FooProject.Collection.DataStore;
 
 namespace FooEditEngine
 {
     class ResourceManager<TKey, TValue>
     {
-        Dictionary<TKey, TValue> collection = new Dictionary<TKey, TValue>();
+        ICacheList<TKey, TValue> collection = new TwoQueueCacheList<TKey, TValue>();
+
+        public ResourceManager()
+        {
+            this.collection.CacheOuted += Collection_CacheOuted;
+        }
+
+        private void Collection_CacheOuted(CacheOutedEventArgs<TKey, TValue> ev)
+        {
+            var key = ev.Key;
+            var outed_item = ev.Value as IDisposable;
+            if (outed_item != null) {
+                outed_item.Dispose();
+            }
+        }
+
         /// <summary>
         /// 任意のキーに関連付けられている値を取得・設定する
         /// </summary>
@@ -27,24 +43,29 @@ namespace FooEditEngine
         {
             get
             {
-                return collection[key];
+                TValue item;
+                this.collection.TryGet(key,out item);
+                return item;
             }
             set
             {
-                if (value is IDisposable && collection.ContainsKey(key))
-                    ((IDisposable)collection[key]).Dispose();
-                collection[key] = value;
+                TValue item;
+                this.collection.TryGet(key, out item);
+                if (item != null) {
+                    ((IDisposable)item).Dispose();
+                }
+                collection.Set(key, value);
             }
         }
 
         public void Add(TKey key,TValue value)
         {
-            collection.Add(key, value);
+            collection.Set(key, value);
         }
 
         public bool TryGetValue(TKey key,out TValue value)
         {
-            return collection.TryGetValue(key, out value);
+            return collection.TryGet(key, out value);
         }
 
         /// <summary>
@@ -53,15 +74,7 @@ namespace FooEditEngine
         /// <remarks>IDispseableを継承している場合、Dispose()が呼び出されます</remarks>
         public void Clear()
         {
-            if (this.collection.Count == 0)
-                return;
-            TValue first = this.collection.Values.First();
-            if (first is IDisposable)
-            {
-                foreach (IDisposable v in this.collection.Values)
-                    v.Dispose();
-            }
-            collection.Clear();
+            collection.Flush();
         }
     }
 }
