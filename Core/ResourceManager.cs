@@ -48,21 +48,6 @@ namespace FooEditEngine
         }
 
         /// <summary>
-        /// 任意のキーに関連づけられてる値を削除する
-        /// </summary>
-        /// <param name="key">キー</param>
-        /// <returns>IDispseableを継承している場合、Dispose()が呼び出されます</returns>
-        public bool Remove(TKey key)
-        {
-            TValue value;
-            bool result = collection.TryGetValue(key, out value);
-            if (value is IDisposable)
-                ((IDisposable)value).Dispose();
-            if (result)
-                collection.Remove(key);
-            return result;
-        }
-        /// <summary>
         /// すべて削除する
         /// </summary>
         /// <remarks>IDispseableを継承している場合、Dispose()が呼び出されます</remarks>
