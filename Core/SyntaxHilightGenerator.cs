@@ -35,8 +35,8 @@ namespace FooEditEngine
                 return false;
 
             long nowTick = DateTime.Now.Ticks;
-            bool not_sync = force || !this._IsSync;
-            if (not_sync && Math.Abs(nowTick - this.lastUpdateTicks) >= AllowCallTicks)
+            bool not_sync = force || (!this._IsSync && Math.Abs(nowTick - this.lastUpdateTicks) >= AllowCallTicks);
+            if (not_sync)
             {
                 for (int i = 0; i < lti.Count; i++)
                 {
