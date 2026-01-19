@@ -84,11 +84,13 @@ namespace FooEditEngine.Windows
 
         public int GetIndexFromPostion(double x, double y)
         {
+            //印刷でしか使わないので実装しなくていい
             throw new NotImplementedException();
         }
 
         public Point GetPostionFromIndex(int index)
         {
+            //印刷でしか使わないので実装しなくていい
             throw new NotImplementedException();
         }
 
@@ -101,6 +103,12 @@ namespace FooEditEngine.Windows
                 var size = g.MeasureString(line,this.font);
                 posy += size.Height;
             }
+        }
+
+        public double GetColHeightFromIndex(int index)
+        {
+            //印刷でしか使わないので実装しなくていい
+            throw new NotImplementedException();
         }
     }
     class PrintableTextRender : IPrintableTextRender
