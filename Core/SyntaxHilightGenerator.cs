@@ -35,8 +35,8 @@ namespace FooEditEngine
                 return false;
 
             long nowTick = DateTime.Now.Ticks;
-            bool sync = force || !this._IsSync;
-            if (sync || Math.Abs(nowTick - this.lastUpdateTicks) >= AllowCallTicks)
+            bool not_sync = force || !this._IsSync;
+            if (not_sync && Math.Abs(nowTick - this.lastUpdateTicks) >= AllowCallTicks)
             {
                 for (int i = 0; i < lti.Count; i++)
                 {
@@ -78,6 +78,7 @@ namespace FooEditEngine
         public void Update(Document doc, long startIndex, long insertLength, long removeLength)
         {
             this.lastUpdateTicks = DateTime.Now.Ticks;
+            this._IsSync = false;
         }
     }
 }
