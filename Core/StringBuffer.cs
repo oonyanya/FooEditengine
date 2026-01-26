@@ -58,7 +58,7 @@ namespace FooEditEngine
         public byte[] Serialize(IComposableList<char> data)
         {
             FixedList<char> list = (FixedList<char>)data;
-            var output = new byte[data.Count * 2 + 4 + 4]; //int32のサイズは4byte、charのサイズ2byte
+            var output = new byte[list.MaxCapacity * 2 + 4 + 4]; //int32のサイズは4byte、charのサイズ2byte
             var memStream = new MemoryStream(output);
             var writer = new BinaryWriter(memStream, Encoding.Unicode);
             writer.Write(list.Count);
