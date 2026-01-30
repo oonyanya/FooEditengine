@@ -10,6 +10,16 @@ if "%1"=="" set BUILD_TYPE=Release
 
 md dist
 
+pushd ..\UnitTest
+"%BUILD_PATH%\msbuild" -t:clean;rebuild -p:Configuration=Debug
+@dotnet test -c Debug
+if errorlevel 1 (
+  popd
+  goto end
+) else (
+  popd
+)
+
 pushd ..\Windows\FooTextBox
 "%BUILD_PATH%\msbuild" -t:pack -p:Configuration=%BUILD_TYPE%"
 copy bin\%BUILD_TYPE%\*.nupkg "%BATCH_FILE_FOLDER%dist"
