@@ -41,7 +41,7 @@ namespace Test
 
             Document doc;
 #if USE_DISK_FOR_DOCUMENT
-            doc = new Document(16);
+            doc = new Document(cache_size:16);
 #else
             doc = new Document();
 #endif
