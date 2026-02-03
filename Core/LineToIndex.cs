@@ -835,6 +835,28 @@ namespace FooEditEngine
         }
 
         /// <summary>
+        /// 生データを更新します
+        /// </summary>
+        /// <param name="row">行</param>
+        /// <param name="fn">更新処理を実行する関数。更新処理が完了したら、渡された値をそのまま返さないといけない。</param>
+        /// <returns>取得できた場合は真を返し、そうでない場合は偽を返す。</returns>
+        /// <remarks>いくつかの値は実態とかけ離れた値を返します。詳しくはLineToIndexTableDataの注意事項を参照すること。</remarks>
+        internal void UpdateRaw(int row, Func<LineToIndexTableData,LineToIndexTableData> fn)
+        {
+            if (row > this._Lines.Count - 1)
+            {
+                return;
+            }
+            var info = this._Lines.GetContainerInfo(row);
+            using(var data = this._Lines.CustomBuilder.DataStore.Get(info.PinableContainer))
+            {
+                int index = (int)info.RelativeIndex;
+                data.Content[index] = fn(data.Content[index]);
+                data.NotifyWriteContent();
+            }
+        }
+
+        /// <summary>
         /// レイアウト行の構築が必要かどうか確認する
         /// </summary>
         /// <param name="row">行</param>

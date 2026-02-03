@@ -70,9 +70,11 @@ namespace FooEditEngine
                 syntax.Add(new SyntaxInfo(line.start + s.index, s.length, s.type));
             });
 
-            LineToIndexTableData lineData = lti.GetRaw(row);
-            lineData.Syntax = syntax.ToArray();
-
+            lti.UpdateRaw(row, (lineData) =>
+            {
+                lineData.Syntax = syntax.ToArray();
+                return lineData;
+            });
         }
 
         public void Update(Document doc, long startIndex, long insertLength, long removeLength)
