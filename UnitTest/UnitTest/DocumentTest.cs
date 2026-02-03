@@ -979,12 +979,13 @@ namespace UnitTest
             for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
             {
                 Assert.AreEqual(text, doc.LayoutLines[i]);
-                Assert.AreEqual(documentIndex, doc.LayoutLines.GetLongIndexFromLineNumber(i));
+                var lineHeadIndex = doc.LayoutLines.GetLongIndexFromLineNumber(i);
+                Assert.AreEqual(documentIndex, lineHeadIndex);
                 var lineData = doc.LayoutLines.GetRaw(i);
                 var syntaxs = lineData.Syntax;
                 if(syntaxs.Length == 6)
                 {
-                    var expected_index = lineData.start;
+                    var expected_index = lineHeadIndex;
                     var expected_tokenLength = 13;  //.までの長さ
                     foreach(var s in syntaxs.Take(6))
                     {
@@ -1051,12 +1052,13 @@ namespace UnitTest
             for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
             {
                 Assert.AreEqual(text, doc.LayoutLines[i]);
-                Assert.AreEqual(documentIndex, doc.LayoutLines.GetLongIndexFromLineNumber(i));
+                var lineHeadIndex = doc.LayoutLines.GetLongIndexFromLineNumber(i);
+                Assert.AreEqual(documentIndex, lineHeadIndex);
                 var lineData = doc.LayoutLines.GetRaw(i);
                 var syntaxs = lineData.Syntax;
                 if (syntaxs.Length == 6)
                 {
-                    var expected_index = lineData.start;
+                    var expected_index = lineHeadIndex;
                     var expected_tokenLength = 13;  //.までの長さ
                     foreach (var s in syntaxs.Take(6))
                     {
