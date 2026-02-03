@@ -985,7 +985,7 @@ namespace UnitTest
                 if(syntaxs.Length == 6)
                 {
                     var expected_index = lineData.start;
-                    var expected_tokenLength = 13;
+                    var expected_tokenLength = 13;  //.までの長さ
                     foreach(var s in syntaxs.Take(6))
                     {
                         Assert.AreEqual(expected_index, s.index);
@@ -1057,7 +1057,7 @@ namespace UnitTest
                 if (syntaxs.Length == 6)
                 {
                     var expected_index = lineData.start;
-                    var expected_tokenLength = 13;
+                    var expected_tokenLength = 13;  //.までの長さ
                     foreach (var s in syntaxs.Take(6))
                     {
                         Assert.AreEqual(expected_index, s.index);
