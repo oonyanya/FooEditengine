@@ -60,14 +60,15 @@ namespace FooEditEngine
             //シンタックスハイライトを行う
             List<SyntaxInfo> syntax = new List<SyntaxInfo>();
             var line = lti.GetRaw(row);
-            int level = this.Hilighter.DoHilight(doc, line.start, line.length, (s) =>
+            var lineHeadIndex = lti.GetLineHeadLongIndex(row);
+            int level = this.Hilighter.DoHilight(doc, lineHeadIndex, line.length, (s) =>
             {
                 if (s.type == TokenType.None || s.type == TokenType.Control)
                     return;
-                var linFeedLength = Util.GetNewLineLengthInTail(doc.Slice(line.start + s.index,s.length));
+                var linFeedLength = Util.GetNewLineLengthInTail(doc.Slice(lineHeadIndex + s.index,s.length));
                 if (linFeedLength > 0)
                     s.length -= linFeedLength;
-                syntax.Add(new SyntaxInfo(line.start + s.index, s.length, s.type));
+                syntax.Add(new SyntaxInfo(lineHeadIndex + s.index, s.length, s.type));
             });
 
             lti.UpdateRaw(row, (lineData) =>
