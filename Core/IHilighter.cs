@@ -134,7 +134,7 @@ namespace FooEditEngine
     /// <summary>
     /// 古いIHilighterと互換性を保つためのクラス
     /// </summary>
-    public abstract class HilighterBase : IHilighter
+    public abstract class HilighterLegacyBase : IHilighter
     {
         public virtual int DoHilight(string text, int length, TokenSpilitHandeler action)
         {
@@ -143,7 +143,8 @@ namespace FooEditEngine
 
         public virtual int DoHilight(Document doc, long startIndex, long length, TokenSpilitHandeler action)
         {
-            string text = doc.ToString(startIndex, length);
+            var row = doc.LayoutLines.GetLineNumberFromIndex(startIndex);
+            string text = doc.LayoutLines[row];
             return this.DoHilight(text, (int)length, action);
         }
 

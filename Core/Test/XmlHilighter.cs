@@ -24,7 +24,7 @@ namespace FooEditEngine.Test
     /// <summary>
     /// XMLドキュメント用ハイライター
     /// </summary>
-    public class XmlHilighter : HilighterBase
+    public class XmlHilighter : HilighterLegacyBase
     {
         private TextParserMode mode;
         private StringBuilder word;

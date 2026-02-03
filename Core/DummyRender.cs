@@ -285,7 +285,7 @@ namespace FooEditEngine
         }
     }
 
-    class DummyHilighter : HilighterBase
+    class DummyHilighter : HilighterLegacyBase
     {
         char spiliter;
         public DummyHilighter(char spiliter)
