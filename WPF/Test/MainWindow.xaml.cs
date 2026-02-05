@@ -334,6 +334,11 @@ namespace Test
             this.fooTextBox.JumpCaret(int.Parse(this.JumpRow.Text), 0);
         }
 
+        private void JumpIndex_Click(object sender, RoutedEventArgs e)
+        {
+            this.fooTextBox.JumpCaret(int.Parse(this.JumpIndex.Text));
+        }
+
         private async void MenuItem_Click_19(object sender, RoutedEventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog();

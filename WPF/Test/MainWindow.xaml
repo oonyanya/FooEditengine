@@ -48,6 +48,8 @@
             <Button Name="ReplaceAll" Content="ReplaceAll" Click="ReplaceAll_Click" Margin="10,0,0,0"/>
             <TextBox Name="JumpRow" Margin="10,0,0,0" Width="20"/>
             <Button x:Name="Jamp" Content="JumpTo" Click="Jamp_Click" Margin="10,0,0,0"/>
+            <TextBox Name="JumpIndex" Margin="10,0,0,0" Width="20"/>
+            <Button x:Name="JampByIndex" Content="JumpTo" Click="JumpIndex_Click" Margin="10,0,0,0"/>
         </StackPanel>
     </Grid>
 </Window>
