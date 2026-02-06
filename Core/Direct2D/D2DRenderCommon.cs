@@ -684,7 +684,7 @@ namespace FooEditEngine
 
             CombineTextLayout mainLayout = (CombineTextLayout)lti.GetLayout(row);
 
-            mainLayout.Draw(main_layout_x, main_layout_y, (subLayout, subLayoutStartIndex, x, y) =>
+            mainLayout.Draw(main_layout_x, main_layout_y,this.TextArea, (subLayout, subLayoutStartIndex, x, y) =>
             {
                 MyTextLayout layout = (MyTextLayout)subLayout;
 

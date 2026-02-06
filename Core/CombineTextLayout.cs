@@ -163,13 +163,28 @@ namespace FooEditEngine
             return TextLayouts[arrayIndex].Layout.GetWidthFromIndex(relativeIndex);
         }
 
-        public void Draw(double x, double y,Action<ITextLayout,int,double,double> action)
+        public void Draw(double x, double y, Action<ITextLayout, int, double, double> action)
+        {
+            this.Draw(x, y, Rectangle.Empty, action);
+        }
+
+        public void Draw(double x, double y,Rectangle draw_area,Action<ITextLayout,int,double,double> action)
         {
             double pos_x = x,pos_y = y;
             int index_main_layout = 0;
             foreach (var sublayout in TextLayouts)
             {
+                if(draw_area != Rectangle.Empty)
+                {
+                    if (pos_y + sublayout.Layout.Height < draw_area.Y)
+                        goto draw_end;
+                    if(pos_y >  draw_area.BottomLeft.Y)
+                        goto draw_end;
+                }
+
                 action(sublayout.Layout, index_main_layout, pos_x, pos_y);
+
+            draw_end:
                 pos_y += sublayout.Layout.Height;
                 index_main_layout += Document.MaximumLineLength;
             }
