@@ -11,7 +11,7 @@ using Windows.Storage;
 
 namespace Test
 {
-    class TestHilighter : HilighterBase
+    class TestHilighter : HilighterLegacyBase
     {
         public override int DoHilight(string text, int length, TokenSpilitHandeler action)
         {

@@ -648,6 +648,7 @@ namespace FooEditEngine.Windows
         /// <summary>
         /// 選択領域の色
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Color Hilight
         {
             get
