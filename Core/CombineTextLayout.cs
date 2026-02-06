@@ -163,6 +163,7 @@ namespace FooEditEngine
             return TextLayouts[arrayIndex].Layout.GetWidthFromIndex(relativeIndex);
         }
 
+        [Obsolete]
         public void Draw(double x, double y, Action<ITextLayout, int, double, double> action)
         {
             this.Draw(x, y, Rectangle.Empty, action);

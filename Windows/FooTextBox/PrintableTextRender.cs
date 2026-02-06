@@ -241,7 +241,7 @@ namespace FooEditEngine.Windows
         public void DrawOneLine(Document doc,LineToIndexTable lti, int row, double mainx, double mainy)
         {
             CombineTextLayout combineTextLayout = (CombineTextLayout)lti.GetLayout(row);
-            combineTextLayout.Draw(mainx, mainy, (subLayout, startIndexSubLayout, x, y) => {
+            combineTextLayout.Draw(mainx, mainy, this.TextArea, (subLayout, startIndexSubLayout, x, y) => {
                 PrintableTextLayout layout = (PrintableTextLayout)subLayout;
                 layout.Draw(g, x, y, this.Foreground);
             });

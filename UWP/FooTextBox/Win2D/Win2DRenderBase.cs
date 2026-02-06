@@ -545,7 +545,7 @@ namespace FooEditEngine.UWP
 
             var mainlayout = (CombineTextLayout)lti.GetLayout(row);
 
-            mainlayout.Draw(main_layout_x, main_layout_y, (sublayout, subLayoutStartIndex, x, y) =>
+            mainlayout.Draw(main_layout_x, main_layout_y, this.TextArea, (sublayout, subLayoutStartIndex, x, y) =>
             {
                 var layout = (Win2DTextLayout)sublayout;
 
