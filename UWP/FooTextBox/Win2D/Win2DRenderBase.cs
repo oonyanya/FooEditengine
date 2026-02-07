@@ -536,74 +536,70 @@ namespace FooEditEngine.UWP
             this.offScreenSession.FillCircle(v, (float)radius, this._factory.CreateSolidColorBrush(this.Background));
         }
 
-        public void DrawOneLine(Document doc, LineToIndexTable lti, int row, double main_layout_x, double main_layout_y)
+        public void DrawOneLine(Document doc, LineToIndexTable lti, int row, double x, double y)
         {
             int lineLength = lti.GetLengthFromLineNumber(row);
 
             if (lineLength == 0 || this.offScreenSession == null)
                 return;
 
-            var mainlayout = (CombineTextLayout)lti.GetLayout(row);
+            var layout = (Win2DTextLayout)lti.GetLayout(row);
 
-            mainlayout.Draw(main_layout_x, main_layout_y, this.TextArea, (sublayout, subLayoutStartIndex, x, y) =>
+            if (layout.Markers != null)
             {
-                var layout = (Win2DTextLayout)sublayout;
-
-                if (layout.Markers != null)
+                foreach (Marker sel in layout.Markers)
                 {
-                    foreach (Marker sel in layout.Markers)
+                    if (sel.length == 0 || sel.start == -1)
+                        continue;
+                    this.DrawMarkerEffect(layout, sel.hilight, (int)sel.start, (int)sel.length, x, y, sel.isBoldLine, new Windows.UI.Color() { A = sel.color.A, R = sel.color.R, B = sel.color.B, G = sel.color.G });
+                }
+            }
+            if (layout.Selects != null)
+            {
+                foreach (Selection sel in layout.Selects)
+                {
+                    if (sel.length == 0 || sel.start == -1)
+                        continue;
+
+                    this.DrawMarkerEffect(layout, HilightType.Select, (int)sel.start, (int)sel.length, x, y, false);
+                }
+            }
+
+            if (this.ShowFullSpace || this.ShowHalfSpace || this.ShowTab)
+            {
+                var str = doc;
+                CanvasCachedGeometry geo = null;
+                double lineHeight = this.emSize.Height * this.LineEmHeight;
+                var subLayoutStartIndex = (int)lti.GetLongIndexFromLineNumber(row);
+                int subLayoutLength = lineLength;
+                for (int i = 0; i < subLayoutLength; i++)
+                {
+                    int indexMainLayout = i + subLayoutStartIndex;
+                    Point pos = new Point(0, 0);
+                    if (this.ShowTab && str[indexMainLayout] == '\t')
                     {
-                        if (sel.length == 0 || sel.start == -1)
-                            continue;
-                        this.DrawMarkerEffect(layout, sel.hilight, (int)sel.start, (int)sel.length, x, y, sel.isBoldLine, new Windows.UI.Color() { A = sel.color.A, R = sel.color.R, B = sel.color.B, G = sel.color.G });
+                        pos = layout.GetPostionFromIndex(i);
+                        geo = this._factory.CreateSymbol(ShowSymbol.Tab, this._format);
+                    }
+                    else if (this.ShowFullSpace && str[indexMainLayout] == '　')
+                    {
+                        pos = layout.GetPostionFromIndex(i);
+                        geo = this._factory.CreateSymbol(ShowSymbol.FullSpace, this._format);
+                    }
+                    else if (this.ShowHalfSpace && str[indexMainLayout] == ' ')
+                    {
+                        pos = layout.GetPostionFromIndex(i);
+                        geo = this._factory.CreateSymbol(ShowSymbol.HalfSpace, this._format);
+                    }
+                    if (geo != null)
+                    {
+                        offScreenSession.DrawCachedGeometry(geo, (float)(x + pos.X), (float)(y + pos.Y), this._factory.CreateSolidColorBrush(this.ControlChar));
+                        geo = null;
                     }
                 }
-                if (layout.Selects != null)
-                {
-                    foreach (Selection sel in layout.Selects)
-                    {
-                        if (sel.length == 0 || sel.start == -1)
-                            continue;
+            }
 
-                        this.DrawMarkerEffect(layout, HilightType.Select, (int)sel.start, (int)sel.length, x, y, false);
-                    }
-                }
-
-                if (this.ShowFullSpace || this.ShowHalfSpace || this.ShowTab)
-                {
-                    string str = lti[row];
-                    CanvasCachedGeometry geo = null;
-                    double lineHeight = this.emSize.Height * this.LineEmHeight;
-                    int subLayoutLength = Math.Min(lineLength - subLayoutStartIndex, Document.MaximumLineLength);
-                    for (int i = 0; i < subLayoutLength; i++)
-                    {
-                        int indexMainLayout = i + subLayoutStartIndex;
-                        Point pos = new Point(0, 0);
-                        if (this.ShowTab && str[indexMainLayout] == '\t')
-                        {
-                            pos = layout.GetPostionFromIndex(i);
-                            geo = this._factory.CreateSymbol(ShowSymbol.Tab, this._format);
-                        }
-                        else if (this.ShowFullSpace && str[indexMainLayout] == '　')
-                        {
-                            pos = layout.GetPostionFromIndex(i);
-                            geo = this._factory.CreateSymbol(ShowSymbol.FullSpace, this._format);
-                        }
-                        else if (this.ShowHalfSpace && str[indexMainLayout] == ' ')
-                        {
-                            pos = layout.GetPostionFromIndex(i);
-                            geo = this._factory.CreateSymbol(ShowSymbol.HalfSpace, this._format);
-                        }
-                        if (geo != null)
-                        {
-                            offScreenSession.DrawCachedGeometry(geo, (float)(x + pos.X), (float)(y + pos.Y), this._factory.CreateSolidColorBrush(this.ControlChar));
-                            geo = null;
-                        }
-                    }
-                }
-
-                offScreenSession.DrawTextLayout(layout.RawLayout, (float)x, (float)y, this._factory.CreateSolidColorBrush(this.Foreground));
-            });
+            offScreenSession.DrawTextLayout(layout.RawLayout, (float)x, (float)y, this._factory.CreateSolidColorBrush(this.Foreground));
         }
 
         public const int BoldThickness = 2;

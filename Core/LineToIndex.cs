@@ -8,15 +8,17 @@
 
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-using System;
-using System.Text;
-using System.Globalization;
-using System.Linq;
-using System.Collections.Generic;
-using System.Diagnostics;
 using FooProject.Collection;
 using FooProject.Collection.DataStore;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace FooEditEngine
 {
@@ -205,6 +207,7 @@ namespace FooEditEngine
         /// </summary>
         public string LineString { get; internal set; }
 
+        public bool LineEnd = false;
         internal SyntaxInfo[] Syntax;
         public bool Dirty = false;
 
@@ -226,6 +229,7 @@ namespace FooEditEngine
                 this.Syntax = Array.Empty<SyntaxInfo>();
             else
                 this.Syntax = syntax;
+            this.LineEnd = lineend;
             this.Dirty = dirty;
         }
 
@@ -243,6 +247,7 @@ namespace FooEditEngine
             var result = new LineToIndexTableData();
             result.start = this.start;
             result.length = this.length;
+            result.LineEnd = this.LineEnd;
             result.Syntax = this.Syntax;
             result.Layout = this.Layout;
             result.Dirty = this.Dirty;
@@ -264,6 +269,7 @@ namespace FooEditEngine
                 var item = new LineToIndexTableData();
                 item.start = reader.ReadInt64();
                 item.length = reader.ReadInt64();
+                item.LineEnd = reader.ReadBoolean();
                 item.Dirty = reader.ReadBoolean();
                 var syntax_item_count = reader.ReadInt64();
                 if (syntax_item_count > 0)
@@ -303,6 +309,7 @@ namespace FooEditEngine
             {
                 writer.Write(item.start);
                 writer.Write(item.length);
+                writer.Write(item.LineEnd);
                 writer.Write(item.Dirty);
                 if(item.Syntax == null)
                 {
@@ -415,6 +422,8 @@ namespace FooEditEngine
 
         private void DataStore_Disposeing(IComposableList<LineToIndexTableData> list)
         {
+            if (list == null)
+                return;
             foreach(var item in list)
             {
                 item.Dispose();
@@ -614,7 +623,7 @@ namespace FooEditEngine
 
             //挿入範囲内のドキュメントから行を生成する
             SpilitStringEventArgs e = new SpilitStringEventArgs(this.Document, HeadIndex, analyzeLength, startRow);
-            IList<LineToIndexTableData> newLines = this.CreateLineList(e.index, e.length, setdirtyflag);
+            IList<LineToIndexTableData> newLines = this.CreateLineList(e.index, e.length, setdirtyflag, Document.MaximumLineLength);
 
             int removeCount = endRow - startRow + 1;
             for (int i = startRow; i < startRow + removeCount; i++)
@@ -706,16 +715,19 @@ namespace FooEditEngine
 
         void GetRemoveRange(long index, long length,out int startRow,out int endRow)
         {
-            if(this.TryGetLineNumberFromIndex(index, out startRow) == false)
+            if (this.TryGetLineNumberFromIndex(index, out startRow) == false)
             {
                 startRow = -1;
                 endRow = -1;
                 return;
             }
+            while (startRow > 0 && this._Lines[startRow - 1].LineEnd == false)
+                startRow--;
 
             if (this.TryGetLineNumberFromIndex(index + length, out endRow) == false)
                 endRow = this._Lines.Count - 1;
-
+            while (endRow < this._Lines.Count && this._Lines[endRow].LineEnd == false)
+                endRow++;
             if (endRow >= this._Lines.Count)
                 endRow = this._Lines.Count - 1;
         }
@@ -997,12 +1009,11 @@ namespace FooEditEngine
 
         ITextLayout CreateLayout(int row)
         {
-            CombineTextLayout layout = new CombineTextLayout();
+            ITextLayout layout;
             LineToIndexTableData lineData = this.GetRaw(row);
             if (lineData.Length == 0)
             {
-                var sublayout = this.render.CreateLaytout(null, 0, 0, null, null, null, this.WrapWidth);
-                layout.Add(sublayout, 0, 0);
+                layout = this.render.CreateLaytout(null, 0, 0, null, null, null, this.WrapWidth);
             }
             else
             {
@@ -1015,28 +1026,24 @@ namespace FooEditEngine
 
                 var watchedMarker = this.Document.MarkerPatternSet.GetMarkers(arg);
 
-                foreach(var touple in this.ForEachLines(lineHeadIndex, lineHeadIndex + lineData.Length - 1, Document.MaximumLineLength))
-                {
-                    long indexSublayout = touple.Item1;
-                    long lengthSublayout = touple.Item2;
-                    var userMarkerRange = from id in this.Document.Markers.IDs
-                                          from s in this.Document.Markers.Get(id, indexSublayout, lengthSublayout)
-                                          let n = Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout)
-                                          select n;
-                    var watchdogMarkerRange = from s in watchedMarker
-                                              let n = Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout)
-                                              select n;
-                    var markerRange = watchdogMarkerRange.Concat(userMarkerRange);
-                    var selectRange = from s in this.Document.Selections.Get(indexSublayout, lengthSublayout)
+                long indexSublayout = lineHeadIndex;
+                long lengthSublayout = lineData.length;
+                var userMarkerRange = from id in this.Document.Markers.IDs
+                                      from s in this.Document.Markers.Get(id, indexSublayout, lengthSublayout)
                                       let n = Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout)
                                       select n;
-                    var syntaxRnage = lineData.Syntax == null ? new SyntaxInfo[] { }  : lineData.Syntax.Select((s) =>
-                    {
-                        return Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout);
-                    }).ToArray();
-                    var sublayout = this.render.CreateLaytout(this.Document, indexSublayout, lengthSublayout, syntaxRnage, markerRange, selectRange, this.WrapWidth);
-                    layout.Add(sublayout,indexSublayout,lengthSublayout);
-                }
+                var watchdogMarkerRange = from s in watchedMarker
+                                          let n = Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout)
+                                          select n;
+                var markerRange = watchdogMarkerRange.Concat(userMarkerRange);
+                var selectRange = from s in this.Document.Selections.Get(indexSublayout, lengthSublayout)
+                                  let n = Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout)
+                                  select n;
+                var syntaxRnage = lineData.Syntax == null ? new SyntaxInfo[] { } : lineData.Syntax.Select((s) =>
+                {
+                    return Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout);
+                }).ToArray();
+                layout = this.render.CreateLaytout(this.Document, indexSublayout, lengthSublayout, syntaxRnage, markerRange, selectRange, this.WrapWidth);
             }
 
             return layout;

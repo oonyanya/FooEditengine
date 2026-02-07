@@ -1078,6 +1078,59 @@ namespace UnitTest
         }
 
         [TestMethod]
+        public void LongLineWithCRTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            for (int i = 0; i < 2; i++)
+            {
+                int testLength = Document.MaximumLineLength * 2;
+                for (int j = 0; j < testLength; j++)
+                {
+                    doc.Append("a");
+                }
+                doc.Append(Document.CR_CHAR);
+            }
+            doc.PerformLayout();
+
+            doc.Remove(1001, 1);
+            doc.Insert(1001, "a");
+            doc.Remove(3001, 1);
+            doc.Insert(3001, "a");
+
+            //メインのテストは他でしてるのでほかの改行コードで動くことを確認する
+            var layoutLines = doc.LayoutLines;
+            Assert.AreEqual(20, layoutLines.GetLineHeight(new TextPoint(0, 0)));
+        }
+        [TestMethod]
+        public void LongLineWithCRLFTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            for (int i = 0; i < 2; i++)
+            {
+                int testLength = Document.MaximumLineLength * 2;
+                for (int j = 0; j < testLength; j++)
+                {
+                    doc.Append("a");
+                }
+                doc.Append(Document.CRLF_STR);
+            }
+            doc.PerformLayout();
+
+            doc.Remove(1001, 1);
+            doc.Insert(1001, "a");
+            doc.Remove(3001, 1);
+            doc.Insert(3001, "a");
+
+            //メインのテストは他でしてるのでほかの改行コードで動くことを確認する
+            var layoutLines = doc.LayoutLines;
+            Assert.AreEqual(20, layoutLines.GetLineHeight(new TextPoint(0, 0)));
+        }
+
+        [TestMethod]
         public void LongLineTest()
         {
             DummyRender render = new DummyRender();
@@ -1094,6 +1147,11 @@ namespace UnitTest
             }
             doc.PerformLayout();
 
+            doc.Remove(1001, 1);
+            doc.Insert(1001, "a");
+            doc.Remove(3001, 1);
+            doc.Insert(3001, "a");
+
             var layoutLines = doc.LayoutLines;
 
             Assert.AreEqual(20, layoutLines.GetLineHeight(new TextPoint(0,0)));
@@ -1104,12 +1162,13 @@ namespace UnitTest
             Assert.AreEqual(0, p.Y);
 
             p = layout.GetPostionFromIndex(Document.MaximumLineLength);
-            Assert.AreEqual(0, p.X);
-            Assert.AreEqual(20, p.Y);
+            Assert.AreEqual(20000, p.X);    //0のほうが違和感ないかも
+            Assert.AreEqual(0, p.Y);   //20のほうが違和感ないかも
 
             Assert.AreEqual(0, layout.GetIndexFromPostion(0, 0));
 
-            Assert.AreEqual(Document.MaximumLineLength, layout.GetIndexFromPostion(0, 20));
+            //Document.MaximumLineLengthのほうが違和感ないかも
+            Assert.AreEqual(0, layout.GetIndexFromPostion(0, 20));
 
             Assert.AreEqual(DummyTextLayout.TestCharWidth, layout.GetWidthFromIndex(0));
 

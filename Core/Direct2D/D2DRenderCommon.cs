@@ -675,84 +675,76 @@ namespace FooEditEngine
             this.render.Clear(this.Background);
         }
 
-        public void DrawOneLine(Document doc,LineToIndexTable lti, int row, double main_layout_x, double main_layout_y, PreDrawOneLineHandler PreDrawOneLine)
+        public void DrawOneLine(Document doc,LineToIndexTable lti, int row, double x, double y, PreDrawOneLineHandler PreDrawOneLine)
         {
             int lineLength = lti.GetLengthFromLineNumber(row);
 
             if (lineLength == 0 || this.render == null || this.render.IsDisposed)
                 return;
 
-            CombineTextLayout mainLayout = (CombineTextLayout)lti.GetLayout(row);
+            MyTextLayout layout = (MyTextLayout)lti.GetLayout(row);
 
-            mainLayout.Draw(main_layout_x, main_layout_y,this.TextArea, (subLayout, subLayoutStartIndex, x, y) =>
+            if (PreDrawOneLine != null)
+                PreDrawOneLine(layout, lti, row, (int)lti.GetLongIndexFromLineNumber(row), x, y);
+
+            if (layout.Markers != null)
             {
-                MyTextLayout layout = (MyTextLayout)subLayout;
-
-                if (PreDrawOneLine != null)
-                    PreDrawOneLine(layout, lti, row, subLayoutStartIndex, x, y);
-
-                if (layout.Markers != null)
+                foreach (Marker sel in layout.Markers)
                 {
-                    foreach (Marker sel in layout.Markers)
+                    if (sel.length == 0 || sel.start == -1)
+                        continue;
+                    Color4 color = new Color4() { Alpha = sel.color.A, Red = sel.color.R, Blue = sel.color.B, Green = sel.color.G };
+                    if (sel.hilight == HilightType.Url)
+                        color = this.Url;
+                    this.DrawMarkerEffect(layout, sel.hilight, (int)sel.start, (int)sel.length, x, y, sel.isBoldLine, color);
+                }
+            }
+            if (layout.Selects != null)
+            {
+                foreach (Selection sel in layout.Selects)
+                {
+                    if (sel.length == 0 || sel.start == -1)
+                        continue;
+
+                    this.DrawMarkerEffect(layout, HilightType.Select, (int)sel.start, (int)sel.length, x, y, false);
+                }
+            }
+
+            if (this.ShowFullSpace || this.ShowHalfSpace || this.ShowTab)
+            {
+                long lineHeadIndex = lti.GetLineHeadLongIndex(row);
+                D2D.GeometryRealization geo = null;
+                for (int i = 0; i < lineLength; i++)
+                {
+                    var indexSubLayout = i + lineHeadIndex;
+                    Point pos = new Point(0, 0);
+                    if (this.ShowTab && doc[indexSubLayout] == '\t')
                     {
-                        if (sel.length == 0 || sel.start == -1)
-                            continue;
-                        Color4 color = new Color4() { Alpha = sel.color.A, Red = sel.color.R, Blue = sel.color.B, Green = sel.color.G };
-                        if (sel.hilight == HilightType.Url)
-                            color = this.Url;
-                        this.DrawMarkerEffect(layout, sel.hilight, (int)sel.start, (int)sel.length, x, y, sel.isBoldLine, color);
+                        pos = layout.GetPostionFromIndex(i);
+                        geo = this._factory.CreateSymbol(ShowSymbol.Tab, this.format);
+                    }
+                    else if (this.ShowFullSpace && doc[indexSubLayout] == '　')
+                    {
+                        pos = layout.GetPostionFromIndex(i);
+                        geo = this._factory.CreateSymbol(ShowSymbol.FullSpace, this.format);
+                    }
+                    else if (this.ShowHalfSpace && doc[indexSubLayout] == ' ')
+                    {
+                        pos = layout.GetPostionFromIndex(i);
+                        geo = this._factory.CreateSymbol(ShowSymbol.HalfSpace, this.format);
+                    }
+                    if (geo != null)
+                    {
+                        var old_trans = this.render.Transform;
+                        this.render.Transform = SharpDX.Matrix3x2.Translation(new Vector2((float)(pos.X + x), (float)(pos.Y + y)));
+                        this.render.DrawGeometryRealization(geo, this._factory.GetSolidColorBrush(this.ControlChar));
+                        this.render.Transform = old_trans;
+                        geo = null;
                     }
                 }
-                if (layout.Selects != null)
-                {
-                    foreach (Selection sel in layout.Selects)
-                    {
-                        if (sel.length == 0 || sel.start == -1)
-                            continue;
+            }
 
-                        this.DrawMarkerEffect(layout, HilightType.Select, (int)sel.start, (int)sel.length, x, y, false);
-                    }
-                }
-
-                if (this.ShowFullSpace || this.ShowHalfSpace || this.ShowTab)
-                {
-                    long lineHeadIndex = lti.GetLineHeadLongIndex(row);
-                    D2D.GeometryRealization geo = null;
-                    int subLayoutLength = Math.Min(lineLength, Document.MaximumLineLength);
-                    for (int i = 0; i < subLayoutLength; i++)
-                    {
-                        long indexMainLayout = i + subLayoutStartIndex + lineHeadIndex;
-                        if (indexMainLayout >= lineHeadIndex + lineLength)
-                            break;
-                        Point pos = new Point(0, 0);
-                        if (this.ShowTab && doc[indexMainLayout] == '\t')
-                        {
-                            pos = layout.GetPostionFromIndex(i);
-                            geo = this._factory.CreateSymbol(ShowSymbol.Tab, this.format);
-                        }
-                        else if (this.ShowFullSpace && doc[indexMainLayout] == '　')
-                        {
-                            pos = layout.GetPostionFromIndex(i);
-                            geo = this._factory.CreateSymbol(ShowSymbol.FullSpace, this.format);
-                        }
-                        else if (this.ShowHalfSpace && doc[indexMainLayout] == ' ')
-                        {
-                            pos = layout.GetPostionFromIndex(i);
-                            geo = this._factory.CreateSymbol(ShowSymbol.HalfSpace, this.format);
-                        }
-                        if (geo != null)
-                        {
-                            var old_trans = this.render.Transform;
-                            this.render.Transform = SharpDX.Matrix3x2.Translation(new Vector2((float)(pos.X + x), (float)(pos.Y + y)));
-                            this.render.DrawGeometryRealization(geo, this._factory.GetSolidColorBrush(this.ControlChar));
-                            this.render.Transform = old_trans;
-                            geo = null;
-                        }
-                    }
-                }
-
-                layout.Draw(this.render, (float)x, (float)y, this._factory.GetSolidColorBrush(this.Foreground));
-            });
+            layout.Draw(this.render, (float)x, (float)y, this._factory.GetSolidColorBrush(this.Foreground));
         }
 
         IDisposable layerDisposer;

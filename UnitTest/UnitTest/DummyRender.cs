@@ -20,6 +20,14 @@ namespace UnitTest
 {
     class DummyRender : IEditorRender
     {
+        public DummyRender() {
+            this.MaximumLineLength = Document.MaximumLineLength;
+        }
+        public int MaximumLineLength
+        {
+            get; set; 
+        }
+
         public bool RightToLeft
         {
             get;
@@ -142,15 +150,24 @@ namespace UnitTest
 
         public ITextLayout CreateLaytout(Document doc, long index, long length, SyntaxInfo[] syntaxCollection, IEnumerable<Marker> MarkerRanges, IEnumerable<Selection> SelectRanges, double WrapWidth)
         {
+            CombineTextLayout layout = new CombineTextLayout();
             if (doc == null)
             {
-                return this.CreateLaytout("", syntaxCollection, MarkerRanges, SelectRanges, WrapWidth);
+                var sublayout =  this.CreateLaytout("", syntaxCollection, MarkerRanges, SelectRanges, WrapWidth);
+                layout.Add(sublayout, 0, 0);
             }
             else
             {
-                var str = doc.ToString(index, length);
-                return this.CreateLaytout(str, syntaxCollection, MarkerRanges, SelectRanges, WrapWidth);
+                foreach (var touple in doc.LayoutLines.ForEachLines(index, index + length - 1, this.MaximumLineLength))
+                {
+                    long indexSublayout = touple.Item1;
+                    long lengthSublayout = touple.Item2;
+                    var str = doc.ToString(indexSublayout, lengthSublayout);
+                    var sublayout = this.CreateLaytout(str, syntaxCollection, MarkerRanges, SelectRanges, WrapWidth);
+                    layout.Add(sublayout, indexSublayout, lengthSublayout);
+                }
             }
+            return layout;
         }
 
         public ITextLayout CreateLaytout(string str, SyntaxInfo[] syntaxCollection, IEnumerable<Marker> MarkerRanges, IEnumerable<Selection> Selections, double WrapWidth)

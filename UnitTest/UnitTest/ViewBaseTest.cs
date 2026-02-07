@@ -56,7 +56,7 @@ namespace UnitTest
             Assert.AreEqual(9, result.col);
 
             view.PageBound = new Rectangle(0, 0, 50, 4 * DummyTextLayout.TestLineHeight);
-            Document.MaximumLineLength = 5;
+            render.MaximumLineLength = 5;
             doc.PerformLayout(false);
             doc.LayoutLines.FetchLine(TestLineCount);
 
