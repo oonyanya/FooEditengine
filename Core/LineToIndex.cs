@@ -674,7 +674,6 @@ namespace FooEditEngine
                 }
                 if (linefeed != string.Empty || (maxCharCount != -1 && currentLineLength >= maxCharCount))
                 {
-                    linefeed = string.Empty;
                     UnicodeCategory uc = CharUnicodeInfo.GetUnicodeCategory(c);
                     if (uc != UnicodeCategory.NonSpacingMark &&
                     uc != UnicodeCategory.SpacingCombiningMark &&
@@ -686,6 +685,7 @@ namespace FooEditEngine
                         yield return new Tuple<long, long,string>(currentLineHeadIndex, currentLineLength,linefeed);
                         currentLineHeadIndex += currentLineLength;
                         currentLineLength = 0;
+                        linefeed = string.Empty;
                     }
                 }
                 i++;

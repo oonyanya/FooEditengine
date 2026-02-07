@@ -1143,9 +1143,9 @@ namespace UnitTest
                 {
                     doc.Append("a");
                 }
-                doc.Append(Document.LF_CHAR);
+                doc.Append(Document.LF_CHAR.ToString());
             }
-            doc.PerformLayout();
+            doc.PerformLayout(false);
 
             doc.Remove(1001, 1);
             doc.Insert(1001, "a");
