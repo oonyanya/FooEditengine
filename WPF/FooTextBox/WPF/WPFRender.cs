@@ -15,6 +15,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.TextFormatting;
+using SharpDX_DW = SharpDX.DirectWrite;
 
 namespace FooEditEngine.WPF
 {
@@ -456,18 +457,14 @@ namespace FooEditEngine.WPF
             this.Context.DrawRectangle(this.Brushes[this.Background], null, rect);
         }
 
-        public void DrawOneLine(Document doc, LineToIndexTable lti, int row, double mainLayoutx, double mainLayouty)
+        public void DrawOneLine(Document doc, LineToIndexTable lti, int row, double x, double y)
         {
-            CombineTextLayout layout = (CombineTextLayout)lti.GetLayout(row);
+            TextLayout layout = (TextLayout)lti.GetLayout(row);
 
             if (lti.GetLengthFromLineNumber(row) == 0)
                 return;
 
-            layout.Draw(mainLayoutx, mainLayouty, (subLayout, startIndexSublayout, x, y) =>
-            {
-                var textLayout = (TextLayout)subLayout;
-                textLayout.Draw(this.Context, x, y);
-            });
+            layout.Draw(this.Context, x, y);
         }
 
         IDisposable layerDisposer;
