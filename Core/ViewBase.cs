@@ -334,7 +334,7 @@ namespace FooEditEngine
 
             //p.Y に最も近い行を調べる(OffsetY分引かれてるので、その分足す)
             bool result;
-            SrcPoint t = this.GetNearstRowAndOffsetY(this.Src.Row, p.Y, out result);
+            SrcPoint t = this.GetNearstRowAndOffsetY(this.Src.Row, 0, p.Y, out result);
             if (result == false)
             {
                 if (p.Y > 0)
@@ -496,18 +496,33 @@ namespace FooEditEngine
         public SrcPoint GetNearstRowAndOffsetY(int srcRow, double rect_hight)
         {
             bool _;
-            return GetNearstRowAndOffsetY(srcRow, rect_hight, out _);
+            return GetNearstRowAndOffsetY(srcRow, 0, rect_hight, out _);
         }
 
         /// <summary>
         /// srcRowを起点としてrect_heightが収まる行とオフセットYを求めます
         /// </summary>
         /// <param name="srcRow">起点となる行</param>
+        /// <param name="offset_y">起点となる行からのオフセット量Y</param>
+        /// <param name="rect_hight">Y方向のバウンディングボックス</param>
+        /// <returns>行とオフセットY</returns>
+        public SrcPoint GetNearstRowAndOffsetY(int srcRow,double offset_y, double rect_hight)
+        {
+            bool _;
+            return GetNearstRowAndOffsetY(srcRow, offset_y, rect_hight, out _);
+        }
+
+        /// <summary>
+        /// srcRowを起点としてrect_heightが収まる行とオフセットYを求めます
+        /// </summary>
+        /// <param name="srcRow">起点となる行</param>
+        /// <param name="offset_y">起点となる行からのオフセット量Y</param>
         /// <param name="rect_hight">Y方向のバウンディングボックス</param>
         /// <param name="result">失敗した場合、偽。成功した場合、真</param>
         /// <returns>行とオフセットY</returns>
-        public SrcPoint GetNearstRowAndOffsetY(int srcRow, double rect_hight,out bool result)
+        public SrcPoint GetNearstRowAndOffsetY(int srcRow,double offset_y, double rect_hight,out bool result)
         {
+            var pos_y = offset_y + rect_hight;
             int i;
             if (rect_hight > 0)
             {
@@ -522,21 +537,21 @@ namespace FooEditEngine
                     if (this.LayoutLines.FoldingCollection.IsHidden(lineHeadIndex))
                         continue;
 
-                    if (rect_hight == 0)
+                    if (pos_y == 0)
                     {
                         result = true;
                         return new SrcPoint(0, i, 0);
                     }
 
-                    if (rect_hight - layoutHeight < 0)
+                    if (pos_y - layoutHeight < 0)
                     {
                         result = true;
-                        return new SrcPoint(0, i, rect_hight);
+                        return new SrcPoint(0, i, pos_y);
                     }
 
-                    rect_hight -= layoutHeight;
+                    pos_y -= layoutHeight;
                 }
-                if(rect_hight >= 0)
+                if(pos_y >= 0)
                 {
                     result = false;
                     return new SrcPoint(0, srcRow, 0);
@@ -555,19 +570,19 @@ namespace FooEditEngine
                     if (this.LayoutLines.FoldingCollection.IsHidden(lineHeadIndex))
                         continue;
 
-                    if(rect_hight == 0)
+                    if(pos_y == 0)
                     {
                         result = true;
                         return new SrcPoint(0, i, 0);
                     }
 
-                    if (rect_hight + layoutHeight >= 0)
+                    if (pos_y + layoutHeight >= 0)
                     {
                         result = true;
-                        return new SrcPoint(0, i, layoutHeight + rect_hight);
+                        return new SrcPoint(0, i, layoutHeight + pos_y);
                     }
 
-                    rect_hight += layoutHeight;
+                    pos_y += layoutHeight;
                 }
                 result = false;
                 return new SrcPoint(0, 0, 0);

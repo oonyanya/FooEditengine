@@ -1064,7 +1064,7 @@ namespace FooEditEngine
                 //この値を足さないとうまく動作しない
                 double offset_y = this.View.render.emSize.Height * count + this.View.render.emSize.Height / 2;
                 bool result;
-                SrcPoint newSrc = this.View.GetNearstRowAndOffsetY(current.row, current_pos.Y + offset_y, out result);
+                SrcPoint newSrc = this.View.GetNearstRowAndOffsetY(current.row, 0, current_pos.Y + offset_y, out result);
                 if (result == false)    //そもそも存在しないケースは存在しうるところにする
                 {
                     if (offset_y > 0)
