@@ -804,6 +804,11 @@ namespace FooEditEngine
                 analyzeLength = i - HeadIndex + 1;
             }
 
+            if(HeadIndex + analyzeLength > this.Document.Length)
+            {
+                analyzeLength = this.Document.Length - HeadIndex;
+            }
+
             return new Tuple<long, long>(HeadIndex, analyzeLength);
         }
 
