@@ -200,6 +200,20 @@ namespace FooEditEngine
         }
     }
 
+    /// <summary>
+    /// 各種フラグ
+    /// </summary>
+    /// <remarks>
+    /// シリアライズするときはInt32で行うこと
+    /// </remarks>
+    [Flags]
+    public enum LineToIndexTableDataFlags
+    {
+        None = 0x00,
+        LineEnd = 0x01,
+        Dirty = 0x02
+    }
+
     public class LineToIndexTableData : LineToIndexTableDataBase
     {
         /// <summary>
@@ -207,15 +221,37 @@ namespace FooEditEngine
         /// </summary>
         public string LineString { get; internal set; }
 
-        public bool LineEnd = false;
+        public LineToIndexTableDataFlags Flags { get; set; }
+        public bool LineEnd
+        {
+            get
+            {
+                return this.Flags.HasFlag(LineToIndexTableDataFlags.LineEnd);
+            }
+            set
+            {
+                this.Flags ^= LineToIndexTableDataFlags.LineEnd;
+            }
+        }
         internal SyntaxInfo[] Syntax;
-        public bool Dirty = false;
+        public bool Dirty
+        {
+            get
+            {
+                return this.Flags.HasFlag(LineToIndexTableDataFlags.Dirty);
+            }
+            set
+            {
+                this.Flags ^= LineToIndexTableDataFlags.Dirty;
+            }
+        }
 
         /// <summary>
         /// コンストラクター。LineToIndexTable以外のクラスで呼び出さないでください
         /// </summary>
         internal LineToIndexTableData()
         {
+            this.Flags = LineToIndexTableDataFlags.None;
         }
 
         /// <summary>
@@ -247,10 +283,9 @@ namespace FooEditEngine
             var result = new LineToIndexTableData();
             result.start = this.start;
             result.length = this.length;
-            result.LineEnd = this.LineEnd;
             result.Syntax = this.Syntax;
             result.Layout = this.Layout;
-            result.Dirty = this.Dirty;
+            result.Flags = this.Flags;
             return result;
         }
     }
@@ -269,8 +304,7 @@ namespace FooEditEngine
                 var item = new LineToIndexTableData();
                 item.start = reader.ReadInt64();
                 item.length = reader.ReadInt64();
-                item.LineEnd = reader.ReadBoolean();
-                item.Dirty = reader.ReadBoolean();
+                item.Flags = (LineToIndexTableDataFlags)reader.ReadInt32();
                 var syntax_item_count = reader.ReadInt64();
                 if (syntax_item_count > 0)
                 {
@@ -309,8 +343,7 @@ namespace FooEditEngine
             {
                 writer.Write(item.start);
                 writer.Write(item.length);
-                writer.Write(item.LineEnd);
-                writer.Write(item.Dirty);
+                writer.Write((int)item.Flags);
                 if(item.Syntax == null)
                 {
                     writer.Write(0L);

@@ -983,6 +983,8 @@ namespace UnitTest
                 Assert.AreEqual(documentIndex, lineHeadIndex);
                 var lineData = doc.LayoutLines.GetRaw(i);
                 var syntaxs = lineData.Syntax;
+                Assert.IsTrue(lineData.LineEnd);
+                Assert.IsTrue(lineData.Dirty);
                 if(syntaxs.Length == 6)
                 {
                     var expected_index = lineHeadIndex;
