@@ -965,7 +965,6 @@ namespace UnitTest
 
             Assert.IsTrue(doc.BufferType.HasFlag(DocumentBufferType.Disk));
 
-            doc.LayoutLines.Hilighter =new DummyHilighter('.');
             doc.LayoutLines.Render = render;
             for (int i = 0; i < ADD_COUNT; i++)
             {
@@ -973,7 +972,6 @@ namespace UnitTest
             }
             doc.StringBuffer.Flush();
             doc.LayoutLines.Trim();
-            doc.LayoutLines.HilightAll(true);
             //最終行は空行なので確かめる必要はない
             long documentIndex = 0;
             for (int i = 0; i < doc.LayoutLines.Count - 1; i++)
