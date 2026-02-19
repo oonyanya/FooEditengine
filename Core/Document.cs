@@ -167,6 +167,7 @@ namespace FooEditEngine
         Match match;
         StringBufferBase buffer;
         LineToIndexTable _LayoutLines;
+        RangeCollection<SyntaxInfo> _SyntanInfoCollecton;
         bool _EnableFireUpdateEvent = true, _UrlMark = false, _DrawLineNumber = false, _HideRuler = true, _RightToLeft = false;
         LineBreakMethod _LineBreak;
         int _TabStops, _LineBreakCharCount = 80;
@@ -246,6 +247,7 @@ namespace FooEditEngine
             this.NewLine = Environment.NewLine;
             this.Markers = new MarkerCollection();
             this.UndoManager = new UndoManager();
+            this._SyntanInfoCollecton = new RangeCollection<SyntaxInfo>();
             this._LayoutLines = new LineToIndexTable(this, this.buffer);
             this.MarkerPatternSet = new MarkerPatternSet(this._LayoutLines, this.Markers);
             this.MarkerPatternSet.Updated += WacthDogPattern_Updated;
@@ -745,6 +747,14 @@ namespace FooEditEngine
             get
             {
                 return this._LayoutLines;
+            }
+        }
+
+        internal RangeCollection<SyntaxInfo> SyntaxInfoCollection
+        {
+            get
+            {
+                return this._SyntanInfoCollecton;
             }
         }
 

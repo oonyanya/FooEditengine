@@ -233,7 +233,6 @@ namespace FooEditEngine
                 this.Flags ^= LineToIndexTableDataFlags.LineEnd;
             }
         }
-        internal SyntaxInfo[] Syntax;
         public bool Dirty
         {
             get
@@ -261,10 +260,6 @@ namespace FooEditEngine
         {
             this.start = index;
             this.length = length;
-            if(syntax == null)
-                this.Syntax = Array.Empty<SyntaxInfo>();
-            else
-                this.Syntax = syntax;
             this.LineEnd = lineend;
             this.Dirty = dirty;
         }
@@ -283,7 +278,6 @@ namespace FooEditEngine
             var result = new LineToIndexTableData();
             result.start = this.start;
             result.length = this.length;
-            result.Syntax = this.Syntax;
             result.Layout = this.Layout;
             result.Flags = this.Flags;
             return result;
@@ -305,24 +299,6 @@ namespace FooEditEngine
                 item.start = reader.ReadInt64();
                 item.length = reader.ReadInt64();
                 item.Flags = (LineToIndexTableDataFlags)reader.ReadInt32();
-                var syntax_item_count = reader.ReadInt64();
-                if (syntax_item_count > 0)
-                {
-                    var syntax_items = new SyntaxInfo[syntax_item_count];
-                    for (int j = 0; j < syntax_item_count; j++)
-                    {
-                        var info = new SyntaxInfo();
-                        info.type = (TokenType)reader.ReadInt64();
-                        info.start = reader.ReadInt64();
-                        info.length = reader.ReadInt64();
-                        syntax_items[j] = info;
-                    }
-                    item.Syntax = syntax_items;
-                }
-                else
-                {
-                    item.Syntax = null;
-                }
                 array.Add(item);
             }
             //FixedRangeListを返さないとうまく動作しない
@@ -344,20 +320,6 @@ namespace FooEditEngine
                 writer.Write(item.start);
                 writer.Write(item.length);
                 writer.Write((int)item.Flags);
-                if(item.Syntax == null)
-                {
-                    writer.Write(0L);
-                }
-                else
-                {
-                    writer.Write((long)item.Syntax.LongLength);
-                    foreach (var s in item.Syntax)
-                    {
-                        writer.Write((long)s.type);
-                        writer.Write(s.start);
-                        writer.Write(s.length);
-                    }
-                }
             }
             writer.Close();
             var result = memStream.ToArray();
@@ -1077,7 +1039,7 @@ namespace FooEditEngine
                 var selectRange = from s in this.Document.Selections.Get(indexSublayout, lengthSublayout)
                                   let n = Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout)
                                   select n;
-                var syntaxRnage = lineData.Syntax == null ? new SyntaxInfo[] { } : lineData.Syntax.Select((s) =>
+                var syntaxRnage = this.Document.SyntaxInfoCollection.Get(indexSublayout, lengthSublayout).Select((s) =>
                 {
                     return Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout);
                 }).ToArray();

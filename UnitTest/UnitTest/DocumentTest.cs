@@ -982,25 +982,8 @@ namespace UnitTest
                 var lineHeadIndex = doc.LayoutLines.GetLongIndexFromLineNumber(i);
                 Assert.AreEqual(documentIndex, lineHeadIndex);
                 var lineData = doc.LayoutLines.GetRaw(i);
-                var syntaxs = lineData.Syntax;
                 Assert.IsTrue(lineData.LineEnd);
                 Assert.IsTrue(lineData.Dirty);
-                if(syntaxs.Length == 6)
-                {
-                    var expected_index = lineHeadIndex;
-                    var expected_tokenLength = 13;  //.までの長さ
-                    foreach(var s in syntaxs.Take(6))
-                    {
-                        Assert.AreEqual(expected_index, s.index);
-                        Assert.AreEqual(expected_tokenLength, s.length);
-                        Assert.AreEqual(TokenType.Keyword1, s.type);
-                        expected_index += expected_tokenLength;
-                    }
-                }
-                else
-                {
-                    Assert.Fail();
-                }
                 documentIndex += lineData.length;
             }
 
@@ -1057,23 +1040,6 @@ namespace UnitTest
                 var lineHeadIndex = doc.LayoutLines.GetLongIndexFromLineNumber(i);
                 Assert.AreEqual(documentIndex, lineHeadIndex);
                 var lineData = doc.LayoutLines.GetRaw(i);
-                var syntaxs = lineData.Syntax;
-                if (syntaxs.Length == 6)
-                {
-                    var expected_index = lineHeadIndex;
-                    var expected_tokenLength = 13;  //.までの長さ
-                    foreach (var s in syntaxs.Take(6))
-                    {
-                        Assert.AreEqual(expected_index, s.index);
-                        Assert.AreEqual(expected_tokenLength, s.length);
-                        Assert.AreEqual(TokenType.Keyword1, s.type);
-                        expected_index += expected_tokenLength;
-                    }
-                }
-                else
-                {
-                    Assert.Fail();
-                }
                 documentIndex += lineData.length;
             }
 

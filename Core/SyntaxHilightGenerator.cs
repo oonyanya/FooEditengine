@@ -19,8 +19,6 @@ namespace FooEditEngine
 
         public void Clear(LineToIndexTable lti)
         {
-            for (int i = 0; i < lti.Count; i++)
-                lti.GetRaw(i).Syntax = null;
             lti.ClearLayoutCache();
             this._IsSync = false;
         }
@@ -38,6 +36,8 @@ namespace FooEditEngine
             bool not_sync = force || (!this._IsSync && Math.Abs(nowTick - this.lastUpdateTicks) >= AllowCallTicks);
             if (not_sync)
             {
+                doc.SyntaxInfoCollection.Clear();
+
                 for (int i = 0; i < lti.Count; i++)
                 {
                     this.HilightLine(doc, lti, i);
@@ -58,7 +58,6 @@ namespace FooEditEngine
         private void HilightLine(Document doc, LineToIndexTable lti, int row)
         {
             //シンタックスハイライトを行う
-            List<SyntaxInfo> syntax = new List<SyntaxInfo>();
             var line = lti.GetRaw(row);
             var lineHeadIndex = lti.GetLineHeadLongIndex(row);
             int level = this.Hilighter.DoHilight(doc, lineHeadIndex, line.length, (s) =>
@@ -68,13 +67,7 @@ namespace FooEditEngine
                 var linFeedLength = Util.GetNewLineLengthInTail(doc.Slice(lineHeadIndex + s.index,s.length));
                 if (linFeedLength > 0)
                     s.length -= linFeedLength;
-                syntax.Add(new SyntaxInfo(lineHeadIndex + s.index, s.length, s.type));
-            });
-
-            lti.UpdateRaw(row, (lineData) =>
-            {
-                lineData.Syntax = syntax.ToArray();
-                return lineData;
+                doc.SyntaxInfoCollection.Add(new SyntaxInfo(lineHeadIndex + s.index, s.length, s.type));
             });
         }
 
