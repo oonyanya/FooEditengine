@@ -1040,6 +1040,24 @@ namespace UnitTest
                 var lineHeadIndex = doc.LayoutLines.GetLongIndexFromLineNumber(i);
                 Assert.AreEqual(documentIndex, lineHeadIndex);
                 var lineData = doc.LayoutLines.GetRaw(i);
+                var syntaxs = doc.SyntaxInfoCollection.Get(lineHeadIndex, lineData.length);
+                if (syntaxs.Count() == 6)
+                {
+                    var expected_index = lineHeadIndex;
+                    var expected_tokenLength = 13;  //.までの長さ
+                    foreach (var s in syntaxs)
+                    {
+                        Assert.AreEqual(expected_index, s.index);
+                        Assert.AreEqual(expected_tokenLength, s.length);
+                        Assert.AreEqual(TokenType.Keyword1, s.type);
+                        expected_index += expected_tokenLength;
+                    }
+                }
+                else
+                {
+                    Assert.Fail();
+                }
+
                 documentIndex += lineData.length;
             }
 
