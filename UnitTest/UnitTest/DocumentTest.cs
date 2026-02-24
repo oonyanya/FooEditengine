@@ -1076,7 +1076,7 @@ namespace UnitTest
                 }
                 doc.Append(Document.CR_CHAR);
             }
-            doc.PerformLayout();
+            doc.PerformLayout(false);
 
             doc.Remove(1001, 1);
             doc.Insert(1001, "a");
@@ -1102,7 +1102,7 @@ namespace UnitTest
                 }
                 doc.Append(Document.CRLF_STR);
             }
-            doc.PerformLayout();
+            doc.PerformLayout(false);
 
             doc.Remove(1001, 1);
             doc.Insert(1001, "a");
@@ -1133,6 +1133,7 @@ namespace UnitTest
 
             var layoutLines = doc.LayoutLines;
             bool[] line_end_list = new bool[] {false, false, true, false, false, true};
+            layoutLines.FetchLine(line_end_list.Length + 1);    //そもそも行が存在しない可能性がある
             Assert.AreEqual(line_end_list.Length + 1, layoutLines.Count);
             for (int i = 0; i < line_end_list.Length; i++) {
                 var raw_line = layoutLines.GetRaw(i);
