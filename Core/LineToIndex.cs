@@ -230,7 +230,14 @@ namespace FooEditEngine
             }
             set
             {
-                this.Flags ^= LineToIndexTableDataFlags.LineEnd;
+                if (value)
+                {
+                    this.Flags |= LineToIndexTableDataFlags.LineEnd;
+                }
+                else
+                {
+                    this.Flags &= ~LineToIndexTableDataFlags.LineEnd;
+                }
             }
         }
         public bool Dirty
@@ -241,7 +248,14 @@ namespace FooEditEngine
             }
             set
             {
-                this.Flags ^= LineToIndexTableDataFlags.Dirty;
+                if (value)
+                {
+                    this.Flags |= LineToIndexTableDataFlags.Dirty;
+                }
+                else
+                {
+                    this.Flags &= ~LineToIndexTableDataFlags.Dirty;
+                }
             }
         }
 

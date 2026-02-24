@@ -1131,12 +1131,18 @@ namespace UnitTest
             }
             doc.PerformLayout(false);
 
+            var layoutLines = doc.LayoutLines;
+            bool[] line_end_list = new bool[] {false, false, true, false, false, true};
+            Assert.AreEqual(line_end_list.Length + 1, layoutLines.Count);
+            for (int i = 0; i < line_end_list.Length; i++) {
+                var raw_line = layoutLines.GetRaw(i);
+                Assert.AreEqual(line_end_list[i], raw_line.LineEnd);
+            }
+
             doc.Remove(1001, 1);
             doc.Insert(1001, "a");
             doc.Remove(3001, 1);
             doc.Insert(3001, "a");
-
-            var layoutLines = doc.LayoutLines;
 
             Assert.AreEqual(20, layoutLines.GetLineHeight(new TextPoint(0,0)));
 
