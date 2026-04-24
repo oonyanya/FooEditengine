@@ -522,6 +522,20 @@ namespace FooEditEngine
         /// <returns>行とオフセットY</returns>
         public SrcPoint GetNearstRowAndOffsetY(int srcRow,double offset_y, double rect_hight,out bool result)
         {
+            var output = this.MoveRow(srcRow, offset_y, rect_hight);
+            result = output.Result;
+            return new SrcPoint(output.X, output.Row, output.OffsetY);
+        }
+
+        /// <summary>
+        /// srcRowを起点としてrect_heightが収まる行とオフセットYを求めます
+        /// </summary>
+        /// <param name="srcRow">起点となる行</param>
+        /// <param name="offset_y">起点となる行からのオフセット量Y</param>
+        /// <param name="rect_hight">Y方向のバウンディングボックス</param>
+        /// <returns>行とオフセットY、result。resultには失敗した場合、偽、成功した場合、真となる</returns>
+        public (double X,int Row,double OffsetY,bool Result) MoveRow(int srcRow, double offset_y, double rect_hight)
+        {
             var pos_y = offset_y + rect_hight;
             int i;
             if (rect_hight > 0)
@@ -539,25 +553,22 @@ namespace FooEditEngine
 
                     if (pos_y == 0)
                     {
-                        result = true;
-                        return new SrcPoint(0, i, 0);
+                        return (0, i, 0, true);
                     }
 
                     if (pos_y - layoutHeight < 0)
                     {
-                        result = true;
-                        return new SrcPoint(0, i, pos_y);
+                        return (0, i, pos_y, true);
                     }
 
                     pos_y -= layoutHeight;
                 }
-                if(pos_y >= 0)
+                if (pos_y >= 0)
                 {
-                    result = false;
-                    return new SrcPoint(0, srcRow, 0);
+                    return (0, srcRow, 0, false);
                 }
             }
-            else if(rect_hight < 0)
+            else if (rect_hight < 0)
             {
                 for (i = srcRow - 1; i >= 0; i--)
                 {
@@ -570,25 +581,22 @@ namespace FooEditEngine
                     if (this.LayoutLines.FoldingCollection.IsHidden(lineHeadIndex))
                         continue;
 
-                    if(pos_y == 0)
+                    if (pos_y == 0)
                     {
-                        result = true;
-                        return new SrcPoint(0, i, 0);
+                        return (0, i, 0, true);
                     }
 
                     if (pos_y + layoutHeight >= 0)
                     {
-                        result = true;
-                        return new SrcPoint(0, i, layoutHeight + pos_y);
+                        return (0, i, layoutHeight + pos_y, true);
                     }
 
                     pos_y += layoutHeight;
                 }
-                result = false;
-                return new SrcPoint(0, 0, 0);
+                return (0, 0, 0, false);
             }
-            result = false;
-            return new SrcPoint(0, srcRow, 0);
+            return (0, srcRow, 0, false);
+
         }
 
         public void Dispose()

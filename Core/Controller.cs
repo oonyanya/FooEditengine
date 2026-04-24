@@ -1063,9 +1063,8 @@ namespace FooEditEngine
                 Point current_pos = this.View.LayoutLines.GetLayout(current.row).GetPostionFromIndex(current.col);
                 //この値を足さないとうまく動作しない
                 double offset_y = this.View.render.emSize.Height * count + this.View.render.emSize.Height / 2;
-                bool result;
-                SrcPoint newSrc = this.View.GetNearstRowAndOffsetY(current.row, 0, current_pos.Y + offset_y, out result);
-                if (result == false)    //そもそも存在しないケースは存在しうるところにする
+                var newSrc = this.View.MoveRow(current.row, 0, current_pos.Y + offset_y);
+                if (newSrc.Result == false)    //そもそも存在しないケースは存在しうるところにする
                 {
                     if (offset_y > 0)
                         return new TextPoint(this.View.LayoutLines.Count - 1, current.col);
