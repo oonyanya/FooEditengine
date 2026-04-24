@@ -522,81 +522,9 @@ namespace FooEditEngine
         /// <returns>行とオフセットY</returns>
         public SrcPoint GetNearstRowAndOffsetY(int srcRow,double offset_y, double rect_hight,out bool result)
         {
-            var output = this.MoveRow(srcRow, offset_y, rect_hight);
+            var output = this.LayoutLines.MoveRow(srcRow, offset_y, rect_hight);
             result = output.Result;
             return new SrcPoint(output.X, output.Row, output.OffsetY);
-        }
-
-        /// <summary>
-        /// srcRowを起点としてrect_heightが収まる行とオフセットYを求めます
-        /// </summary>
-        /// <param name="srcRow">起点となる行</param>
-        /// <param name="offset_y">起点となる行からのオフセット量Y</param>
-        /// <param name="rect_hight">Y方向のバウンディングボックス</param>
-        /// <returns>行とオフセットY、result。resultには失敗した場合、偽、成功した場合、真となる</returns>
-        public (double X,int Row,double OffsetY,bool Result) MoveRow(int srcRow, double offset_y, double rect_hight)
-        {
-            var pos_y = offset_y + rect_hight;
-            int i;
-            if (rect_hight > 0)
-            {
-                for (i = srcRow; i < this.Document.LayoutLines.Count; i++)
-                {
-                    ITextLayout layout = this.Document.LayoutLines.GetLayout(i);
-
-                    long lineHeadIndex = this.LayoutLines.GetLongIndexFromLineNumber(i);
-                    long lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
-                    double layoutHeight = layout.Height;
-
-                    if (this.LayoutLines.FoldingCollection.IsHidden(lineHeadIndex))
-                        continue;
-
-                    if (pos_y == 0)
-                    {
-                        return (0, i, 0, true);
-                    }
-
-                    if (pos_y - layoutHeight < 0)
-                    {
-                        return (0, i, pos_y, true);
-                    }
-
-                    pos_y -= layoutHeight;
-                }
-                if (pos_y >= 0)
-                {
-                    return (0, srcRow, 0, false);
-                }
-            }
-            else if (rect_hight < 0)
-            {
-                for (i = srcRow - 1; i >= 0; i--)
-                {
-                    ITextLayout layout = this.Document.LayoutLines.GetLayout(i);
-
-                    long lineHeadIndex = this.LayoutLines.GetLongIndexFromLineNumber(i);
-                    long lineLength = this.LayoutLines.GetLengthFromLineNumber(i);
-                    double layoutHeight = layout.Height;
-
-                    if (this.LayoutLines.FoldingCollection.IsHidden(lineHeadIndex))
-                        continue;
-
-                    if (pos_y == 0)
-                    {
-                        return (0, i, 0, true);
-                    }
-
-                    if (pos_y + layoutHeight >= 0)
-                    {
-                        return (0, i, layoutHeight + pos_y, true);
-                    }
-
-                    pos_y += layoutHeight;
-                }
-                return (0, 0, 0, false);
-            }
-            return (0, srcRow, 0, false);
-
         }
 
         public void Dispose()

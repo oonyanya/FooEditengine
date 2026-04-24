@@ -524,11 +524,11 @@ namespace FooEditEngine
             {
                 case ScrollDirection.Up:
                     toRow = Math.Max(0, this.View.Src.Row - delta);
-                    toRow = this.View.AdjustRow(toRow, false);
+                    toRow = this.View.LayoutLines.AdjustRow(toRow, false);
                     break;
                 case ScrollDirection.Down:
                     toRow = Math.Min(this.View.Src.Row + delta, this.View.LayoutLines.Count - 1);
-                    toRow = this.View.AdjustRow(toRow, true);
+                    toRow = this.View.LayoutLines.AdjustRow(toRow, true);
                     break;
                 case ScrollDirection.Left:
                     toX -= delta;
@@ -603,7 +603,7 @@ namespace FooEditEngine
                     bool moveFlow = count > 0;
                     if (this.Document.RightToLeft)
                         moveFlow = !moveFlow;
-                    caret = this.MoveCaretHorizontical(caret, moveFlow);
+                    caret = this.View.LayoutLines.MoveCaretHorizontical(caret, moveFlow);
 
                     if (method == FooEditEngine.MoveFlow.Word)
                         caret = this.AlignNearestWord(caret, moveFlow);
@@ -614,7 +614,7 @@ namespace FooEditEngine
             {
                 for (int i = Math.Abs(count); i > 0; i--)
                 {
-                    caret = this.MoveCaretVertical(caret, count > 0, method == MoveFlow.Paragraph);
+                    caret = this.View.LayoutLines.MoveCaretVertical(caret, count > 0, method == MoveFlow.Paragraph);
                     moved++;
                 }
             }
@@ -634,7 +634,7 @@ namespace FooEditEngine
                 {
                     if (caret.col + 1 < this.Document.Length && this.Document[index + 1] == Document.LF_CHAR)
                     {
-                        caret = this.MoveCaretHorizontical(caret, MoveFlow);
+                        caret = this.View.LayoutLines.MoveCaretHorizontical(caret, MoveFlow);
                         break;
                     }
                     else
@@ -646,12 +646,12 @@ namespace FooEditEngine
                 }
                 else if (!Util.IsWordSeparator(this.Document[index]))
                 {
-                    caret = this.MoveCaretHorizontical(caret, MoveFlow);
+                    caret = this.View.LayoutLines.MoveCaretHorizontical(caret, MoveFlow);
                 }
                 else
                 {
                     if (MoveFlow)
-                        caret = this.MoveCaretHorizontical(caret, MoveFlow);
+                        caret = this.View.LayoutLines.MoveCaretHorizontical(caret, MoveFlow);
                     break;
                 }
             }
@@ -1035,57 +1035,6 @@ namespace FooEditEngine
         }
 
         /// <summary>
-        /// 行単位で移動後のキャレット位置を取得する
-        /// </summary>
-        /// <param name="count">移動量</param>
-        /// <param name="current">現在のキャレット位置</param>
-        /// <param name="move_pargraph">パラグラフ単位で移動するなら真</param>
-        /// <returns>移動後のキャレット位置</returns>
-        TextPoint GetTextPointAfterMoveLine(int count, TextPoint current, bool move_pargraph = false)
-        {
-            if(move_pargraph == true)
-            {
-                int row = current.row + count;
-
-                if (row < 0)
-                    row = 0;
-                else if (row >= this.View.LayoutLines.Count)
-                    row = this.View.LayoutLines.Count - 1;
-
-                row = this.View.AdjustRow(row, count > 0);
-
-                Point pos = this.View.LayoutLines.GetLayout(current.row).GetPostionFromIndex(current.col);
-                int col = this.View.LayoutLines.GetLayout(row).GetIndexFromPostion(pos.X, pos.Y);
-                return new TextPoint(row, col);
-            }
-            else
-            {
-                Point current_pos = this.View.LayoutLines.GetLayout(current.row).GetPostionFromIndex(current.col);
-                //この値を足さないとうまく動作しない
-                double offset_y = this.View.render.emSize.Height * count + this.View.render.emSize.Height / 2;
-                var newSrc = this.View.MoveRow(current.row, 0, current_pos.Y + offset_y);
-                if (newSrc.Result == false)    //そもそも存在しないケースは存在しうるところにする
-                {
-                    if (offset_y > 0)
-                        return new TextPoint(this.View.LayoutLines.Count - 1, current.col);
-                    else if (offset_y < 0)
-                        return new TextPoint(0, current.col);
-                    else
-                        return current;
-                }
-                else
-                {
-                    int newcol = this.View.LayoutLines.GetLayout(newSrc.Row).GetIndexFromPostion(current_pos.X, newSrc.OffsetY);
-                    int lineLength = this.View.LayoutLines.GetLengthFromLineNumber(newSrc.Row);
-                    if (newcol > lineLength)
-                        newcol = lineLength;
-                    var new_tp = new TextPoint(newSrc.Row, newcol);
-                    return new_tp;
-                }
-            }
-        }
-
-        /// <summary>
         /// 選択文字列のインデントを一つ増やす
         /// </summary>
         public void UpIndent()
@@ -1139,89 +1088,6 @@ namespace FooEditEngine
                     output.Append(lines[i] + lines[i].linefeed);
             }
             return output.ToString();
-        }
-
-        /// <summary>
-        /// キャレットを一文字移動させる
-        /// </summary>
-        /// <param name="caret">キャレット</param>
-        /// <param name="isMoveNext">真なら１文字すすめ、そうでなければ戻す</param>
-        /// <remarks>このメソッドを呼び出した後でScrollToCaretメソッドとSelectWithMoveCaretメソッドを呼び出す必要があります。また、\r\nは1文字と扱われます。</remarks>
-        TextPoint MoveCaretHorizontical(TextPoint caret,bool isMoveNext)
-        {
-            if (this.Document.FireUpdateEvent == false)
-                throw new InvalidOperationException("");
-            int delta = isMoveNext ? 0 : -1;
-            int prevcol = caret.col;
-            int col = caret.col + delta;
-            long colIndexInDocument = this.View.LayoutLines.GetLongIndexFromLineNumber(caret.row) + col;
-            long lineEndIndexInDocument = this.View.LayoutLines.GetLongIndexFromLineNumber(caret.row) + this.View.LayoutLines.GetLengthFromLineNumber(caret.row);
-            if (col < 0 || caret.row >= this.View.LayoutLines.Count)
-            {
-                if (caret.row == 0)
-                {
-                    caret.col = 0;
-                    return caret;
-                }
-                caret = this.MoveCaretVertical(caret,false);
-                caret.col = this.View.LayoutLines.GetLengthFromLineNumber(caret.row) - 1; //最終行以外は改行コードがつくはず
-
-                long newColIndexInDocument = this.View.LayoutLines.GetLongIndexFromLineNumber(caret.row) + caret.col;
-
-                if (this.Document[newColIndexInDocument] == Document.LF_CHAR)
-                {
-                    if (caret.col > 1 && this.Document[newColIndexInDocument - 1] == Document.CR_CHAR)
-                    {
-                        caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(caret.col - 1, AlignDirection.Back);
-                    }
-                }
-            }
-            else if (colIndexInDocument >= lineEndIndexInDocument || this.Document[colIndexInDocument] == Document.LF_CHAR || this.Document[colIndexInDocument] == Document.CR_CHAR)
-            {
-                if (isMoveNext)
-                {
-                    if (caret.row < this.View.LayoutLines.Count - 1)
-                    {
-                        caret = this.MoveCaretVertical(caret, true);
-                        caret.col = 0;
-                    }
-                }
-                else if (this.Document[colIndexInDocument] == Document.LF_CHAR)
-                {
-                    if (col > 1 && this.Document[colIndexInDocument - 1] == Document.CR_CHAR)
-                    {
-                        caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 2, AlignDirection.Back);
-                    }
-                    else
-                    {
-                        caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
-                    }
-                }else if (this.Document[colIndexInDocument] == Document.CR_CHAR)
-                {
-                    caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
-                }
-            }
-            else
-            {
-                AlignDirection direction = isMoveNext ? AlignDirection.Forward : AlignDirection.Back;
-                caret.col = this.View.LayoutLines.GetLayout(caret.row).AlignIndexToNearestCluster(col, direction);
-            }
-            return caret;
-        }
-
-        /// <summary>
-        /// キャレットを行方向に移動させる
-        /// </summary>
-        /// <param name="caret">計算の起点となるテキストポイント</param>
-        /// <param name="isMoveNext">プラス方向に移動するなら真</param>
-        /// <param name="move_pargraph">パラグラフ単位で移動するするなら真</param>
-        /// <remarks>このメソッドを呼び出した後でScrollToCaretメソッドとSelectWithMoveCaretメソッドを呼び出す必要があります</remarks>
-        TextPoint MoveCaretVertical(TextPoint caret,bool isMoveNext, bool move_pargraph = false)
-        {
-            if (this.Document.FireUpdateEvent == false)
-                throw new InvalidOperationException("");
-
-            return this.GetTextPointAfterMoveLine(isMoveNext ? 1 : -1, this.Document.CaretPostion, move_pargraph);
         }
 
         private void ReplaceBeforeSelectionArea(SelectCollection Selections, int removeLength, string insertStr)

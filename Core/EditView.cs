@@ -758,32 +758,6 @@ namespace FooEditEngine
             (result, pos) = this.AdjustSrc(new TextPoint(row, 0), AdjustFlow.Both);
         }
 
-        /// <summary>
-        /// 折り畳みを考慮して行を調整します
-        /// </summary>
-        /// <param name="row">調整前の行</param>
-        /// <param name="isMoveNext">移動方向</param>
-        /// <returns>調整後の行</returns>
-        public int AdjustRow(int row, bool isMoveNext)
-        {
-            if (this.LayoutLines.FoldingStrategy == null)
-                return row;
-            long lineHeadIndex = this.LayoutLines.GetLongIndexFromLineNumber(row);
-            long lineLength = this.LayoutLines.GetLengthFromLineNumber(row);
-            FoldingItem foldingData = this.LayoutLines.FoldingCollection.GetFarestHiddenFoldingData(lineHeadIndex, lineLength);
-            if (foldingData != null && !foldingData.Expand)
-            {
-                if (foldingData.End == this.Document.Length)
-                    return row;
-                if (isMoveNext && lineHeadIndex > foldingData.Start)
-                    row = this.LayoutLines.GetLineNumberFromIndex(foldingData.End) + 1;
-                else
-                    row = this.LayoutLines.GetLineNumberFromIndex(foldingData.Start);
-                if(row > this.LayoutLines.Count - 1)
-                    row = this.LayoutLines.GetLineNumberFromIndex(foldingData.Start);
-            }
-            return row;
-        }
         protected override void OnRenderChanged(EventArgs e)
         {
             base.OnRenderChanged(e);

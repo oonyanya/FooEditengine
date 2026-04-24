@@ -1172,6 +1172,240 @@ namespace FooEditEngine
         }
 
         /// <summary>
+        /// 折り畳みを考慮して行を調整します
+        /// </summary>
+        /// <param name="row">調整前の行</param>
+        /// <param name="isMoveNext">移動方向</param>
+        /// <returns>調整後の行</returns>
+        public int AdjustRow(int row, bool isMoveNext)
+        {
+            if (this.FoldingStrategy == null)
+                return row;
+            long lineHeadIndex = this.GetLongIndexFromLineNumber(row);
+            long lineLength = this.GetLengthFromLineNumber(row);
+            FoldingItem foldingData = this.FoldingCollection.GetFarestHiddenFoldingData(lineHeadIndex, lineLength);
+            if (foldingData != null && !foldingData.Expand)
+            {
+                if (foldingData.End == this.Document.Length)
+                    return row;
+                if (isMoveNext && lineHeadIndex > foldingData.Start)
+                    row = this.GetLineNumberFromIndex(foldingData.End) + 1;
+                else
+                    row = this.GetLineNumberFromIndex(foldingData.Start);
+                if (row > this.Count - 1)
+                    row = this.GetLineNumberFromIndex(foldingData.Start);
+            }
+            return row;
+        }
+
+        /// <summary>
+        /// srcRowを起点としてrect_heightが収まる行とオフセットYを求めます
+        /// </summary>
+        /// <param name="srcRow">起点となる行</param>
+        /// <param name="offset_y">起点となる行からのオフセット量Y</param>
+        /// <param name="rect_hight">Y方向のバウンディングボックス</param>
+        /// <returns>行とオフセットY、result。resultには失敗した場合、偽、成功した場合、真となる</returns>
+        public (double X, int Row, double OffsetY, bool Result) MoveRow(int srcRow, double offset_y, double rect_hight)
+        {
+            var pos_y = offset_y + rect_hight;
+            int i;
+            if (rect_hight > 0)
+            {
+                for (i = srcRow; i < this.Count; i++)
+                {
+                    ITextLayout layout = this.GetLayout(i);
+
+                    long lineHeadIndex = this.GetLongIndexFromLineNumber(i);
+                    long lineLength = this.GetLengthFromLineNumber(i);
+                    double layoutHeight = layout.Height;
+
+                    if (this.FoldingCollection.IsHidden(lineHeadIndex))
+                        continue;
+
+                    if (pos_y == 0)
+                    {
+                        return (0, i, 0, true);
+                    }
+
+                    if (pos_y - layoutHeight < 0)
+                    {
+                        return (0, i, pos_y, true);
+                    }
+
+                    pos_y -= layoutHeight;
+                }
+                if (pos_y >= 0)
+                {
+                    return (0, srcRow, 0, false);
+                }
+            }
+            else if (rect_hight < 0)
+            {
+                for (i = srcRow - 1; i >= 0; i--)
+                {
+                    ITextLayout layout = this.GetLayout(i);
+
+                    long lineHeadIndex = this.GetLongIndexFromLineNumber(i);
+                    long lineLength = this.GetLengthFromLineNumber(i);
+                    double layoutHeight = layout.Height;
+
+                    if (this.FoldingCollection.IsHidden(lineHeadIndex))
+                        continue;
+
+                    if (pos_y == 0)
+                    {
+                        return (0, i, 0, true);
+                    }
+
+                    if (pos_y + layoutHeight >= 0)
+                    {
+                        return (0, i, layoutHeight + pos_y, true);
+                    }
+
+                    pos_y += layoutHeight;
+                }
+                return (0, 0, 0, false);
+            }
+            return (0, srcRow, 0, false);
+
+        }
+
+        /// <summary>
+        /// 行単位で移動後のキャレット位置を取得する
+        /// </summary>
+        /// <param name="count">移動量</param>
+        /// <param name="current">現在のキャレット位置</param>
+        /// <param name="move_pargraph">パラグラフ単位で移動するなら真</param>
+        /// <returns>移動後のキャレット位置</returns>
+        public TextPoint GetTextPointAfterMoveLine(int count, TextPoint current, bool move_pargraph = false)
+        {
+            if (move_pargraph == true)
+            {
+                int row = current.row + count;
+
+                if (row < 0)
+                    row = 0;
+                else if (row >= this.Count)
+                    row = this.Count - 1;
+
+                row = this.AdjustRow(row, count > 0);
+
+                Point pos = this.GetLayout(current.row).GetPostionFromIndex(current.col);
+                int col = this.GetLayout(row).GetIndexFromPostion(pos.X, pos.Y);
+                return new TextPoint(row, col);
+            }
+            else
+            {
+                Point current_pos = this.GetLayout(current.row).GetPostionFromIndex(current.col);
+                //この値を足さないとうまく動作しない
+                double offset_y = this.render.emSize.Height * count + this.render.emSize.Height / 2;
+                var newSrc = this.MoveRow(current.row, 0, current_pos.Y + offset_y);
+                if (newSrc.Result == false)    //そもそも存在しないケースは存在しうるところにする
+                {
+                    if (offset_y > 0)
+                        return new TextPoint(this.Count - 1, current.col);
+                    else if (offset_y < 0)
+                        return new TextPoint(0, current.col);
+                    else
+                        return current;
+                }
+                else
+                {
+                    int newcol = this.GetLayout(newSrc.Row).GetIndexFromPostion(current_pos.X, newSrc.OffsetY);
+                    int lineLength = this.GetLengthFromLineNumber(newSrc.Row);
+                    if (newcol > lineLength)
+                        newcol = lineLength;
+                    var new_tp = new TextPoint(newSrc.Row, newcol);
+                    return new_tp;
+                }
+            }
+        }
+
+        /// <summary>
+        /// キャレットを一文字移動させる
+        /// </summary>
+        /// <param name="caret">キャレット</param>
+        /// <param name="isMoveNext">真なら１文字すすめ、そうでなければ戻す</param>
+        /// <remarks>このメソッドを呼び出した後でScrollToCaretメソッドとSelectWithMoveCaretメソッドを呼び出す必要があります。また、\r\nは1文字と扱われます。</remarks>
+        public TextPoint MoveCaretHorizontical(TextPoint caret, bool isMoveNext)
+        {
+            if (this.Document.FireUpdateEvent == false)
+                throw new InvalidOperationException("");
+            int delta = isMoveNext ? 0 : -1;
+            int prevcol = caret.col;
+            int col = caret.col + delta;
+            long colIndexInDocument = this.GetLongIndexFromLineNumber(caret.row) + col;
+            long lineEndIndexInDocument = this.GetLongIndexFromLineNumber(caret.row) + this.GetLengthFromLineNumber(caret.row);
+            if (col < 0 || caret.row >= this.Count)
+            {
+                if (caret.row == 0)
+                {
+                    caret.col = 0;
+                    return caret;
+                }
+                caret = this.MoveCaretVertical(caret, false);
+                caret.col = this.GetLengthFromLineNumber(caret.row) - 1; //最終行以外は改行コードがつくはず
+
+                long newColIndexInDocument = this.GetLongIndexFromLineNumber(caret.row) + caret.col;
+
+                if (this.Document[newColIndexInDocument] == Document.LF_CHAR)
+                {
+                    if (caret.col > 1 && this.Document[newColIndexInDocument - 1] == Document.CR_CHAR)
+                    {
+                        caret.col = this.GetLayout(caret.row).AlignIndexToNearestCluster(caret.col - 1, AlignDirection.Back);
+                    }
+                }
+            }
+            else if (colIndexInDocument >= lineEndIndexInDocument || this.Document[colIndexInDocument] == Document.LF_CHAR || this.Document[colIndexInDocument] == Document.CR_CHAR)
+            {
+                if (isMoveNext)
+                {
+                    if (caret.row < this.Count - 1)
+                    {
+                        caret = this.MoveCaretVertical(caret, true);
+                        caret.col = 0;
+                    }
+                }
+                else if (this.Document[colIndexInDocument] == Document.LF_CHAR)
+                {
+                    if (col > 1 && this.Document[colIndexInDocument - 1] == Document.CR_CHAR)
+                    {
+                        caret.col = this.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 2, AlignDirection.Back);
+                    }
+                    else
+                    {
+                        caret.col = this.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
+                    }
+                }
+                else if (this.Document[colIndexInDocument] == Document.CR_CHAR)
+                {
+                    caret.col = this.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
+                }
+            }
+            else
+            {
+                AlignDirection direction = isMoveNext ? AlignDirection.Forward : AlignDirection.Back;
+                caret.col = this.GetLayout(caret.row).AlignIndexToNearestCluster(col, direction);
+            }
+            return caret;
+        }
+
+        /// <summary>
+        /// キャレットを行方向に移動させる
+        /// </summary>
+        /// <param name="caret">計算の起点となるテキストポイント</param>
+        /// <param name="isMoveNext">プラス方向に移動するなら真</param>
+        /// <param name="move_pargraph">パラグラフ単位で移動するするなら真</param>
+        /// <remarks>このメソッドを呼び出した後でScrollToCaretメソッドとSelectWithMoveCaretメソッドを呼び出す必要があります</remarks>
+        public TextPoint MoveCaretVertical(TextPoint caret, bool isMoveNext, bool move_pargraph = false)
+        {
+            if (this.Document.FireUpdateEvent == false)
+                throw new InvalidOperationException("");
+
+            return this.GetTextPointAfterMoveLine(isMoveNext ? 1 : -1, this.Document.CaretPostion, move_pargraph);
+        }
+
+        /// <summary>
         /// フォールディングを再生成します
         /// </summary>
         /// <param name="force">ドキュメントが更新されていなくても再生成する</param>
