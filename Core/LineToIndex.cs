@@ -1123,9 +1123,10 @@ namespace FooEditEngine
             var result = TryGetLineNumberFromIndex(index, out row);
             if (result == false)
                 return TextPoint.Null;
-            TextPoint tp = new TextPoint();
-            tp.row = row;
-            tp.col = (int)(index - this.GetLineHeadLongIndex(tp.row));
+            TextPoint tp = new TextPoint(
+                row,
+                (int)(index - this.GetLineHeadLongIndex(row))
+                );
             Debug.Assert(tp.row < this._Lines.Count && tp.col <= this.GetRaw(tp.row).Length);
             return tp;
         }
@@ -1137,9 +1138,11 @@ namespace FooEditEngine
         /// <returns>TextPoint構造体を返します</returns>
         public TextPoint GetTextPointFromIndex(long index)
         {
-            TextPoint tp = new TextPoint();
-            tp.row = GetLineNumberFromIndex(index);
-            tp.col = (int)(index - this.GetLineHeadLongIndex(tp.row));
+            var row = GetLineNumberFromIndex(index);
+            TextPoint tp = new TextPoint(
+                row,
+                (int)(index - this.GetLineHeadLongIndex(row))
+                );
             Debug.Assert(tp.row < this._Lines.Count && tp.col <= this.GetRaw(tp.row).Length);
             return tp;
         }
@@ -1336,15 +1339,16 @@ namespace FooEditEngine
             int col = caret.col + delta;
             long colIndexInDocument = this.GetLongIndexFromLineNumber(caret.row) + col;
             long lineEndIndexInDocument = this.GetLongIndexFromLineNumber(caret.row) + this.GetLengthFromLineNumber(caret.row);
+            var new_col = 0;
             if (col < 0 || caret.row >= this.Count)
             {
                 if (caret.row == 0)
                 {
-                    caret.col = 0;
+                    new_col = 0;
                     return caret;
                 }
                 caret = this.MoveCaretVertical(caret, false);
-                caret.col = this.GetLengthFromLineNumber(caret.row) - 1; //最終行以外は改行コードがつくはず
+                new_col = this.GetLengthFromLineNumber(caret.row) - 1; //最終行以外は改行コードがつくはず
 
                 long newColIndexInDocument = this.GetLongIndexFromLineNumber(caret.row) + caret.col;
 
@@ -1352,7 +1356,7 @@ namespace FooEditEngine
                 {
                     if (caret.col > 1 && this.Document[newColIndexInDocument - 1] == Document.CR_CHAR)
                     {
-                        caret.col = this.GetLayout(caret.row).AlignIndexToNearestCluster(caret.col - 1, AlignDirection.Back);
+                        new_col = this.GetLayout(caret.row).AlignIndexToNearestCluster(caret.col - 1, AlignDirection.Back);
                     }
                 }
             }
@@ -1363,31 +1367,31 @@ namespace FooEditEngine
                     if (caret.row < this.Count - 1)
                     {
                         caret = this.MoveCaretVertical(caret, true);
-                        caret.col = 0;
+                        new_col = 0;
                     }
                 }
                 else if (this.Document[colIndexInDocument] == Document.LF_CHAR)
                 {
                     if (col > 1 && this.Document[colIndexInDocument - 1] == Document.CR_CHAR)
                     {
-                        caret.col = this.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 2, AlignDirection.Back);
+                        new_col = this.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 2, AlignDirection.Back);
                     }
                     else
                     {
-                        caret.col = this.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
+                        new_col = this.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
                     }
                 }
                 else if (this.Document[colIndexInDocument] == Document.CR_CHAR)
                 {
-                    caret.col = this.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
+                    new_col = this.GetLayout(caret.row).AlignIndexToNearestCluster(prevcol - 1, AlignDirection.Back);
                 }
             }
             else
             {
                 AlignDirection direction = isMoveNext ? AlignDirection.Forward : AlignDirection.Back;
-                caret.col = this.GetLayout(caret.row).AlignIndexToNearestCluster(col, direction);
+                new_col = this.GetLayout(caret.row).AlignIndexToNearestCluster(col, direction);
             }
-            return caret;
+            return new TextPoint(caret.row,new_col);
         }
 
         /// <summary>

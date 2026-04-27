@@ -1134,15 +1134,17 @@ namespace FooEditEngine
             this.Document.UndoManager.EndUndoGroup();
 
             int delta = insertStr.Length - removeLength;
-            start.col += delta;
-            end.col += delta;
+            var start_col = start.col;
+            var end_col = end.col;
+            start_col += delta;
+            end_col += delta;
 
             if (reverse)
-                this.JumpCaret(start.row, start.col);
+                this.JumpCaret(start.row, start_col);
             else
-                this.JumpCaret(end.row, end.col);
+                this.JumpCaret(end.row, end_col);
             
-            this.Document.Select(start, 0, end.row - start.row);
+            this.Document.Select(new TextPoint(start.row, start_col), 0, end.row - start.row);
         }
 
         private void ReplaceBeforeSelection(Selection sel, int removeLength, string insertStr)
@@ -1185,13 +1187,15 @@ namespace FooEditEngine
                 var line = Util.EnumrateLine(value).Where(item => item.str.Length > 0).ToArray();
 
                 TextPoint Current = this.View.GetLayoutLineFromIndex(this.SelectionStart);
+                var current_row = Current.row;
+                var current_col = Current.col;
 
-                for (i = 0; i < line.Length && Current.row < this.View.LayoutLines.Count; i++, Current.row++)
+                for (i = 0; i < line.Length && Current.row < this.View.LayoutLines.Count; i++, current_row++)
                 {
                     int lineLength = this.View.LayoutLines.GetLengthFromLineNumber(Current.row);
                     if (Current.col > lineLength)
-                        Current.col = lineLength;
-                    StartIndex = this.View.GetIndexFromLayoutLine(Current);
+                        current_col = lineLength;
+                    StartIndex = this.View.GetIndexFromLayoutLine(new TextPoint(current_row,current_col));
                     this.Document.Replace(StartIndex, 0, line[i].str);
                     StartIndex += line[i].str.Length;
                 }

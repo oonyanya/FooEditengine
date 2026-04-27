@@ -1550,9 +1550,9 @@ namespace FooEditEngine.Windows
         void Ime_ImeQueryReconvert(object sender, ImeQueryRecovertStringEventArgs e)
         {
             TextPoint tp = this.LayoutLines.GetTextPointFromIndex(this.Controller.SelectionStart);
-            tp.col = e.offset;
+            var new_col = e.offset;
 
-            long index = this.View.GetIndexFromLayoutLine(tp);
+            long index = this.View.GetIndexFromLayoutLine(new TextPoint(tp.row,new_col));
 
             this.Select(index, index + e.length);
         }

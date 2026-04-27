@@ -966,15 +966,15 @@ namespace FooEditEngine
                 throw new ArgumentOutOfRangeException("height is within Int32.MaxValue - 1");
             TextPoint end = tp;
 
-            end.row = tp.row + (int)height;
-            end.col = tp.col + (int)width;
+            var end_row = tp.row + (int)height;
+            var end_col = tp.col + (int)width;
 
             if (end.row > this.LayoutLines.Count - 1)
                 throw new ArgumentOutOfRangeException("");
 
             this.Selections.Clear();
 
-            this.SelectByRectangle(new TextRectangle(tp, end));
+            this.SelectByRectangle(new TextRectangle(tp, new TextPoint(end_row,end_col)));
 
             this.SelectionChanged(this, null);
         }

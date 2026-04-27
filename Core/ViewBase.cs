@@ -324,10 +324,11 @@ namespace FooEditEngine
                     return TextPoint.Null;
             }
 
-            TextPoint tp = new TextPoint();
-
             if (this.LayoutLines.Count == 0)
-                return tp;
+                return new TextPoint();
+
+            var new_row = 0;
+            var new_col = 0;
 
             //表示領域から探索を始めるのでパディングの分だけ引く
             p.Y -= this.render.TextArea.Y;
@@ -338,30 +339,30 @@ namespace FooEditEngine
             if (result == false)
             {
                 if (p.Y > 0)
-                    t.Row = this.LayoutLines.Count - 1;
+                    t.TextPoint = new TextPoint(this.LayoutLines.Count - 1, 0);
                 else if (p.Y < 0)
-                    t.Row = 0;
+                    t.TextPoint = new TextPoint(0,0);
             }
             t.OffsetY -= this.Src.OffsetY;
 
             double relX = 0, relY;
-            tp.row = t.Row;
+            new_row = t.Row;
             relY = t.OffsetY;    //相対位置がマイナスなので反転させる
 
             if (searchRange == TextPointSearchRange.TextAreaOnly)
             {
                 if (p.X < this.render.TextArea.X)
-                    return tp;
+                    return new TextPoint(new_row,new_col);
             }
 
             relX = p.X - this.render.TextArea.X + this.Document.Src.X;
-            tp.col = this.LayoutLines.GetLayout(tp.row).GetIndexFromPostion(relX, relY);
+            new_col = this.LayoutLines.GetLayout(new_row).GetIndexFromPostion(relX, relY);
 
-            int lineLength = this.LayoutLines.GetLengthFromLineNumber(tp.row);
-            if (tp.col > lineLength)
-                tp.col = lineLength;
+            int lineLength = this.LayoutLines.GetLengthFromLineNumber(new_row);
+            if (new_col > lineLength)
+                new_col = lineLength;
 
-            return tp;
+            return new TextPoint(new_row, new_col);
         }
 
         /// <summary>

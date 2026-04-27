@@ -15,14 +15,16 @@ namespace FooEditEngine
     struct SrcPoint
     {
         public double X;
-        public int Row;
+        public int Row { get { return TextPoint.row; } }
         public double OffsetY;
+        public TextPoint TextPoint{  get; set; }
+
         public SrcPoint(double x, int row, double y)
         {
             if (row < 0)
                 throw new ArgumentOutOfRangeException("マイナスを値を指定することはできません");
             this.X = x;
-            this.Row = row;
+            this.TextPoint = new TextPoint(row,0);
             this.OffsetY = y;
         }
     }
@@ -63,16 +65,16 @@ namespace FooEditEngine
     /// <summary>
     /// 文章の位置を示すクラス
     /// </summary>
-    public struct TextPoint : IComparable<TextPoint>
+    public readonly struct TextPoint : IComparable<TextPoint>
     {
         /// <summary>
         /// 行番号
         /// </summary>
-        public int row;
+        public readonly int row;
         /// <summary>
         /// 桁
         /// </summary>
-        public int col;
+        public readonly int col;
 
         /// <summary>
         /// TextPointがドキュメント上のどこも指していないことを表す
