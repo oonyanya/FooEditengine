@@ -313,7 +313,7 @@ namespace FooEditEngine.Windows
         {
             ImeDocumentFeedEventArgs e = new ImeDocumentFeedEventArgs();
             this.ImeDocumentFeed(this, e);
-            if (lParam.ToInt32() != 0)
+            if (lParam != IntPtr.Zero)
             {
                 if (e.pos > e.Pragraph.Length)
                     e.pos = e.Pragraph.Length;
