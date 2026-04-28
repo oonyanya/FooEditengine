@@ -1175,6 +1175,96 @@ namespace FooEditEngine
         }
 
         /// <summary>
+        /// テキストポイントの移動先を求める
+        /// </summary>
+        /// <param name="caret">起点となるキャレット位置</param>
+        /// <param name="count">移動量</param>
+        /// <param name="method">移動方法</param>
+        /// <returns>移動後のテキストポイント</returns>
+        public TextPoint MoveTextPoint(TextPoint caret, int count, MoveFlow method)
+        {
+            var actual_moved = 0;
+            return this.GetNextCaret(caret, count, method, out actual_moved);
+        }
+
+        /// <summary>
+        /// 移動後のキャレット位置を求める
+        /// </summary>
+        /// <param name="caret">起点となるキャレット位置</param>
+        /// <param name="count">移動量</param>
+        /// <param name="method">移動方法</param>
+        /// <param name="moved">実際に移動した量</param>
+        /// <returns>移動後のキャレット位置</returns>
+        public TextPoint GetNextCaret(TextPoint caret, int count, MoveFlow method, out int moved)
+        {
+            moved = 0;
+            if (method == MoveFlow.Character || method == MoveFlow.Word)
+            {
+                for (int i = Math.Abs(count); i > 0; i--)
+                {
+                    bool moveFlow = count > 0;
+                    if (this.Document.RightToLeft)
+                        moveFlow = !moveFlow;
+                    caret = this.MoveCaretHorizontical(caret, moveFlow);
+
+                    if (method == FooEditEngine.MoveFlow.Word)
+                        caret = this.AlignNearestWord(caret, moveFlow);
+                    moved++;
+                }
+            }
+            if (method == MoveFlow.Line || method == MoveFlow.Paragraph)
+            {
+                for (int i = Math.Abs(count); i > 0; i--)
+                {
+                    caret = this.MoveCaretVertical(caret, count > 0, method == MoveFlow.Paragraph);
+                    moved++;
+                }
+            }
+            if (count < 0)
+                moved = -moved;
+            return caret;
+        }
+
+        TextPoint AlignNearestWord(TextPoint caret, bool MoveFlow)
+        {
+            long lineHeadIndex = this.GetLineHeadLongIndex(caret.row);
+            while (caret.col > 0 &&
+                caret.col < this.Document.Length)
+            {
+                long index = lineHeadIndex + caret.col;
+                if (this.Document[index] == Document.CR_CHAR)
+                {
+                    if (caret.col + 1 < this.Document.Length && this.Document[index + 1] == Document.LF_CHAR)
+                    {
+                        caret = this.MoveCaretHorizontical(caret, MoveFlow);
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else if (this.Document[index] == Document.LF_CHAR)
+                {
+                    break;
+                }
+                else if (!Util.IsWordSeparator(this.Document[index]))
+                {
+                    caret = this.MoveCaretHorizontical(caret, MoveFlow);
+                }
+                else
+                {
+                    if (MoveFlow)
+                        caret = this.MoveCaretHorizontical(caret, MoveFlow);
+                    break;
+                }
+            }
+            return caret;
+        }
+
+
+
+        /// <summary>
         /// 折り畳みを考慮して行を調整します
         /// </summary>
         /// <param name="row">調整前の行</param>

@@ -206,62 +206,6 @@ namespace UnitTest
         }
 
         [TestMethod()]
-        public void GetNextCaretTest()
-        {
-            DummyRender render = new DummyRender();
-            Document doc = new Document();
-            doc.LayoutLines.Render = render;
-            EditView view = new EditView(doc, render);
-            Controller ctrl = new Controller(doc, view);
-            TextPoint nextCaret;
-            int moved;
-            doc.Append("1234\n1234");
-            ctrl.JumpCaret(0);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Character, out moved);
-            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 1);
-            Assert.IsTrue(moved == 1);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Word, out moved);
-            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 4);
-            Assert.IsTrue(moved == 1);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Paragraph, out moved);
-            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
-            Assert.IsTrue(moved == 1);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Line, out moved);
-            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
-            Assert.IsTrue(moved == 1);
-
-            doc.Append("1234\r1234");
-            ctrl.JumpCaret(0);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Character, out moved);
-            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 1);
-            Assert.IsTrue(moved == 1);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Word, out moved);
-            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 4);
-            Assert.IsTrue(moved == 1);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Paragraph, out moved);
-            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
-            Assert.IsTrue(moved == 1);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Line, out moved);
-            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
-            Assert.IsTrue(moved == 1);
-
-            doc.Append("1234\r\n1234");
-            ctrl.JumpCaret(0);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Character, out moved);
-            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 1);
-            Assert.IsTrue(moved == 1);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Word, out moved);
-            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 4);
-            Assert.IsTrue(moved == 1);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Paragraph, out moved);
-            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
-            Assert.IsTrue(moved == 1);
-            nextCaret = ctrl.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Line, out moved);
-            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
-            Assert.IsTrue(moved == 1);
-        }
-
-        [TestMethod()]
         public void DoDeleteActionTest()
         {
             DummyRender render = new DummyRender();

@@ -1114,6 +1114,80 @@ namespace UnitTest
             Assert.AreEqual(20, layoutLines.GetLineHeight(new TextPoint(0, 0)));
         }
 
+
+        [TestMethod()]
+        public void MoveTextPointTest()
+        {
+            //メインのテストはGetNextCaretTestで行っているので、テストパターンは一つで構わない
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            EditView view = new EditView(doc, render);
+            var layoutline = doc.LayoutLines;
+            TextPoint nextCaret;
+            int moved;
+            doc.Append("1234\n1234");
+            doc.SetCaretPostionWithoutEvent(0, 0);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Character, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 1);
+        }
+
+        [TestMethod()]
+        public void GetNextCaretTest()
+        {
+            DummyRender render = new DummyRender();
+            Document doc = new Document();
+            doc.LayoutLines.Render = render;
+            EditView view = new EditView(doc, render);
+            var layoutline = doc.LayoutLines;
+            TextPoint nextCaret;
+            int moved;
+            doc.Append("1234\n1234");
+            doc.SetCaretPostionWithoutEvent(0, 0);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Character, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 1);
+            Assert.IsTrue(moved == 1);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Word, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 4);
+            Assert.IsTrue(moved == 1);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Paragraph, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Line, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+
+            doc.Append("1234\r1234");
+            doc.SetCaretPostionWithoutEvent(0, 0);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Character, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 1);
+            Assert.IsTrue(moved == 1);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Word, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 4);
+            Assert.IsTrue(moved == 1);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Paragraph, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Line, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+
+            doc.Append("1234\r\n1234");
+            doc.SetCaretPostionWithoutEvent(0, 0);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Character, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 1);
+            Assert.IsTrue(moved == 1);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Word, out moved);
+            Assert.IsTrue(nextCaret.row == 0 && nextCaret.col == 4);
+            Assert.IsTrue(moved == 1);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Paragraph, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+            nextCaret = layoutline.GetNextCaret(doc.CaretPostion, 1, MoveFlow.Line, out moved);
+            Assert.IsTrue(nextCaret.row == 1 && nextCaret.col == 0);
+            Assert.IsTrue(moved == 1);
+        }
+
         [TestMethod]
         public void LongLineTest()
         {
@@ -1169,6 +1243,8 @@ namespace UnitTest
 
             Assert.AreEqual(Document.MaximumLineLength + 1, layout.AlignIndexToNearestCluster(Document.MaximumLineLength, AlignDirection.Forward));
         }
+
+
 
         [TestMethod]
         public void MarkerTest()

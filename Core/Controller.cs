@@ -579,83 +579,10 @@ namespace FooEditEngine
         {
             TextPoint caret = this.Document.CaretPostion;
             int moved;
-            caret = GetNextCaret(caret, realLength, alignWord ? MoveFlow.Word : MoveFlow.Character,out moved);
+            caret = this.View.LayoutLines.GetNextCaret(caret, realLength, alignWord ? MoveFlow.Word : MoveFlow.Character,out moved);
             this.Document.SetCaretPostionWithoutEvent(caret.row, caret.col, false);
             this.View.AdjustCaretAndSrc(AdjustFlow.Both);
             this.SelectWithMoveCaret(isSelected);
-        }
-
-        /// <summary>
-        /// 移動後のキャレット位置を求める
-        /// </summary>
-        /// <param name="caret">起点となるキャレット位置</param>
-        /// <param name="count">移動量</param>
-        /// <param name="method">移動方法</param>
-        /// <param name="moved">実際に移動した量</param>
-        /// <returns>移動後のキャレット位置</returns>
-        public TextPoint GetNextCaret(TextPoint caret, int count,MoveFlow method,out int moved)
-        {
-            moved = 0;
-            if(method == MoveFlow.Character || method == MoveFlow.Word)
-            {
-                for (int i = Math.Abs(count); i > 0; i--)
-                {
-                    bool moveFlow = count > 0;
-                    if (this.Document.RightToLeft)
-                        moveFlow = !moveFlow;
-                    caret = this.View.LayoutLines.MoveCaretHorizontical(caret, moveFlow);
-
-                    if (method == FooEditEngine.MoveFlow.Word)
-                        caret = this.AlignNearestWord(caret, moveFlow);
-                    moved++;
-                }
-            }
-            if(method == MoveFlow.Line || method == MoveFlow.Paragraph)
-            {
-                for (int i = Math.Abs(count); i > 0; i--)
-                {
-                    caret = this.View.LayoutLines.MoveCaretVertical(caret, count > 0, method == MoveFlow.Paragraph);
-                    moved++;
-                }
-            }
-            if (count < 0)
-                moved = -moved;
-            return caret;
-        }
-
-        TextPoint AlignNearestWord(TextPoint caret,bool MoveFlow)
-        {
-            long lineHeadIndex = this.View.LayoutLines.GetLineHeadLongIndex(caret.row);
-            while (caret.col > 0 &&
-                caret.col < this.Document.Length)
-            {
-                long index = lineHeadIndex + caret.col;
-                if (this.Document[index] == Document.CR_CHAR)
-                {
-                    if (caret.col + 1 < this.Document.Length && this.Document[index + 1] == Document.LF_CHAR)
-                    {
-                        caret = this.View.LayoutLines.MoveCaretHorizontical(caret, MoveFlow);
-                        break;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                } else if (this.Document[index] == Document.LF_CHAR){
-                    break;
-                }
-                else if (!Util.IsWordSeparator(this.Document[index]))
-                {
-                    caret = this.View.LayoutLines.MoveCaretHorizontical(caret, MoveFlow);
-                }
-                else
-                {
-                    if (MoveFlow)
-                        caret = this.View.LayoutLines.MoveCaretHorizontical(caret, MoveFlow);
-                    break;
-                }
-            }
-            return caret;
         }
 
         /// <summary>
@@ -668,7 +595,7 @@ namespace FooEditEngine
         {
             TextPoint caret = this.Document.CaretPostion;
             int moved;
-            caret = this.GetNextCaret(caret, deltarow, MoveFlow.Line,out moved);
+            caret = this.View.LayoutLines.GetNextCaret(caret, deltarow, MoveFlow.Line,out moved);
             this.Document.SetCaretPostionWithoutEvent(caret.row, caret.col, true);
             this.View.AdjustCaretAndSrc(AdjustFlow.Both);
             this.SelectWithMoveCaret(isSelected);

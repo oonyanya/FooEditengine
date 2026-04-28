@@ -355,17 +355,17 @@ namespace FooEditEngine
             switch (unit)
             {
                 case TextUnit.Character:
-                    newCaret = ctrl.GetNextCaret(caret, count, MoveFlow.Character, out moved);
+                    newCaret = layoutLine.GetNextCaret(caret, count, MoveFlow.Character, out moved);
                     break;
                 case TextUnit.Format:
                 case TextUnit.Word:
-                    newCaret = ctrl.GetNextCaret(caret, count, MoveFlow.Word, out moved);
+                    newCaret = layoutLine.GetNextCaret(caret, count, MoveFlow.Word, out moved);
                     break;
                 case TextUnit.Line:
-                    newCaret = ctrl.GetNextCaret(caret, count, MoveFlow.Line, out moved);
+                    newCaret = layoutLine.GetNextCaret(caret, count, MoveFlow.Line, out moved);
                     break;
                 case TextUnit.Paragraph:
-                    newCaret = ctrl.GetNextCaret(caret, count, MoveFlow.Paragraph, out moved);
+                    newCaret = layoutLine.GetNextCaret(caret, count, MoveFlow.Paragraph, out moved);
                     break;
                 case TextUnit.Page:
                 case TextUnit.Document:
