@@ -261,7 +261,8 @@ namespace FooEditEngine
 
         internal MarkerCollection()
         {
-            foreach (var id in this.IDs)
+            var list = new int[] { MarkerIDs.Defalut, MarkerIDs.IME, MarkerIDs.URL };
+            foreach (var id in list)
             {
                 var markers = new MarkerRleCollection();
                 this.collection.Add(id, markers);
@@ -320,14 +321,8 @@ namespace FooEditEngine
             MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                if(markers.Count == 0)
-                {
-                    markers.Add(Marker.Create(start, length, HilightType.None));
-                }
-                else
-                {
+                if(markers.Count > 0)
                     markers.Update(Marker.Create(start, length, HilightType.None));
-                }
             }
             this.Updated(this, null);
         }
@@ -419,7 +414,8 @@ namespace FooEditEngine
             long deltaLength = insertLength - removeLength;
             foreach (var markers in this.collection.Values)
             {
-                markers.UpdateIndex(startIndex, deltaLength);
+                if(markers.Count > 0)
+                    markers.UpdateIndex(startIndex, deltaLength);
             }
         }
 
