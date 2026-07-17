@@ -9,8 +9,10 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Linq;
+using System.CodeDom;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using FooProject.Collection;
 
 namespace FooEditEngine
 {
@@ -75,10 +77,52 @@ namespace FooEditEngine
         Squiggle,
     }
 
+    public readonly struct MarkerData : IEqualityComparer<MarkerData>
+    {
+        /// <summary>
+        /// マーカーのタイプ
+        /// </summary>
+        public HilightType hilight { get; }
+
+        /// <summary>
+        /// 色を指定する
+        /// </summary>
+        public Color color { get; }
+
+        /// <summary>
+        /// 線を太くするかどうか
+        /// </summary>
+        public bool isBoldLine { get; }
+
+        public MarkerData(HilightType hilight, bool isBoldLine = false)
+        {
+            this.hilight = hilight;
+            this.color = new Color();
+            this.isBoldLine = isBoldLine;
+        }
+
+        public MarkerData(HilightType hilight, Color color, bool isBoldLine = false)
+        {
+            this.hilight = hilight;
+            this.color = color;
+            this.isBoldLine = isBoldLine;
+        }
+
+        public bool Equals(MarkerData x, MarkerData y)
+        {
+            return x.hilight == y.hilight && x.color.Equals(y.color) && x.isBoldLine == isBoldLine;
+        }
+
+        public int GetHashCode([DisallowNull] MarkerData obj)
+        {
+            return obj.hilight.GetHashCode() ^ obj.color.GetHashCode() ^ obj.isBoldLine.GetHashCode();
+        }
+    }
+
     /// <summary>
     /// マーカー自身を表します
     /// </summary>
-    public struct Marker : FooProject.Collection.IRange, IEqualityComparer<Marker>
+    public class Marker : FooProject.Collection.IRleArrayRange<MarkerData>, IEqualityComparer<Marker>
     {
         #region IRange メンバー
 
@@ -100,22 +144,40 @@ namespace FooEditEngine
             set;
         }
 
+        public MarkerData Value
+        {
+            get;
+            set;
+        }
+
         #endregion
 
         /// <summary>
         /// マーカーのタイプ
         /// </summary>
-        public HilightType hilight;
+        public HilightType hilight { get {  return Value.hilight; }  }
 
         /// <summary>
         /// 色を指定する
         /// </summary>
-        public Color color;
+        public Color color { get { return Value.color; } }
 
         /// <summary>
         /// 線を太くするかどうか
         /// </summary>
-        public bool isBoldLine;
+        public bool isBoldLine { get { return Value.isBoldLine; } }
+
+        /// <summary>
+        /// マーカーを作成します
+        /// </summary>
+        /// <param name="start">開始インデックス</param>
+        /// <param name="length">長さ</param>
+        /// <param name="hilight">タイプ</param>
+        /// <returns>マーカー</returns>
+        public static Marker Create(long start, long length, MarkerData data)
+        {
+            return new Marker { start = start, length = length, Value = data };
+        }
 
         /// <summary>
         /// マーカーを作成します
@@ -126,7 +188,7 @@ namespace FooEditEngine
         /// <returns>マーカー</returns>
         public static Marker Create(long start, long length, HilightType hilight)
         {
-            return new Marker { start = start, length = length, hilight = hilight, color = new Color(), isBoldLine = false};
+            return new Marker { start = start, length = length, Value = new MarkerData( hilight, false)};
         }
 
         /// <summary>
@@ -140,7 +202,7 @@ namespace FooEditEngine
         /// <returns>マーカー</returns>
         public static Marker Create(long start, long length, HilightType hilight,Color color,bool isBoldLine = false)
         {
-            return new Marker { start = start, length = length, hilight = hilight ,color = color , isBoldLine = isBoldLine };
+            return new Marker { start = start, length = length, Value = new MarkerData(hilight, color, false) };
         }
 
         /// <summary>
@@ -169,10 +231,24 @@ namespace FooEditEngine
             var newItem = new Marker();
             newItem.start = this.start;
             newItem.length = this.length;
-            newItem.hilight = this.hilight;
-            newItem.color = this.color;
-            newItem.isBoldLine = this.isBoldLine;
+            newItem.Value = new MarkerData(this.hilight, this.color, this.isBoldLine);
             return newItem;
+        }
+    }
+
+    public class MarkerRleCollection : BigRleArrayBase<MarkerData>
+    {
+        protected override IRleArrayRange<MarkerData> CreateItem(MarkerData value, long start = -1, long length = -1)
+        {
+            return Marker.Create(start, length, value);
+        }
+
+        public void UpdateIndex(long absoluteIndex,long deltaLength)
+        {
+            var index = 0L;
+            var item = this.Get(absoluteIndex, out index);
+            item.length += deltaLength;
+            this.SetAt(index, item);
         }
     }
 
@@ -181,10 +257,18 @@ namespace FooEditEngine
     /// </summary>
     public sealed class MarkerCollection
     {
-        Dictionary<int, RangeCollection<Marker>> collection = new Dictionary<int, RangeCollection<Marker>>();
+        Dictionary<int, MarkerRleCollection> collection = new Dictionary<int, MarkerRleCollection>();
 
         internal MarkerCollection()
         {
+            var list = new int[] { MarkerIDs.Defalut, MarkerIDs.URL, MarkerIDs.IME };
+            foreach (var id in list)
+            {
+                var markers = new MarkerRleCollection();
+                markers.Add(Marker.Create(0, 0, HilightType.None));
+                this.collection.Add(id, markers);
+
+            }
             this.Updated +=new EventHandler((s,e)=>{});
         }
 
@@ -201,15 +285,14 @@ namespace FooEditEngine
 
         void AddImpl(int id, Marker m)
         {
-            RangeCollection<Marker> markers;
+            MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                markers.Remove(m.start, m.length);
-                markers.Add(m);
+                markers.Update(m);
             }
             else
             {
-                markers = new RangeCollection<Marker>();
+                markers = new MarkerRleCollection();
                 markers.Add(m);
                 this.collection.Add(id, markers);
             }
@@ -224,7 +307,7 @@ namespace FooEditEngine
 
         internal void RemoveAll(int id)
         {
-            RangeCollection<Marker> markers;
+            MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 markers.Clear();
@@ -234,22 +317,22 @@ namespace FooEditEngine
 
         internal void RemoveAll(int id, long start, long length)
         {
-            RangeCollection<Marker> markers;
+            MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                markers.Remove(start, length);
+                markers.Update(Marker.Create(start, length, HilightType.None));
             }
             this.Updated(this, null);
         }
 
         internal void RemoveAll(int id, HilightType type)
         {
-            RangeCollection<Marker> markers;
+            MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 for (int i = 0; i < markers.Count; i++)
                 {
-                    if (markers[i].hilight == type)
+                    if (markers.GetAt(i).Value.hilight == type)
                         markers.RemoveAt(i);
                 }
             }
@@ -266,33 +349,33 @@ namespace FooEditEngine
 
         internal IEnumerable<Marker> Get(int id)
         {
-            RangeCollection<Marker> markers;
+            MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 foreach (var m in markers)
-                    yield return m;
+                    yield return (Marker)m;
             }
             yield break;
         }
 
         internal IEnumerable<Marker> Get(int id, long index)
         {
-            RangeCollection<Marker> markers;
+            MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                foreach (var m in markers.Get(index))
-                    yield return m;
+                foreach (var m in markers.GetRanges(index,markers.TotalRangeCount))
+                    yield return (Marker)m;
             }
             yield break;
         }
 
         internal IEnumerable<Marker> Get(int id, long index, long length)
         {
-            RangeCollection<Marker> markers;
+            MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                foreach (var m in markers.Get(index, length))
-                    yield return m;
+                foreach (var m in markers.GetRanges(index, length))
+                    yield return (Marker)m;
             }
             yield break;
         }
@@ -303,7 +386,7 @@ namespace FooEditEngine
         /// <param name="id">マーカーＩＤ</param>
         public void Clear(int id)
         {
-            RangeCollection<Marker> markers;
+            MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
                 markers.Clear();
             this.Updated(this, null);
@@ -321,11 +404,9 @@ namespace FooEditEngine
         internal void UpdateMarkers(long startIndex, long insertLength, long removeLength)
         {
             long deltaLength = insertLength - removeLength;
-            foreach (RangeCollection<Marker> markers in this.collection.Values)
+            foreach (var markers in this.collection.Values)
             {
-                int updateStartRow = markers.IndexOf(startIndex);
-                if(updateStartRow != -1)
-                    markers.UpdateStartIndex(deltaLength, updateStartRow);
+                markers.UpdateIndex(startIndex, deltaLength);
             }
         }
 

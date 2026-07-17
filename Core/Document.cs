@@ -1182,25 +1182,6 @@ namespace FooEditEngine
         }
 
         /// <summary>
-        /// マーカーを削除する
-        /// </summary>
-        /// <param name="id">マーカーID</param>
-        /// <param name="type">削除したいマーカーのタイプ</param>
-        public void RemoveMarker(int id, HilightType type)
-        {
-            this.Markers.RemoveAll(id,type);
-        }
-
-        /// <summary>
-        /// すべてのマーカーを削除する
-        /// </summary>
-        /// <param name="id">マーカーID</param>
-        public void RemoveAllMarker(int id)
-        {
-            this.Markers.RemoveAll(id);
-        }
-
-        /// <summary>
         /// インデックスに対応するマーカーを得る
         /// </summary>
         /// <param name="id">マーカーID</param>
@@ -1743,6 +1724,7 @@ namespace FooEditEngine
                 case UpdateType.Clear:
                     this.TotalLineCount = 0;
                     this._LayoutLines.Clear();
+                    this.Markers.Clear();
                     this.Dirty = true;
                     break;
             }
