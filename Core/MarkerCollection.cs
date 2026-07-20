@@ -12,6 +12,7 @@ using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using FooProject.Collection;
 
 namespace FooEditEngine
@@ -265,6 +266,7 @@ namespace FooEditEngine
             foreach (var id in list)
             {
                 var markers = new MarkerRleCollection();
+                markers.Add(Marker.Create(0, 0, HilightType.None));
                 this.collection.Add(id, markers);
             }
             this.Updated +=new EventHandler((s,e)=>{});
@@ -289,7 +291,7 @@ namespace FooEditEngine
                 if (markers.Count == 0)
                     markers.Add(m);
                 else
-                    markers.Update(m);
+                    markers.Update(m.start,m.length, m);
             }
             else
             {
@@ -322,7 +324,7 @@ namespace FooEditEngine
             if (this.collection.TryGetValue(id, out markers))
             {
                 if(markers.Count > 0)
-                    markers.Update(Marker.Create(start, length, HilightType.None));
+                    markers.Update(start,length, Marker.Create(start, length, HilightType.None));
             }
             this.Updated(this, null);
         }
@@ -354,7 +356,7 @@ namespace FooEditEngine
             MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                foreach (var m in markers)
+                foreach (var m in markers.Where(m => m.Value.hilight != HilightType.None))
                     yield return (Marker)m;
             }
             yield break;
@@ -365,7 +367,7 @@ namespace FooEditEngine
             MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                foreach (var m in markers.GetRanges(index,markers.TotalRangeCount))
+                foreach (var m in markers.GetRanges(index,markers.TotalRangeCount).Where(m => m.Value.hilight != HilightType.None))
                     yield return (Marker)m;
             }
             yield break;
@@ -376,7 +378,7 @@ namespace FooEditEngine
             MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                foreach (var m in markers.GetRanges(index, length))
+                foreach (var m in markers.GetRanges(index, length).Where(m => m.Value.hilight != HilightType.None))
                     yield return (Marker)m;
             }
             yield break;
@@ -390,7 +392,10 @@ namespace FooEditEngine
         {
             MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
+            {
                 markers.Clear();
+                markers.Add(Marker.Create(0, 0, HilightType.None));
+            }
             this.Updated(this, null);
         }
 
@@ -403,6 +408,7 @@ namespace FooEditEngine
             foreach (var id in this.IDs)
             {
                 var markers = new MarkerRleCollection();
+                markers.Add(Marker.Create(0, 0, HilightType.None));
                 this.collection.Add(id, markers);
 
             }
