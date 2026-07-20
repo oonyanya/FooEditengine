@@ -265,6 +265,9 @@ namespace FooEditEngine
 
         public void UpdateIndex(long absoluteIndex,long deltaLength)
         {
+            //負の値の場合は既に調整済みなので無視して構わない。See. Document.Replaceメソッド
+            if (deltaLength <= 0)
+                return;
             var index = 0L;
             var item = this.Get(absoluteIndex, out index);
             item.length += deltaLength;
