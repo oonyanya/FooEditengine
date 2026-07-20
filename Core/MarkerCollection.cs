@@ -78,7 +78,7 @@ namespace FooEditEngine
         Squiggle,
     }
 
-    public readonly struct MarkerData : IEqualityComparer<MarkerData>
+    public readonly struct MarkerData : IEqualityComparer<MarkerData>, IEquatable<MarkerData>
     {
         /// <summary>
         /// マーカーのタイプ
@@ -109,6 +109,10 @@ namespace FooEditEngine
             this.isBoldLine = isBoldLine;
         }
 
+        public override bool Equals(object obj) {
+            return (obj is MarkerData other) && this.Equals(other);
+        }
+
         public bool Equals(MarkerData x, MarkerData y)
         {
             return x.hilight == y.hilight && x.color.Equals(y.color) && x.isBoldLine == isBoldLine;
@@ -118,12 +122,17 @@ namespace FooEditEngine
         {
             return obj.hilight.GetHashCode() ^ obj.color.GetHashCode() ^ obj.isBoldLine.GetHashCode();
         }
+
+        public bool Equals(MarkerData other)
+        {
+            return this.hilight == other.hilight && this.color.Equals(other.color) && this.isBoldLine == other.isBoldLine;
+        }
     }
 
     /// <summary>
     /// マーカー自身を表します
     /// </summary>
-    public class Marker : FooProject.Collection.IRleArrayRange<MarkerData>, IEqualityComparer<Marker>
+    public class Marker : FooProject.Collection.IRleArrayRange<MarkerData>, IEqualityComparer<Marker>, IEquatable<Marker>
     {
         #region IRange メンバー
 
@@ -214,7 +223,12 @@ namespace FooEditEngine
         /// <returns>等しいなら真。そうでなければ偽</returns>
         public bool Equals(Marker x, Marker y)
         {
-            return x.hilight == y.hilight && x.length == y.length && x.start == y.start;
+            return x.Value.Equals(y.Value) && x.length == y.length && x.start == y.start;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as Marker);
         }
 
         /// <summary>
@@ -234,6 +248,11 @@ namespace FooEditEngine
             newItem.length = this.length;
             newItem.Value = new MarkerData(this.hilight, this.color, this.isBoldLine);
             return newItem;
+        }
+
+        public bool Equals(Marker other)
+        {
+            return this.Value.Equals(other.Value) && this.length == other.length && this.start == other.start;
         }
     }
 
