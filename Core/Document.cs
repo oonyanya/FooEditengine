@@ -1169,8 +1169,26 @@ namespace FooEditEngine
         /// マーカーを削除する
         /// </summary>
         /// <param name="id">マーカーID</param>
-        /// <param name="start">開始インデックス</param>
-        /// <param name="length">削除する長さ</param>
+        /// <param name="type">削除したいマーカーのタイプ</param>
+        public void RemoveMarker(int id, HilightType type)
+        {
+            this.Markers.RemoveAll(id, type);
+        }
+
+        /// <summary>
+        /// すべてのマーカーを削除する
+        /// </summary>
+        /// <param name="id">マーカーID</param>
+        public void RemoveAllMarker(int id)
+        {
+            this.Markers.RemoveAll(id);
+        }
+        /// <summary>
+                 /// マーカーを削除する
+                 /// </summary>
+                 /// <param name="id">マーカーID</param>
+                 /// <param name="start">開始インデックス</param>
+                 /// <param name="length">削除する長さ</param>
         public void RemoveMarker(int id, long start, long length)
         {
             if (start < 0 || start + length > this.Length)
