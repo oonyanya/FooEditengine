@@ -389,8 +389,12 @@ namespace FooEditEngine
             MarkerRleCollection markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                foreach (var m in markers.GetRanges(index,markers.TotalRangeCount).Where(m => m.Value.hilight != HilightType.None))
-                    yield return (Marker)m;
+                if(markers.Count > 0)
+                {
+                    var ranges = markers.GetRanges(index, markers.TotalRangeCount);
+                    foreach (var m in ranges.Where(m => m.Value.hilight != HilightType.None))
+                        yield return (Marker)m;
+                }
             }
             yield break;
         }
