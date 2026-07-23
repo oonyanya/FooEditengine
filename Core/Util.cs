@@ -424,8 +424,10 @@ namespace FooEditEngine
             return gt.TransformPoint(client);
         }
 
-        internal static Point GetScreentPoint(Point client, Microsoft.UI.Xaml.UIElement element)
+        internal static Point TryGetScreentPoint(Point client, Microsoft.UI.Xaml.UIElement element, out bool result)
         {
+            result = false;
+
             double scale = GetScale();
             var gt = element.TransformToVisual(element.XamlRoot.Content);
             Point p = gt.TransformPoint(client);
@@ -433,9 +435,13 @@ namespace FooEditEngine
 
             //Windows10以降では補正する必要がある
             var appWnd = GetAppWindow(element);
+            if (appWnd == null)
+                return new Point(0, 0);
             var screenPoint = p.Offset(appWnd.Position.X + appWnd.Size.Width - appWnd.ClientSize.Width, appWnd.Position.Y + appWnd.Size.Height - appWnd.ClientSize.Height);
+            result =  true;
             return screenPoint;
         }
+
         internal static Windows.Foundation.Rect GetClientRect(Windows.Foundation.Rect screen, Microsoft.UI.Xaml.UIElement element)
         {
             //Windows10以降では補正する必要がある
