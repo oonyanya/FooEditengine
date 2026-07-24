@@ -1265,12 +1265,17 @@ namespace UnitTest
             foreach (var m in markers)
                 Assert.IsTrue(m.start == 5 && m.length == 2);
 
-            //マーカーがあるところでドキュメントを変更するとマーカー自体が消えることを確認する
-            doc.Insert(5, "a");
+            doc.Insert(4, "a");
             markers = doc.Markers.Get(MarkerIDs.Defalut, 0);
-            Assert.AreEqual(0, markers.Count());
+            foreach (var m in markers)
+                Assert.IsTrue(m.start == 6 && m.length == 2);
 
             doc.Insert(10, "a");
+            markers = doc.Markers.Get(MarkerIDs.Defalut, 0);
+            foreach (var m in markers)
+                Assert.IsTrue(m.start == 6 && m.length == 2);
+
+            doc.Insert(6, "a");
             markers = doc.Markers.Get(MarkerIDs.Defalut, 0);
             Assert.AreEqual(0, markers.Count());
 
