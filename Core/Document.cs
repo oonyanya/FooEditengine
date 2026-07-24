@@ -1326,12 +1326,11 @@ namespace FooEditEngine
             if (length == 0 && (s == string.Empty || s == null))
                 return;
 
-            foreach(int id in this.Markers.IDs)
-                this.RemoveMarker(id,index, length);
-
             ReplaceCommand cmd = new ReplaceCommand(this.buffer, index, length, s);
             this.UndoManager.push(cmd);
             cmd.redo();
+
+            this.Markers.UpdateMarkers(index, s.Length, length);
 
             if (this.FireUpdateEvent && UserInput)
             {
@@ -1735,13 +1734,11 @@ namespace FooEditEngine
                     if (e.row == null)
                     {
                         var updateLineCount = this._LayoutLines.UpdateLayoutLine(e.startIndex, e.removeLength, e.insertLength, true);
-                        this.Markers.UpdateMarkers(e.startIndex, e.insertLength, e.removeLength);
                         this.TotalLineCount += updateLineCount;
                     }
                     else
                     {
                         this._LayoutLines.UpdateLineAsReplace(e.row.Value, e.removeLength, e.insertLength);
-                        this.Markers.UpdateMarkers(this.LayoutLines.GetLongIndexFromLineNumber(e.row.Value), e.insertLength, e.removeLength);
                     }
                     this.Dirty = true;
                     break;

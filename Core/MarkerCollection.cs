@@ -265,9 +265,6 @@ namespace FooEditEngine
 
         public void UpdateIndex(long absoluteIndex,long deltaLength)
         {
-            //負の値の場合は既に調整済みなので無視して構わない。See. Document.Replaceメソッド
-            if (deltaLength <= 0)
-                return;
             var index = 0L;
             var item = this.Get(absoluteIndex, out index);
             item.length += deltaLength;
@@ -346,7 +343,10 @@ namespace FooEditEngine
             if (this.collection.TryGetValue(id, out markers))
             {
                 if(markers.Count > 0)
-                    markers.Update(start,length, Marker.Create(start, length, HilightType.None));
+                {
+                    markers.RemoveRange(start, length);
+                    markers.Insert(Marker.Create(start, length, HilightType.None));
+                }
             }
             this.Updated(this, null);
         }
