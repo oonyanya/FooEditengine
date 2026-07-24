@@ -212,7 +212,7 @@ namespace FooEditEngine
         /// <returns>マーカー</returns>
         public static Marker Create(long start, long length, HilightType hilight,Color color,bool isBoldLine = false)
         {
-            return new Marker { start = start, length = length, Value = new MarkerData(hilight, color, false) };
+            return new Marker { start = start, length = length, Value = new MarkerData(hilight, color, isBoldLine) };
         }
 
         /// <summary>
@@ -308,9 +308,14 @@ namespace FooEditEngine
             if (this.collection.TryGetValue(id, out markers))
             {
                 if (markers.Count == 0)
+                {
                     markers.Add(m);
+                }
                 else
-                    markers.Update(m.start,m.length, m);
+                {
+                    markers.RemoveRange(m.start, m.length);
+                    markers.Insert(m);
+                }
             }
             else
             {

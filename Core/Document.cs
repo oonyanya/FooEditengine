@@ -1162,6 +1162,7 @@ namespace FooEditEngine
             if (m.length > Int32.MaxValue - 1)
                 throw new ArgumentOutOfRangeException("Length is within Int32.MaxValue - 1");
 
+            DebugLog.WriteLine(DebugLogLevel.Infomation, "set marker start:{0} length:{1} type:{2} isbold:{3}", m.start, m.length, m.hilight.ToString(), m.isBoldLine);
             this.Markers.Add(id,m);
         }
 
@@ -1330,6 +1331,7 @@ namespace FooEditEngine
             this.UndoManager.push(cmd);
             cmd.redo();
 
+            DebugLog.WriteLine(DebugLogLevel.Infomation, "update marker start:{0} remove length:{1} insert length:{2}",index, length, s.Length);
             this.Markers.UpdateMarkers(index, s.Length, length);
 
             if (this.FireUpdateEvent && UserInput)
