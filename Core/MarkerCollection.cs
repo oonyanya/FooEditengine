@@ -443,11 +443,15 @@ namespace FooEditEngine
 
         internal void UpdateMarkers(long startIndex, long insertLength, long removeLength)
         {
-            long deltaLength = insertLength - removeLength;
-            foreach (var markers in this.collection.Values)
+            foreach (var id in this.IDs)
             {
-                if(markers.Count > 0)
-                    markers.UpdateIndex(startIndex, deltaLength);
+                this.RemoveAll(id, startIndex, removeLength);
+            }
+
+           foreach (var markers in this.collection.Values)
+            {
+                if (markers.Count > 0)
+                    markers.UpdateIndex(startIndex, insertLength);
             }
         }
 
