@@ -132,7 +132,7 @@ namespace FooEditEngine
     /// <summary>
     /// マーカー自身を表します
     /// </summary>
-    public class Marker : FooProject.Collection.IRleArrayRange<MarkerData>, IEqualityComparer<Marker>, IEquatable<Marker>
+    public class Marker : FooProject.Collection.IRleArrayRangeItem<MarkerData>, IEqualityComparer<Marker>, IEquatable<Marker>
     {
         #region IRange メンバー
 
@@ -256,9 +256,9 @@ namespace FooEditEngine
         }
     }
 
-    public class MarkerRleCollection : BigRleArrayBase<MarkerData>
+    public class MarkerRleCollection : BigRleArrayCollectionBase<MarkerData>
     {
-        protected override IRleArrayRange<MarkerData> CreateItem(MarkerData value, long start = -1, long length = -1)
+        protected override IRleArrayRangeItem<MarkerData> CreateItem(MarkerData value, long start = -1, long length = -1)
         {
             return Marker.Create(start, length, value);
         }
