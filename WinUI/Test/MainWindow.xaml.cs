@@ -97,12 +97,16 @@ namespace Test
             PrintTaskRequestedDeferral = args.Request.GetDeferral();
         }
 
+        string file_location = string.Empty;
+        StorageFile current_file;
+
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
             var filepicker = new FileOpenPicker();
             InitializeWithWindow.Initialize(filepicker, WindowNative.GetWindowHandle(this));
             filepicker.FileTypeFilter.Add(".txt");
             var file = await filepicker.PickSingleFileAsync();
+            current_file = file;
             await this.vm.AddDocumentFromFile(file);
         }
 
@@ -111,6 +115,7 @@ namespace Test
             var filepicker = new FileSavePicker();
             InitializeWithWindow.Initialize(filepicker, WindowNative.GetWindowHandle(this));
             filepicker.FileTypeChoices.Add("text files", new string[] { ".txt" });
+            filepicker.SuggestedSaveFile = current_file;
             var file = await filepicker.PickSaveFileAsync();
             await this.vm.SaveFileDocument(file);
         }
