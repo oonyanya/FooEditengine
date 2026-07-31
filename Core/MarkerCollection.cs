@@ -309,6 +309,11 @@ namespace FooEditEngine
             {
                 if (markers.Count == 0)
                 {
+                    //マーカーが存在しないときに０より大きな値の奴を突っ込むと表示がおかしくなる
+                    if(m.start > 0)
+                    {
+                        markers.Add(Marker.Create(0, m.start, HilightType.None));
+                    }
                     markers.Add(m);
                 }
                 else

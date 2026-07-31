@@ -1287,6 +1287,14 @@ namespace UnitTest
                 foreach (var m in markers)
                     Assert.IsTrue(m.start == 0 && m.length == 4);
             }
+
+            doc = new Document();
+            doc.LayoutLines.Render = render;
+            doc.Append("this is a pen");
+            doc.RemoveAllMarker(MarkerIDs.Defalut);
+            doc.SetMarker(MarkerIDs.Defalut, Marker.Create(5, 2, HilightType.Sold));
+            foreach (var m in doc.Markers.Get(MarkerIDs.Defalut))
+                Assert.IsTrue(m.start == 5 && m.length == 2);
         }
 
         [TestMethod]
