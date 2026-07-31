@@ -158,6 +158,19 @@ namespace Test
             this.CurrentDocument = _list[0];
         }
 
+        public async Task SaveFileDocument(IStorageFile file)
+        {
+            if (file != null)
+            {
+                var doc = this.CurrentDocument;
+                using (var ws = await file.OpenAsync(FileAccessMode.ReadWrite))
+                using (var fs = new StreamWriter(ws.AsStream()))
+                {
+                    await doc.SaveAsync(fs);
+                }
+            }
+        }
+
         public async Task AddDocumentFromFile(IStorageFile file)
         {
             if (file != null)

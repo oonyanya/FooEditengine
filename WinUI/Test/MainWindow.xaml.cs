@@ -106,6 +106,15 @@ namespace Test
             await this.vm.AddDocumentFromFile(file);
         }
 
+        private async void Save_Button_Click(object sender, RoutedEventArgs e)
+        {
+            var filepicker = new FileSavePicker();
+            InitializeWithWindow.Initialize(filepicker, WindowNative.GetWindowHandle(this));
+            filepicker.FileTypeChoices.Add("text files", new string[] { ".txt" });
+            var file = await filepicker.PickSaveFileAsync();
+            await this.vm.SaveFileDocument(file);
+        }
+
         private async void Print_Button_Click(object sender, RoutedEventArgs e)
         {
             await PrintManagerInterop.ShowPrintUIForWindowAsync(WindowNative.GetWindowHandle(this));

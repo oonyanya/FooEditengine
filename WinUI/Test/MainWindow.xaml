@@ -26,6 +26,7 @@
             </muxc:TabView.TabItemTemplate>
         </muxc:TabView>
         <StackPanel Grid.Row="1"  Orientation="Horizontal">
+            <Button Content="Save" Click="Save_Button_Click"/>
             <Button Content="Load" Click="Button_Click"/>
             <Button Content="Print" Click="Print_Button_Click"/>
             <Button Content="New" Click="Button_Click_New"/>
