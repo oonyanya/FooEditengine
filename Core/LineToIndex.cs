@@ -1053,7 +1053,7 @@ namespace FooEditEngine
                 var selectRange = from s in this.Document.Selections.Get(indexSublayout, lengthSublayout)
                                   let n = Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout)
                                   select n;
-                var syntaxRnage = this.Document.SyntaxInfoCollection.Get(indexSublayout, lengthSublayout).Select((s) =>
+                var syntaxRnage = this.Document.SyntaxInfoCollection.GetRanges(indexSublayout, lengthSublayout).Select((s) =>
                 {
                     return Util.ConvertAbsIndexToRelIndex(s, indexSublayout, lengthSublayout);
                 }).ToArray();

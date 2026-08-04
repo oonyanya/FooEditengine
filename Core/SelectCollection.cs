@@ -138,7 +138,7 @@ namespace FooEditEngine
         /// <returns>要素を表すイテレーター</returns>
         public IEnumerable<Selection> Get(long index, long length)
         {
-            return this.collection.Get(index, length);
+            return this.collection.GetRanges(index, length);
         }
 
         /// <summary>

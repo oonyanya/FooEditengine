@@ -265,7 +265,7 @@ namespace FooEditEngine
             yield return this.collection[at];
         }
 
-        public IEnumerable<T> Get(long start, long length)
+        public IEnumerable<T> GetRanges(long start, long length)
         {
             //TODO:インデックスがおかしくなってる可能性がある
             int nearAt;
