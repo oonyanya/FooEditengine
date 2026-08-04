@@ -29,6 +29,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)GripperView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IFoldingStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IHilighter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IRangeCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ITextRender.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LineToIndex.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MarkerCollection.cs" />

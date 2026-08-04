@@ -256,8 +256,9 @@ namespace FooEditEngine
         }
     }
 
-    public class MarkerRleCollection : BigRleArrayCollectionBase<MarkerData>
+    public class MarkerRleCollection : BigRleArrayCollectionBase<MarkerData>, IRangeCollection<IRleArrayRangeItem<MarkerData>>
     {
+
         protected override IRleArrayRangeItem<MarkerData> CreateItem(MarkerData value, long start = -1, long length = -1)
         {
             return Marker.Create(start, length, value);
@@ -269,6 +270,11 @@ namespace FooEditEngine
             var item = this.Get(absoluteIndex, out index);
             item.length += deltaLength;
             this.SetAt(index, item);
+        }
+
+        public void UpdateStartIndex(long deltaLength, long startRow)
+        {
+            throw new NotImplementedException();
         }
     }
 

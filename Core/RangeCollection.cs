@@ -24,11 +24,11 @@ namespace FooEditEngine
         long length { get; set; }
     }
 
-    public class RangeCollection<T> : IEnumerable<T>
+    public class RangeCollection<T> : IRangeCollection<T>
         where T : FooProject.Collection.IRange
     {
         private protected BigList<T> collection;
-        protected int stepRow = -1;
+        protected long stepRow = -1;
         protected long stepLength = 0;
         protected const int STEP_ROW_IS_NONE = -1;
 
@@ -83,20 +83,20 @@ namespace FooEditEngine
             }
         }
 
-        public void ReplaceRange(int startRow, IList<T> new_collection, int removeCount, long deltaLength)
+        public void ReplaceRange(long startRow, IList<T> new_collection, int removeCount, long deltaLength)
         {
             //消すべき行が複数ある場合は消すが、そうでない場合は最適化のため長さを変えるだけにとどめておく
             if (removeCount == 1 && new_collection != null && new_collection.Count == 1)
             {
-                this.collection[startRow] = new_collection.First();
+                this.collection.Set(startRow, new_collection.First());
             }
             else
             {
                 if(typeof(T) == typeof(IDisposable))
                 {
-                    for (int i = startRow; i < startRow + removeCount; i++)
+                    for (var i = startRow; i < startRow + removeCount; i++)
                     {
-                        IDisposable item = (IDisposable)this.collection[i];
+                        IDisposable item = (IDisposable)this.collection.Get(i);
                         item.Dispose();
                     }
                 }
@@ -139,7 +139,7 @@ namespace FooEditEngine
             this.UpdateStartIndex(deltaLength, startRow);
         }
 
-        public void Remove(long start, long length)
+        public void RemoveRange(long start, long length)
         {
             if (this.collection.Count == 0)
                 return;
@@ -173,7 +173,7 @@ namespace FooEditEngine
             this.UpdateStartIndex(0,startRow);
         }
 
-        public void RemoveAt(int startRow)
+        public void RemoveAt(long startRow)
         {
             this.ReplaceRange(startRow, null, 1, 0);
             this.UpdateStartIndex(0, startRow);
@@ -256,7 +256,7 @@ namespace FooEditEngine
             return -1;
         }
 
-        public IEnumerable<T> Get(long index)
+        public IEnumerable<T> GetRanges(long index)
         {
             //TODO:インデックスがおかしくなってる可能性がある
             int at = this.IndexOf(index);
@@ -298,7 +298,7 @@ namespace FooEditEngine
             DebugLog.WriteLine("Clear");
         }
 
-        public void UpdateStartIndex(long deltaLength, int startRow)
+        public void UpdateStartIndex(long deltaLength, long startRow)
         {
             if (this.collection.Count == 0)
             {
@@ -320,13 +320,13 @@ namespace FooEditEngine
                 //ドキュメントの後半部分をごっそり削除した場合、this.stepRow >= this.Lines.Countになる可能性がある
                 if (this.stepRow >= this.collection.Count)
                     this.stepRow = this.collection.Count - 1;
-                for (int i = this.stepRow; i > startRow; i--)
-                    this.collection[i].start -= this.stepLength;
+                for (var i = this.stepRow; i > startRow; i--)
+                    this.collection.Get(i).start -= this.stepLength;
             }
             else if (startRow > this.stepRow)
             {
-                for (int i = this.stepRow + 1; i < startRow; i++)
-                    this.collection[i].start += this.stepLength;
+                for (var i = this.stepRow + 1; i < startRow; i++)
+                    this.collection.Get(i).start += this.stepLength;
             }
 
             this.stepRow = startRow;
@@ -338,8 +338,8 @@ namespace FooEditEngine
         /// </summary>
         public void CommiteChange()
         {
-            for (int i = this.stepRow + 1; i < this.collection.Count; i++)
-                this.collection[i].start += this.stepLength;
+            for (var i = this.stepRow + 1; i < this.collection.Count; i++)
+                this.collection.Get(i).start += this.stepLength;
 
             this.stepRow = STEP_ROW_IS_NONE;
             this.stepLength = 0;

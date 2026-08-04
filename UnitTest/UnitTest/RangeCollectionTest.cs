@@ -91,14 +91,14 @@ namespace UnitTest
         {
             RangeCollection<MyRangeItem> collection = new RangeCollection<MyRangeItem>();
             collection.Add(new MyRangeItem(1, 10));
-            var result = collection.Get(1).ToList();
+            var result = collection.GetRanges(1).ToList();
             Assert.IsTrue(result[0].start == 1 && result[0].length == 10);
 
-            result = collection.Get(0, 20).ToList();
+            result = collection.GetRanges(0, 20).ToList();
             Assert.IsTrue(result[0].start == 1 && result[0].length == 10);
 
             collection.Add(new MyRangeItem(15, 10));
-            result = collection.Get(0, 20).ToList();
+            result = collection.GetRanges(0, 20).ToList();
             Assert.IsTrue(result[0].start == 1 && result[0].length == 10);
             Assert.IsTrue(result[1].start == 15 && result[0].length == 10);
         }
@@ -110,12 +110,12 @@ namespace UnitTest
             collection.Add(new MyRangeItem(1, 10));
             collection.Add(new MyRangeItem(20, 10));
 
-            collection.Remove(0, 15);
+            collection.RemoveRange(0, 15);
             
             var result = collection.ToList();
             Assert.IsTrue(result[0].start == 20 && result[0].length == 10);
 
-            collection.Remove(20,1);
+            collection.RemoveRange(20,1);
             Assert.IsTrue(collection.Count == 0);
         }
     }
