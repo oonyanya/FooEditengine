@@ -370,6 +370,16 @@ namespace FooEditEngine
         {
             throw new NotImplementedException();
         }
+
+        public T GetAt(long index)
+        {
+            return this.collection.Get(index);
+        }
+
+        public void Insert(T item)
+        {
+            this.Add(item);
+        }
     }
 
 }
