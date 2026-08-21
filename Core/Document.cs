@@ -1155,14 +1155,15 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="id">マーカーID</param>
         /// <param name="m">設定したいマーカー</param>
-        public void SetMarker(int id,Marker m)
+        public void SetMarker(int id, Marker m)
         {
             if (m.start < 0 || m.start + m.length > this.Length)
                 throw new ArgumentOutOfRangeException("startもしくはendが指定できる範囲を超えています");
             if (m.length > Int32.MaxValue - 1)
                 throw new ArgumentOutOfRangeException("Length is within Int32.MaxValue - 1");
 
-            this.Markers.Add(id,m);
+            DebugLog.WriteLine(DebugLogLevel.Infomation, "set marker start:{0} length:{1} type:{2} isbold:{3}", m.start, m.length, m.hilight.ToString(), m.isBoldLine);
+            this.Markers.Add(id, m);
         }
 
         /// <summary>
