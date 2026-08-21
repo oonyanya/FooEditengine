@@ -914,28 +914,33 @@ namespace FooEditEngine.WinUI
             long i_startIndex = args.Request.Range.StartCaretPosition;
             long i_endIndex = args.Request.Range.EndCaretPosition;
 
-            if(args.Request.IsCanceled)
+            if (args.Request.IsCanceled)
             {
                 return;
             }
 
-            DebugLog.WriteLine("core text layoutreq range({0}-{1})",i_startIndex,i_endIndex);
+            DebugLog.WriteLine("core text layoutreq range({0}-{1})", i_startIndex, i_endIndex);
 
             double scale = Util.GetScale();
             Point screenStartPos, screenEndPos;
+            bool result;
 
             if (i_startIndex != i_endIndex && i_startIndex != -1 && i_endIndex != -1)
             {
                 TextStoreHelper.GetStringExtent(this._View, i_startIndex, i_endIndex, out startPos, out endPos);
 
                 //Core.Textはスクリーン座標に変換してくれないので自前で変換する（しかも、デバイス依存の座標で返さないといけない）
-                screenStartPos = Util.GetScreentPoint(startPos, this);
-                screenEndPos = Util.GetScreentPoint(endPos, this);
+                screenStartPos = Util.TryGetScreentPoint(startPos, this, out result);
+                screenEndPos = Util.TryGetScreentPoint(endPos, this, out result);
+
+                if (result == false)
+                    return;
+
                 args.Request.LayoutBounds.TextBounds = new Rect(
                     screenStartPos.X,
                     screenStartPos.Y,
-                    Math.Max(0,screenEndPos.X - screenStartPos.X),  //折り返されている場合、負になることがある
-                    Math.Max(0,screenEndPos.Y - screenStartPos.Y)
+                    Math.Max(0, screenEndPos.X - screenStartPos.X),  //折り返されている場合、負になることがある
+                    Math.Max(0, screenEndPos.Y - screenStartPos.Y)
                     );
             }
 
@@ -944,8 +949,14 @@ namespace FooEditEngine.WinUI
             var controlBottomRight = new Point(this.ActualWidth, this.ActualHeight);
 
             //Core.Textはスクリーン座標に変換してくれないので自前で変換する（しかも、デバイス依存の座標で返さないといけない）
-            screenStartPos = Util.GetScreentPoint(controlTopLeft, this);
-            screenEndPos = Util.GetScreentPoint(controlBottomRight, this);
+            screenStartPos = Util.TryGetScreentPoint(controlTopLeft, this, out result);
+            screenEndPos = Util.TryGetScreentPoint(controlBottomRight, this, out result);
+
+            if (result == false)
+            {
+                args.Request.LayoutBounds.TextBounds = new Rect();
+                return;
+            }
 
             args.Request.LayoutBounds.ControlBounds = new Rect(
                 screenStartPos.X,
@@ -954,6 +965,7 @@ namespace FooEditEngine.WinUI
                 screenEndPos.Y - screenStartPos.Y
                 );
         }
+
 
         private void TextEditContext_SelectionRequested(CoreTextEditContext sender, CoreTextSelectionRequestedEventArgs args)
         {

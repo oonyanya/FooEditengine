@@ -459,6 +459,25 @@ namespace FooEditEngine
 
             return screenRect;
         }
+
+        internal static Point TryGetScreentPoint(Point client, Microsoft.UI.Xaml.UIElement element, out bool result)
+        {
+            result = false;
+
+            double scale = GetScale();
+            var gt = element.TransformToVisual(element.XamlRoot.Content);
+            Point p = gt.TransformPoint(client);
+            p = p.Scale(scale); //XamlRootの(0,0)からクライアント座標までは自前でスケーリングしないといけない
+
+            //Windows10以降では補正する必要がある
+            var appWnd = GetAppWindow(element);
+            if (appWnd == null)
+                return new Point(0, 0);
+            var screenPoint = p.Offset(appWnd.Position.X + appWnd.Size.Width - appWnd.ClientSize.Width, appWnd.Position.Y + appWnd.Size.Height - appWnd.ClientSize.Height);
+            result = true;
+            return screenPoint;
+        }
+
         internal static Microsoft.UI.Windowing.AppWindow GetAppWindow(Microsoft.UI.Xaml.UIElement element)
         {
             var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(FooEditEngine.WinUI.FooTextBox.OwnerWindow);
