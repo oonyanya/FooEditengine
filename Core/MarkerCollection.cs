@@ -9,7 +9,9 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
+using System.Buffers;
 using System.CodeDom;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -256,25 +258,123 @@ namespace FooEditEngine
         }
     }
 
-    public class MarkerRleCollection : BigRleArrayCollectionBase<MarkerData>, IRangeCollection<IRleArrayRangeItem<MarkerData>>
+    public class MarkerRleCollection : IRangeCollection<Marker>
     {
-
-        protected override IRleArrayRangeItem<MarkerData> CreateItem(MarkerData value, long start = -1, long length = -1)
+        class MarkerDataRleCollection : BigRleArrayCollectionBase<MarkerData>
         {
-            return Marker.Create(start, length, value);
+            protected override IRleArrayRangeItem<MarkerData> CreateItem(MarkerData value, long start = -1, long length = -1)
+            {
+                return Marker.Create(start, length, value);
+            }
+        }
+
+        MarkerDataRleCollection collection = new MarkerDataRleCollection();
+
+        public int Count => this.collection.Count;
+
+        public MarkerRleCollection()
+        {
+            this.collection.Add(Marker.Create(0, 0, HilightType.None));
         }
 
         public void UpdateStartIndex(long deltaLength, long startRow)
         {
             var index = 0L;
-            var item = this.Get(startRow, out index);
+            var item = this.collection.Get(startRow, out index);
             item.length += deltaLength;
-            this.SetAt(index, item);
+            this.collection.SetAt(index, item);
         }
 
-        public IEnumerable<IRleArrayRangeItem<MarkerData>> GetRanges(long index)
+        public void AddOrInsert(Marker m)
         {
-            return this.GetRanges(index, this.TotalRangeCount - index);
+            if (this.collection.Count == 0)
+            {
+                //マーカーが存在しないときに０より大きな値の奴を突っ込むと表示がおかしくなる
+                if (m.start > 0)
+                {
+                    this.Add(Marker.Create(0, m.start, HilightType.None));
+                }
+                this.collection.Add(m);
+            }
+            else
+            {
+                this.collection.RemoveRange(m.start, m.length);
+                this.collection.Insert(m);
+            }
+        }
+
+        public void Add(Marker item)
+        {
+            this.collection.Add(item);
+        }
+
+        Marker IRangeCollection<Marker>.GetAt(long index)
+        {
+            return (Marker)this.collection.GetAt(index);
+        }
+
+        IEnumerable<Marker> IRangeCollection<Marker>.GetRanges(long index)
+        {
+            if (this.collection.Count > 0)
+            {
+                var ranges = this.collection.GetRanges(index, this.collection.TotalRangeCount - index);
+                foreach (var m in ranges.Where(m => m.Value.hilight != HilightType.None))
+                    yield return (Marker)m;
+            }
+        }
+
+        IEnumerable<Marker> IRangeCollection<Marker>.GetRanges(long start, long length)
+        {
+            if (this.collection.Count > 0)
+            {
+                var ranges = this.collection.GetRanges(start, length);
+                foreach (var m in ranges.Where(m => m.Value.hilight != HilightType.None))
+                    yield return (Marker)m;
+            }
+        }
+
+        public void Insert(Marker item)
+        {
+            this.Insert(item);
+        }
+
+        IEnumerator<Marker> IEnumerable<Marker>.GetEnumerator()
+        {
+            foreach (var m in this.collection.GetRanges(0,this.collection.TotalRangeCount).Where(m => m.Value.hilight != HilightType.None))
+                yield return (Marker)m;
+        }
+
+        public void Clear()
+        {
+            this.collection.Clear();
+            this.collection.Add(Marker.Create(0, 0, HilightType.None));
+        }
+
+        public void RemoveRange(long start, long length)
+        {
+            if (collection.Count > 0)
+            {
+                collection.RemoveRange(start, length);
+                collection.Insert(Marker.Create(start, length, HilightType.None));
+            }
+        }
+
+        public void RemoveAt(long startRow)
+        {
+            collection.RemoveAt(startRow);
+        }
+
+        public IEnumerator GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+        public void UpdateMarkers(long startIndex, long insertLength, long removeLength)
+        {
+            if (collection.Count > 0)
+            {
+                this.RemoveRange(startIndex, removeLength);
+                this.UpdateStartIndex(insertLength, startIndex);
+            }
         }
     }
 
@@ -283,7 +383,7 @@ namespace FooEditEngine
     /// </summary>
     public sealed class MarkerCollection
     {
-        Dictionary<int, IRangeCollection<IRleArrayRangeItem<MarkerData>>> collection = new Dictionary<int, IRangeCollection<IRleArrayRangeItem<MarkerData>>>();
+        Dictionary<int, IRangeCollection<Marker>> collection = new Dictionary<int, IRangeCollection<Marker>>();
 
         internal MarkerCollection()
         {
@@ -291,7 +391,6 @@ namespace FooEditEngine
             foreach (var id in list)
             {
                 var markers = new MarkerRleCollection();
-                markers.Add(Marker.Create(0, 0, HilightType.None));
                 this.collection.Add(id, markers);
             }
             this.Updated +=new EventHandler((s,e)=>{});
@@ -310,23 +409,10 @@ namespace FooEditEngine
 
         void AddImpl(int id, Marker m)
         {
-            IRangeCollection<IRleArrayRangeItem<MarkerData>> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                if (markers.Count == 0)
-                {
-                    //マーカーが存在しないときに０より大きな値の奴を突っ込むと表示がおかしくなる
-                    if(m.start > 0)
-                    {
-                        markers.Add(Marker.Create(0, m.start, HilightType.None));
-                    }
-                    markers.Add(m);
-                }
-                else
-                {
-                    markers.RemoveRange(m.start, m.length);
-                    markers.Insert(m);
-                }
+                markers.AddOrInsert(m);
             }
             else
             {
@@ -345,7 +431,7 @@ namespace FooEditEngine
 
         internal void RemoveAll(int id)
         {
-            IRangeCollection<IRleArrayRangeItem<MarkerData>> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 markers.Clear();
@@ -355,21 +441,17 @@ namespace FooEditEngine
 
         internal void RemoveAll(int id, long start, long length)
         {
-            IRangeCollection<IRleArrayRangeItem<MarkerData>> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                if(markers.Count > 0)
-                {
-                    markers.RemoveRange(start, length);
-                    markers.Insert(Marker.Create(start, length, HilightType.None));
-                }
+                markers.RemoveRange(start, length);
             }
             this.Updated(this, null);
         }
 
         internal void RemoveAll(int id, HilightType type)
         {
-            IRangeCollection<IRleArrayRangeItem<MarkerData>> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 for (int i = 0; i < markers.Count; i++)
@@ -391,7 +473,7 @@ namespace FooEditEngine
 
         internal IEnumerable<Marker> Get(int id)
         {
-            IRangeCollection<IRleArrayRangeItem<MarkerData>> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 foreach (var m in markers.Where(m => m.Value.hilight != HilightType.None))
@@ -402,28 +484,22 @@ namespace FooEditEngine
 
         internal IEnumerable<Marker> Get(int id, long index)
         {
-            IRangeCollection<IRleArrayRangeItem<MarkerData>> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                if(markers.Count > 0)
-                {
-                    var ranges = markers.GetRanges(index);
-                    foreach (var m in ranges.Where(m => m.Value.hilight != HilightType.None))
-                        yield return (Marker)m;
-                }
+                return markers.GetRanges(index);
             }
-            yield break;
+            return [];
         }
 
         internal IEnumerable<Marker> Get(int id, long index, long length)
         {
-            IRangeCollection<IRleArrayRangeItem<MarkerData>> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                foreach (var m in markers.GetRanges(index, length).Where(m => m.Value.hilight != HilightType.None))
-                    yield return (Marker)m;
+                return markers.GetRanges(index, length);
             }
-            yield break;
+            return [];
         }
 
         /// <summary>
@@ -432,11 +508,10 @@ namespace FooEditEngine
         /// <param name="id">マーカーＩＤ</param>
         public void Clear(int id)
         {
-            IRangeCollection<IRleArrayRangeItem<MarkerData>> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 markers.Clear();
-                markers.Add(Marker.Create(0, 0, HilightType.None));
             }
             this.Updated(this, null);
         }
@@ -449,25 +524,16 @@ namespace FooEditEngine
             this.collection.Clear();
             foreach (var id in this.IDs)
             {
-                var markers = new MarkerRleCollection();
-                markers.Add(Marker.Create(0, 0, HilightType.None));
-                this.collection.Add(id, markers);
-
+                this.collection.Clear();
             }
             this.Updated(this, null);
         }
 
         internal void UpdateMarkers(long startIndex, long insertLength, long removeLength)
         {
-            foreach (var id in this.IDs)
+            foreach (var markers in this.collection.Values)
             {
-                this.RemoveAll(id, startIndex, removeLength);
-            }
-
-           foreach (var markers in this.collection.Values)
-            {
-                if (markers.Count > 0)
-                    markers.UpdateStartIndex(insertLength, startIndex);
+                markers.UpdateMarkers(startIndex,insertLength, removeLength);
             }
         }
 

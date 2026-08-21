@@ -380,6 +380,20 @@ namespace FooEditEngine
         {
             this.Add(item);
         }
+
+        public void AddOrInsert(T m)
+        {
+            this.RemoveRange(m.start, m.length);
+            this.Add(m);
+        }
+
+        public void UpdateMarkers(long startIndex, long insertLength, long removeLength)
+        {
+            long deltaLength = insertLength - removeLength;
+            int updateStartRow = this.IndexOf(startIndex);
+            if (updateStartRow != -1)
+                this.UpdateStartIndex(deltaLength, updateStartRow);
+        }
     }
 
 }

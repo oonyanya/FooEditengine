@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using FooProject.Collection;
 
 namespace FooEditEngine
 {
@@ -12,9 +13,10 @@ namespace FooEditEngine
         T GetAt(long index);
         IEnumerable<T> GetRanges(long index);
         IEnumerable<T> GetRanges(long start, long length);
+        void AddOrInsert(T m);
         void Insert(T item);
         void RemoveRange(long start, long length);
         void RemoveAt(long startRow);
-        void UpdateStartIndex(long deltaLength, long startRow);
+        void UpdateMarkers(long startIndex, long insertLength, long removeLength);
     }
 }
