@@ -1464,11 +1464,8 @@ namespace FooEditEngine
                 return true;
             },buffer_size);
 
-            this.Markers.Clear();
-            foreach (int id in this.Markers.IDs)
-            {
-                this.Markers.Add(id, Marker.Create(0, this.StringBuffer.Length, HilightType.None));
-            }
+
+            this.Markers.OnInit(this);
 
             this.NewLine = lineFeedType;
             this.TotalLineCount = totalLineCount;

@@ -401,6 +401,16 @@ namespace FooEditEngine
         /// </summary>
         public event EventHandler Updated;
 
+        internal void OnInit(Document doc)
+        {
+            this.Clear();
+            foreach (var markers in this.collection.Values)
+            {
+                if(markers is MarkerRleCollection)
+                    markers.Add(Marker.Create(0, doc.StringBuffer.Length, HilightType.None));
+            }
+        }
+
         internal void Add(int id,Marker m)
         {
             this.AddImpl(id, m);
