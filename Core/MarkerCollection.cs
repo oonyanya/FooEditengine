@@ -176,12 +176,20 @@ namespace FooEditEngine
         }
     }
 
+    public class MarkerRangeCollection : RangeCollectionBase<Marker>
+    {
+        protected override Marker CreateItem(Marker value, long start = -1, long length = -1)
+        {
+            return Marker.Create(start, length, value.hilight, value.color, value.isBoldLine);
+        }
+    }
+
     /// <summary>
     /// マーカークラスのコレクションを表します
     /// </summary>
     public sealed class MarkerCollection
     {
-        Dictionary<int, RangeCollection<Marker>> collection = new Dictionary<int, RangeCollection<Marker>>();
+        Dictionary<int, IRangeCollection<Marker>> collection = new Dictionary<int, IRangeCollection<Marker>>();
 
         internal MarkerCollection()
         {
@@ -201,7 +209,7 @@ namespace FooEditEngine
 
         void AddImpl(int id, Marker m)
         {
-            RangeCollection<Marker> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 markers.RemoveRange(m.start, m.length);
@@ -209,7 +217,7 @@ namespace FooEditEngine
             }
             else
             {
-                markers = new RangeCollection<Marker>();
+                markers = new MarkerRangeCollection();
                 markers.AddOrInsert(m);
                 this.collection.Add(id, markers);
             }
@@ -224,7 +232,7 @@ namespace FooEditEngine
 
         internal void RemoveAll(int id)
         {
-            RangeCollection<Marker> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 markers.Clear();
@@ -234,7 +242,7 @@ namespace FooEditEngine
 
         internal void RemoveAll(int id, long start, long length)
         {
-            RangeCollection<Marker> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 markers.RemoveRange(start, length);
@@ -244,12 +252,12 @@ namespace FooEditEngine
 
         internal void RemoveAll(int id, HilightType type)
         {
-            RangeCollection<Marker> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 for (int i = 0; i < markers.Count; i++)
                 {
-                    if (markers[i].hilight == type)
+                    if (markers.GetAt(i).hilight == type)
                         markers.RemoveAt(i);
                 }
             }
@@ -266,7 +274,7 @@ namespace FooEditEngine
 
         internal IEnumerable<Marker> Get(int id)
         {
-            RangeCollection<Marker> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 foreach (var m in markers)
@@ -277,10 +285,10 @@ namespace FooEditEngine
 
         internal IEnumerable<Marker> Get(int id, long index)
         {
-            RangeCollection<Marker> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                foreach (var m in markers.Get(index))
+                foreach (var m in markers.GetRanges(index))
                     yield return m;
             }
             yield break;
@@ -288,7 +296,7 @@ namespace FooEditEngine
 
         internal IEnumerable<Marker> Get(int id, long index, long length)
         {
-            RangeCollection<Marker> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
                 foreach (var m in markers.GetRanges(index, length))
@@ -303,7 +311,7 @@ namespace FooEditEngine
         /// <param name="id">マーカーＩＤ</param>
         public void Clear(int id)
         {
-            RangeCollection<Marker> markers;
+            IRangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
                 markers.Clear();
             this.Updated(this, null);
@@ -321,11 +329,9 @@ namespace FooEditEngine
         internal void UpdateMarkers(long startIndex, long insertLength, long removeLength)
         {
             long deltaLength = insertLength - removeLength;
-            foreach (RangeCollection<Marker> markers in this.collection.Values)
+            foreach (var markers in this.collection.Values)
             {
-                int updateStartRow = markers.IndexOf(startIndex);
-                if (updateStartRow != -1)
-                    markers.UpdateMarkers(startIndex, insertLength, removeLength);
+                markers.UpdateMarkers(startIndex, insertLength, removeLength);
             }
         }
 

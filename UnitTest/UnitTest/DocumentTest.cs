@@ -1256,7 +1256,7 @@ namespace UnitTest
             doc.SetMarker(MarkerIDs.Defalut, Marker.Create(0, 4, HilightType.Sold));
 
             var markers = doc.Markers.Get(MarkerIDs.Defalut);
-            foreach(var m in markers)
+            foreach (var m in markers)
                 Assert.IsTrue(m.start == 0 && m.length == 4);
 
             doc.SetMarker(MarkerIDs.Defalut, Marker.Create(5, 2, HilightType.Sold));
@@ -1265,7 +1265,7 @@ namespace UnitTest
             foreach (var m in markers)
                 Assert.IsTrue(m.start == 5 && m.length == 2);
 
-            doc.Insert(5, "a");
+            doc.Insert(4, "a");
             markers = doc.Markers.Get(MarkerIDs.Defalut, 0);
             foreach (var m in markers)
                 Assert.IsTrue(m.start == 6 && m.length == 2);
@@ -1275,6 +1275,16 @@ namespace UnitTest
             foreach (var m in markers)
                 Assert.IsTrue(m.start == 6 && m.length == 2);
 
+            doc.Remove(4, 1);
+            markers = doc.Markers.Get(MarkerIDs.Defalut, 0);
+            foreach (var m in markers)
+                Assert.IsTrue(m.start == 5 && m.length == 2);
+            doc.Insert(4, "a");
+
+            doc.Insert(6, "a");
+            markers = doc.Markers.Get(MarkerIDs.Defalut, 0);
+            Assert.AreEqual(0, markers.Count());
+
             doc.SetMarker(MarkerIDs.URL, Marker.Create(0, 4, HilightType.Sold));
             doc.Markers.Clear(MarkerIDs.Defalut);
             foreach (int id in doc.Markers.IDs)
@@ -1283,6 +1293,14 @@ namespace UnitTest
                 foreach (var m in markers)
                     Assert.IsTrue(m.start == 0 && m.length == 4);
             }
+
+            doc = new Document();
+            doc.LayoutLines.Render = render;
+            doc.Append("this is a pen");
+            doc.RemoveAllMarker(MarkerIDs.Defalut);
+            doc.SetMarker(MarkerIDs.Defalut, Marker.Create(5, 2, HilightType.Sold));
+            foreach (var m in doc.Markers.Get(MarkerIDs.Defalut))
+                Assert.IsTrue(m.start == 5 && m.length == 2);
         }
 
         [TestMethod]

@@ -38,7 +38,29 @@ namespace FooEditEngine
         void UpdateMarkers(long startIndex, long insertLength, long removeLength);
     }
 
-    public class RangeCollection<T> : IRangeCollection<T>
+    /// <summary>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <remarks>互換性を残すためのクラス。GetRagesを呼び出しても適切な開始インデックスに変換されないので注意すること</remarks>
+    public class RangeCollection<T> : RangeCollectionBase<T> where T : FooProject.Collection.IRange
+    {
+        public RangeCollection() : base()
+        {
+
+        }
+
+        public RangeCollection(IEnumerable<T> collection) : base(collection)
+        {
+
+        }
+
+        protected override T CreateItem(T value, long start = -1, long length = -1)
+        {
+            return value;
+        }
+    }
+
+    public abstract class RangeCollectionBase<T> : IRangeCollection<T>
         where T : FooProject.Collection.IRange
     {
         private protected BigList<T> collection;
@@ -46,12 +68,12 @@ namespace FooEditEngine
         protected long stepLength = 0;
         protected const int STEP_ROW_IS_NONE = -1;
 
-        public RangeCollection()
+        public RangeCollectionBase()
             : this(null)
         {
         }
 
-        public RangeCollection(IEnumerable<T> collection)
+        public RangeCollectionBase(IEnumerable<T> collection)
         {
             this.collection = new BigList<T>();
             if (collection != null)
@@ -279,6 +301,12 @@ namespace FooEditEngine
             yield return this.collection[at];
         }
 
+        protected virtual T CreateItem(T value, long start = -1, long length = -1)
+        {
+            throw new NotImplementedException();
+        }
+
+
         public IEnumerable<T> GetRanges(long start, long length)
         {
             //TODO:インデックスがおかしくなってる可能性がある
@@ -293,13 +321,14 @@ namespace FooEditEngine
             long end = start + length - 1;
             for (int i = at; i < this.collection.Count; i++)
             {
-                long markerEnd = this.collection[i].start + this.collection[i].length - 1;
-                if (this.collection[i].start >= start && markerEnd <= end ||
+                var marker_start_index = this.GetLineHeadIndex(i);
+                long markerEnd = marker_start_index + this.collection[i].length - 1;
+                if (marker_start_index >= start && markerEnd <= end ||
                     markerEnd >= start && markerEnd <= end ||
-                    this.collection[i].start >= start && this.collection[i].start <= end ||
-                    this.collection[i].start < start && markerEnd > end)
-                    yield return this.collection[i];
-                else if (this.collection[i].start > start + length)
+                    marker_start_index >= start && marker_start_index <= end ||
+                    marker_start_index < start && markerEnd > end)
+                    yield return  this.CreateItem(this.collection[i], marker_start_index, this.collection[i].length);
+                else if (marker_start_index > start + length)
                     yield break;
             }
         }
@@ -364,14 +393,14 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="row"></param>
         /// <returns></returns>
-        public long GetLineHeadIndex(int row)
+        public long GetLineHeadIndex(long row)
         {
             if (this.collection.Count == 0)
                 return 0;
             if (this.stepRow != STEP_ROW_IS_NONE && row > this.stepRow)
-                return this.collection[row].start + this.stepLength;
+                return this.collection.Get(row).start + this.stepLength;
             else
-                return this.collection[row].start;
+                return this.collection.Get(row).start;
         }
 
         public IEnumerator<T> GetEnumerator()
@@ -414,7 +443,24 @@ namespace FooEditEngine
 
         public void UpdateMarkers(long startIndex, long insertLength, long removeLength)
         {
-            this.UpdateStartIndex(insertLength - removeLength, (int)startIndex);
+            int updateStartRow = this.IndexOf(startIndex);
+            var deltaLength = insertLength - removeLength;
+            if(updateStartRow == -1)
+            {
+                for(long i = 0; i < this.collection.Count; i++)
+                {
+                    if(startIndex <= this.GetLineHeadIndex(i))
+                    {
+                        var item = this.collection.Get(i);
+                        item.start += deltaLength;
+                        this.collection.Set(i, item);
+                    }
+                }
+            }
+            else
+            {
+                this.UpdateStartIndex(deltaLength, (int)startIndex);
+            }
         }
     }
 
