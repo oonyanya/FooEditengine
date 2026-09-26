@@ -159,7 +159,7 @@ namespace FooEditEngine
                 return;
 
             int at = this.IndexOf(start);
-            int endAt = this.IndexOf(start + length - 1);
+            int endAt = this.IndexOf(Math.Max(0, start + length - 1));
 
             int startRow = 0;
             int removeCount = 0;
