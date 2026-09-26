@@ -1038,7 +1038,7 @@ namespace UnitTest
                 var lineHeadIndex = doc.LayoutLines.GetLongIndexFromLineNumber(i);
                 Assert.AreEqual(documentIndex, lineHeadIndex);
                 var lineData = doc.LayoutLines.GetRaw(i);
-                var syntaxs = doc.SyntaxInfoCollection.Get(lineHeadIndex, lineData.length);
+                var syntaxs = doc.SyntaxInfoCollection.GetRanges(lineHeadIndex, lineData.length);
                 if (syntaxs.Count() == 6)
                 {
                     var expected_index = lineHeadIndex;

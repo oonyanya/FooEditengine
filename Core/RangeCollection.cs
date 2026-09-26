@@ -1,10 +1,10 @@
 ﻿/* https://github.com/mbuchetics/RangeTree よりコピペ。このファイルのみMITライセンスに従います */
+using FooProject.Collection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using FooProject.Collection;
 
 namespace FooEditEngine
 {
@@ -23,8 +23,22 @@ namespace FooEditEngine
         /// </summary>
         long length { get; set; }
     }
+    public interface IRangeCollection<T> : IEnumerable<T>
+    {
+        int Count { get; }
 
-    public class RangeCollection<T> : IEnumerable<T>
+        void AddOrInsert(T item);
+        void Clear();
+        T GetAt(long index);
+        IEnumerable<T> GetRanges(long index);
+        IEnumerable<T> GetRanges(long start, long length);
+        void Insert(T item);
+        void RemoveRange(long start, long length);
+        void RemoveAt(long startRow);
+        void UpdateMarkers(long startIndex, long insertLength, long removeLength);
+    }
+
+    public class RangeCollection<T> : IRangeCollection<T>
         where T : FooProject.Collection.IRange
     {
         private protected BigList<T> collection;
@@ -64,7 +78,7 @@ namespace FooEditEngine
             }
         }
 
-        public void Add(T item)
+        public void AddOrInsert(T item)
         {
             this.CommiteChange();
             this.collection.Add(item);
@@ -139,7 +153,7 @@ namespace FooEditEngine
             this.UpdateStartIndex(deltaLength, startRow);
         }
 
-        public void Remove(long start, long length)
+        public void RemoveRange(long start, long length)
         {
             if (this.collection.Count == 0)
                 return;
@@ -265,7 +279,7 @@ namespace FooEditEngine
             yield return this.collection[at];
         }
 
-        public IEnumerable<T> Get(long start, long length)
+        public IEnumerable<T> GetRanges(long start, long length)
         {
             //TODO:インデックスがおかしくなってる可能性がある
             int nearAt;
@@ -369,6 +383,38 @@ namespace FooEditEngine
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             throw new NotImplementedException();
+        }
+
+        public T GetAt(long index)
+        {
+            return this.collection.Get(index);
+        }
+
+        public IEnumerable<T> GetRanges(long index)
+        {
+            //TODO:インデックスがおかしくなってる可能性がある
+            int at = this.IndexOf(index);
+            if (at == -1)
+                yield break;
+            for (long i = at; i < this.collection.Count; i++)
+            {
+                yield return this.collection.Get(i);
+            }
+        }
+
+        public void Insert(T item)
+        {
+            this.AddOrInsert(item);
+        }
+
+        public void RemoveAt(long startRow)
+        {
+            this.collection.RemoveAt(startRow);
+        }
+
+        public void UpdateMarkers(long startIndex, long insertLength, long removeLength)
+        {
+            this.UpdateStartIndex(insertLength - removeLength, (int)startIndex);
         }
     }
 

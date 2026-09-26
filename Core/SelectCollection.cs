@@ -117,7 +117,7 @@ namespace FooEditEngine
         /// <param name="sel">選択領域</param>
         public void Add(Selection sel)
         {
-            this.collection.Add(sel);
+            this.collection.AddOrInsert(sel);
             this.SelectChange(this, null);
         }
 
@@ -136,9 +136,9 @@ namespace FooEditEngine
         /// <param name="index">インデックス</param>
         /// <param name="length">長さ</param>
         /// <returns>要素を表すイテレーター</returns>
-        public IEnumerable<Selection> Get(long index, long length)
+        public IEnumerable<Selection> GetRanges(long index, long length)
         {
-            return this.collection.Get(index, length);
+            return this.collection.GetRanges(index, length);
         }
 
         /// <summary>

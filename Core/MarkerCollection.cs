@@ -204,13 +204,13 @@ namespace FooEditEngine
             RangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                markers.Remove(m.start, m.length);
-                markers.Add(m);
+                markers.RemoveRange(m.start, m.length);
+                markers.AddOrInsert(m);
             }
             else
             {
                 markers = new RangeCollection<Marker>();
-                markers.Add(m);
+                markers.AddOrInsert(m);
                 this.collection.Add(id, markers);
             }
         }
@@ -237,7 +237,7 @@ namespace FooEditEngine
             RangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                markers.Remove(start, length);
+                markers.RemoveRange(start, length);
             }
             this.Updated(this, null);
         }
@@ -291,7 +291,7 @@ namespace FooEditEngine
             RangeCollection<Marker> markers;
             if (this.collection.TryGetValue(id, out markers))
             {
-                foreach (var m in markers.Get(index, length))
+                foreach (var m in markers.GetRanges(index, length))
                     yield return m;
             }
             yield break;
@@ -324,8 +324,8 @@ namespace FooEditEngine
             foreach (RangeCollection<Marker> markers in this.collection.Values)
             {
                 int updateStartRow = markers.IndexOf(startIndex);
-                if(updateStartRow != -1)
-                    markers.UpdateStartIndex(deltaLength, updateStartRow);
+                if (updateStartRow != -1)
+                    markers.UpdateMarkers(startIndex, insertLength, removeLength);
             }
         }
 
