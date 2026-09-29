@@ -9,8 +9,10 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using FooProject.Collection;
 
 namespace FooEditEngine
 {
@@ -78,7 +80,7 @@ namespace FooEditEngine
     /// <summary>
     /// マーカー自身を表します
     /// </summary>
-    public struct Marker : FooProject.Collection.IRange, IEqualityComparer<Marker>
+    public struct Marker : FooProject.Collection.IRange, IEqualityComparer<Marker>, FooProject.Collection.IRleArrayRangeItem
     {
         #region IRange メンバー
 
@@ -174,6 +176,140 @@ namespace FooEditEngine
             newItem.isBoldLine = this.isBoldLine;
             return newItem;
         }
+
+        public bool EqualsValue(IRleArrayRangeItem other)
+        {
+            var other_marker = (Marker)other;
+            return this.hilight == other_marker.hilight && this.isBoldLine == other_marker.isBoldLine && this.color.Equals(other_marker.color);
+        }
+    }
+
+    public class MarkerRleCollection : IRangeCollection<Marker>
+    {
+        class MarkerRleCollectionInner : BigRleArrayCollectionBase<Marker>
+        {
+            protected override Marker CreateItem(Marker value, long start = -1, long length = -1)
+            {
+                var marker_start = 0L;
+                var marker_length = 1L;
+                if(start != -1)
+                    marker_start = start;
+                if (length != -1)
+                    marker_length = length;
+                return Marker.Create(marker_start, marker_length, value.hilight, value.color, value.isBoldLine);
+            }
+        }
+
+        MarkerRleCollectionInner collection = new MarkerRleCollectionInner();
+
+        public int Count => this.collection.Count;
+
+        public MarkerRleCollection()
+        {
+        }
+
+        public void UpdateStartIndex(long deltaLength, long startRow)
+        {
+            var index = 0L;
+            var item = this.collection.Get(startRow, out index);
+            item.length += deltaLength;
+            this.collection.SetAt(index, item);
+        }
+
+        public void AddOrInsert(Marker m)
+        {
+            if (this.collection.Count == 0)
+            {
+                if (m.start > 0)
+                {
+                    this.Add(Marker.Create(0, m.start, HilightType.None));
+                }
+                this.collection.AddRange(m);
+            }
+            else
+            {
+                this.Insert(m);
+            }
+        }
+
+        public void Add(Marker item)
+        {
+            this.collection.AddRange(item);
+        }
+
+        public Marker GetAt(long index)
+        {
+            return (Marker)this.collection.GetAt(index);
+        }
+
+        public IEnumerable<Marker> GetRanges(long index)
+        {
+            if (this.collection.Count > 0)
+            {
+                var ranges = this.collection.GetRanges(index, this.collection.TotalRangeCount - index);
+                foreach (var m in ranges.Where(m => m.hilight != HilightType.None))
+                    yield return (Marker)m;
+            }
+        }
+
+        public IEnumerable<Marker> GetRanges(long start, long length)
+        {
+            if (this.collection.Count > 0)
+            {
+                var ranges = this.collection.GetRanges(start, length);
+                foreach (var m in ranges.Where(m => m.hilight != HilightType.None))
+                    yield return (Marker)m;
+            }
+        }
+
+        public void Insert(Marker item)
+        {
+            this.collection.InsertRange(item.start, item);
+        }
+
+        public IEnumerator<Marker> GetEnumerator()
+        {
+            foreach (var m in this.collection.Where(m => m.hilight != HilightType.None))
+                yield return (Marker)m;
+        }
+
+        public void Clear()
+        {
+            this.collection.Clear();
+        }
+
+        public void RemoveRange(long start, long length)
+        {
+            if (collection.Count > 0)
+            {
+                var near_marker_index = 0L;
+                var marker_index = collection.TryIndexOfNearst(start, out near_marker_index);
+                if(marker_index != -1)
+                {
+                    collection.RemoveRange(start, length);
+                    collection.InsertRange(start, Marker.Create(start, length, HilightType.None));
+                }
+            }
+        }
+
+        public void RemoveAt(long startRow)
+        {
+            collection.RemoveAt(startRow);
+        }
+
+        public void UpdateMarkers(long startIndex, long insertLength, long removeLength)
+        {
+            if (collection.Count > 0)
+            {
+                this.RemoveRange(startIndex, removeLength);
+                this.UpdateStartIndex(insertLength, startIndex);
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 
     public class MarkerRangeCollection : RangeCollectionBase<Marker>
@@ -217,7 +353,7 @@ namespace FooEditEngine
             }
             else
             {
-                markers = new MarkerRangeCollection();
+                markers = new MarkerRleCollection();
                 markers.AddOrInsert(m);
                 this.collection.Add(id, markers);
             }
