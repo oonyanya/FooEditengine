@@ -343,6 +343,12 @@ namespace FooEditEngine
         /// </summary>
         public event EventHandler Updated;
 
+        internal void Initalize(int id)
+        {
+            var markers = new MarkerRangeCollection();
+            this.collection.Add(id, markers);
+        }
+
         internal void Add(int id,Marker m)
         {
             this.AddImpl(id, m);
@@ -359,9 +365,7 @@ namespace FooEditEngine
             }
             else
             {
-                markers = new MarkerRangeCollection();
-                markers.AddOrInsert(m);
-                this.collection.Add(id, markers);
+                throw new InvalidOperationException("makers is empty");
             }
         }
 
@@ -379,6 +383,10 @@ namespace FooEditEngine
             {
                 markers.Clear();
             }
+            else
+            {
+                throw new InvalidOperationException("makers is empty");
+            }
             this.Updated(this, null);
         }
 
@@ -388,6 +396,10 @@ namespace FooEditEngine
             if (this.collection.TryGetValue(id, out markers))
             {
                 markers.RemoveRange(start, length);
+            }
+            else
+            {
+                throw new InvalidOperationException("makers is empty");
             }
             this.Updated(this, null);
         }
@@ -402,6 +414,10 @@ namespace FooEditEngine
                     if (markers.GetAt(i).hilight == type)
                         markers.RemoveAt(i);
                 }
+            }
+            else
+            {
+                throw new InvalidOperationException("makers is empty");
             }
             this.Updated(this, null);
         }
@@ -462,6 +478,7 @@ namespace FooEditEngine
         /// <summary>
         /// マーカーをすべて削除します
         /// </summary>
+        /// <remarks>Initaizeメソッドを呼び出す必要があります</remarks>
         public void Clear()
         {
             this.collection.Clear();
