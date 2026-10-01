@@ -307,7 +307,14 @@ namespace FooEditEngine
         {
             if (collection.Count > 0)
             {
-                this.RemoveRange(startIndex, removeLength);
+                var near_marker_index = 0L;
+                var marker_index = collection.TryIndexOfNearst(startIndex, out near_marker_index);
+                if (marker_index != -1)
+                {
+                    collection.RemoveRange(startIndex, removeLength);
+                    if (insertLength - removeLength > 0)
+                        collection.InsertRange(startIndex, Marker.Create(startIndex, removeLength, HilightType.None));
+                }
                 this.UpdateStartIndex(insertLength, startIndex);
             }
         }
@@ -345,7 +352,12 @@ namespace FooEditEngine
 
         internal void Initalize(int id)
         {
+            /*
             var markers = new MarkerRangeCollection();
+            this.collection.Add(id, markers);
+            */
+            var markers = new MarkerRleCollection();
+            markers.AddOrInsert(Marker.Create(0, 0, HilightType.None));
             this.collection.Add(id, markers);
         }
 
