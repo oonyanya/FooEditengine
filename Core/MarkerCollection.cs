@@ -80,7 +80,7 @@ namespace FooEditEngine
     /// <summary>
     /// マーカー自身を表します
     /// </summary>
-    public struct Marker : FooProject.Collection.IRange, IEqualityComparer<Marker>, FooProject.Collection.IRleArrayRangeItem
+    public class Marker : FooProject.Collection.IRange, IEqualityComparer<Marker>, FooProject.Collection.IRleArrayRangeItem
     {
         #region IRange メンバー
 
@@ -154,6 +154,12 @@ namespace FooEditEngine
         public bool Equals(Marker x, Marker y)
         {
             return x.hilight == y.hilight && x.length == y.length && x.start == y.start;
+        }
+
+        public override bool Equals(object obj)
+        {
+            var other = (Marker)obj;
+            return other.hilight == this.hilight && this.length == this.length && this.start == this.start;
         }
 
         /// <summary>
@@ -353,7 +359,7 @@ namespace FooEditEngine
             }
             else
             {
-                markers = new MarkerRleCollection();
+                markers = new MarkerRangeCollection();
                 markers.AddOrInsert(m);
                 this.collection.Add(id, markers);
             }

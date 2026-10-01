@@ -523,6 +523,7 @@ namespace FooEditEngine
         }
 #endif
 
+        /// <remarks>T自体複製される</remarks>
         public static T ConvertAbsIndexToRelIndex<T>(T n, long StartIndex, long Length) where T : FooProject.Collection.IRange
         {
             n = Util.NormalizeIMaker<T>(n);
@@ -586,13 +587,15 @@ namespace FooEditEngine
             return new Rectangle(r.X + s.Width,r.Y + s.Height, r.Width - s.Width, r.Height - s.Height);
         }
 
+        /// <remarks>T自体複製される</remarks>
         public static T NormalizeIMaker<T>(T m) where T : FooProject.Collection.IRange
         {
             if (m.length > 0)
                 return m;
-            m.start = m.start + m.length;
-            m.length = Math.Abs(m.length);
-            return m;
+            var new_m = m.DeepCopy();
+            new_m.start = m.start + m.length;
+            new_m.length = Math.Abs(m.length);
+            return (T)new_m;
         }
 
         public static int RoundUp(double x)
