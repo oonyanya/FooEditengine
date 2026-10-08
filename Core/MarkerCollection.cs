@@ -218,8 +218,8 @@ namespace FooEditEngine
         {
             var index = 0L;
             var item = this.collection.Get(startRow, out index);
-            item.length += deltaLength;
-            this.collection.SetAt(index, item);
+            var new_item = Marker.Create(item.start, item.length + deltaLength, item.hilight, item.color, item.isBoldLine);
+            this.collection.SetAt(index, new_item);
         }
 
         public void AddOrInsert(Marker m)
@@ -228,13 +228,13 @@ namespace FooEditEngine
             {
                 if (m.start > 0)
                 {
-                    this.Add(Marker.Create(0, m.start, HilightType.None));
+                    this.collection.AddRange(Marker.Create(0, m.start, HilightType.None));
                 }
                 this.collection.AddRange(m);
             }
             else
             {
-                this.Insert(m);
+                this.collection.InsertRange(m.start, m);
             }
         }
 
@@ -286,6 +286,9 @@ namespace FooEditEngine
 
         public void RemoveRange(long start, long length)
         {
+            if (length == 0)
+                return;
+
             if (collection.Count > 0)
             {
                 var near_marker_index = 0L;
@@ -315,7 +318,8 @@ namespace FooEditEngine
                     if (insertLength - removeLength > 0)
                         collection.InsertRange(startIndex, Marker.Create(startIndex, removeLength, HilightType.None));
                 }
-                this.UpdateStartIndex(insertLength, startIndex);
+                if (collection.Count > 0)
+                    this.UpdateStartIndex(insertLength, startIndex);
             }
         }
 
