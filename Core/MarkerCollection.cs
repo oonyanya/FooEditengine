@@ -216,12 +216,6 @@ namespace FooEditEngine
 
         public void UpdateStartIndex(long deltaLength, long startRow)
         {
-            if (this.collection.Count == 0)
-                return;
-            var index = 0L;
-            var item = this.collection.Get(startRow, out index);
-            var new_item = Marker.Create(item.start, item.length + deltaLength, item.hilight, item.color, item.isBoldLine);
-            this.collection.SetAt(index, new_item);
         }
 
         public void AddOrInsert(Marker m)
@@ -312,12 +306,26 @@ namespace FooEditEngine
         {
             if (collection.Count > 0)
             {
-                if (insertLength - removeLength > 0)
+                var deltaLength = insertLength - removeLength;
+                //ドキュメントの長さが短くなっているならマーカー全体の長さも合わせなければならない
+                if (deltaLength > 0)
                     this.RemoveRange(startIndex, removeLength);
                 else
                     collection.RemoveRange(startIndex, removeLength);
-                if(insertLength > 0)
-                    this.UpdateStartIndex(insertLength, startIndex);
+
+                //削除された結果、中身が何もなくなるなら、空のマーカーをひとまず作っておく
+                if (collection.Count == 0)
+                {
+                    collection.AddRange(Marker.Create(0, 0, HilightType.None));
+                }
+
+                if (insertLength > 0)
+                {
+                    var index = 0L;
+                    var item = this.collection.Get(startIndex, out index);
+                    var new_item = Marker.Create(item.start, item.length + deltaLength, item.hilight, item.color, item.isBoldLine);
+                    this.collection.SetAt(index, new_item);
+                }
             }
         }
 
