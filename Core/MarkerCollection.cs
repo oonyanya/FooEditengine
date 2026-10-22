@@ -216,6 +216,8 @@ namespace FooEditEngine
 
         public void UpdateStartIndex(long deltaLength, long startRow)
         {
+            if (this.collection.Count == 0)
+                return;
             var index = 0L;
             var item = this.collection.Get(startRow, out index);
             var new_item = Marker.Create(item.start, item.length + deltaLength, item.hilight, item.color, item.isBoldLine);
@@ -310,15 +312,11 @@ namespace FooEditEngine
         {
             if (collection.Count > 0)
             {
-                var near_marker_index = 0L;
-                var marker_index = collection.TryIndexOfNearst(startIndex, out near_marker_index);
-                if (marker_index != -1)
-                {
+                if (insertLength - removeLength > 0)
+                    this.RemoveRange(startIndex, removeLength);
+                else
                     collection.RemoveRange(startIndex, removeLength);
-                    if (insertLength - removeLength > 0)
-                        collection.InsertRange(startIndex, Marker.Create(startIndex, removeLength, HilightType.None));
-                }
-                if (collection.Count > 0)
+                if(insertLength > 0)
                     this.UpdateStartIndex(insertLength, startIndex);
             }
         }
