@@ -1472,7 +1472,7 @@ namespace UnitTest
 
             while (e1.MoveNext() && e2.MoveNext())
             {
-                Assert.AreEqual(e1.Current, e2.Current);
+                Assert.IsTrue(e1.Current.Equals(e2.Current));
             }
         }
     }

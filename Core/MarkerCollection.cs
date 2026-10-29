@@ -9,8 +9,10 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using FooProject.Collection;
 
 namespace FooEditEngine
 {
@@ -78,7 +80,7 @@ namespace FooEditEngine
     /// <summary>
     /// マーカー自身を表します
     /// </summary>
-    public struct Marker : FooProject.Collection.IRange, IEqualityComparer<Marker>
+    public class Marker : FooProject.Collection.IRange, IEqualityComparer<Marker>
     {
         #region IRange メンバー
 
@@ -154,6 +156,12 @@ namespace FooEditEngine
             return x.hilight == y.hilight && x.length == y.length && x.start == y.start;
         }
 
+        public override bool Equals(object obj)
+        {
+            var other = (Marker)obj;
+            return other.hilight == this.hilight && this.length == this.length && this.start == this.start;
+        }
+
         /// <summary>
         /// ハッシュを得ます
         /// </summary>
@@ -174,6 +182,7 @@ namespace FooEditEngine
             newItem.isBoldLine = this.isBoldLine;
             return newItem;
         }
+
     }
 
     public class MarkerRangeCollection : RangeCollectionBase<Marker>
