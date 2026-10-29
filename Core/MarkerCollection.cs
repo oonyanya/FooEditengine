@@ -8,6 +8,7 @@
 
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#define USE_RLE_MAERKER_ON_IME
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -80,7 +81,7 @@ namespace FooEditEngine
     /// <summary>
     /// マーカー自身を表します
     /// </summary>
-    public class Marker : FooProject.Collection.IRange, IEqualityComparer<Marker>
+    public class Marker : FooProject.Collection.IRange, IEqualityComparer<Marker>, FooProject.Collection.IRleArrayRangeItem
     {
         #region IRange メンバー
 
@@ -162,6 +163,11 @@ namespace FooEditEngine
             return other.hilight == this.hilight && this.length == this.length && this.start == this.start;
         }
 
+        public override int GetHashCode()
+        {
+            return (int)this.start ^ (int)this.length ^ (int)this.hilight ^ (int)(this.start >> 32);
+        }
+
         /// <summary>
         /// ハッシュを得ます
         /// </summary>
@@ -169,7 +175,7 @@ namespace FooEditEngine
         /// <returns>ハッシュ</returns>
         public int GetHashCode(Marker obj)
         {
-            return (int)this.start ^ (int)this.length ^ (int)this.hilight ^ (int)(this.start >> 32);
+            return (int)obj.start ^ (int)obj.length ^ (int)obj.hilight ^ (int)(obj.start >> 32);
         }
 
         public FooProject.Collection.IRange DeepCopy()
@@ -183,6 +189,144 @@ namespace FooEditEngine
             return newItem;
         }
 
+        public bool EqualsValue(IRleArrayRangeItem other)
+        {
+            var other_marker = (Marker)other;
+            return this.hilight == other_marker.hilight && this.isBoldLine == other_marker.isBoldLine && this.color.Equals(other_marker.color);
+        }
+    }
+
+    public class MarkerRleCollection : IRangeCollection<Marker>
+    {
+        class MarkerRleCollectionInner : BigRleArrayCollectionBase<Marker>
+        {
+            protected override Marker CreateItem(Marker value, long start = -1, long length = -1)
+            {
+                var marker_start = 0L;
+                var marker_length = 1L;
+                if(start != -1)
+                    marker_start = start;
+                if (length != -1)
+                    marker_length = length;
+                return Marker.Create(marker_start, marker_length, value.hilight, value.color, value.isBoldLine);
+            }
+        }
+
+        MarkerRleCollectionInner collection = new MarkerRleCollectionInner();
+
+        public int Count => this.collection.Count;
+
+        public MarkerRleCollection()
+        {
+        }
+
+        public void UpdateStartIndex(long deltaLength, long startRow)
+        {
+        }
+
+        public void AddOrInsert(Marker m)
+        {
+            if(collection.Count == 0)
+            {
+                this.collection.AddRange(m);
+            }
+            else
+            {
+                //隙間があればとりあえず埋める。
+                var totalMakerLength = this.collection.TotalRangeCount;
+                if (totalMakerLength < m.start + m.length)
+                    this.collection.AddRange(Marker.Create(totalMakerLength, m.start + m.length - totalMakerLength, HilightType.None));
+                this.collection.UpdateRange(m.start, m);
+            }
+        }
+
+        public void Add(Marker m)
+        {
+            this.AddOrInsert(m);
+        }
+
+        public Marker GetAt(long index)
+        {
+            return (Marker)this.collection.GetAt(index);
+        }
+
+        public IEnumerable<Marker> GetRanges(long index)
+        {
+            if (this.collection.Count > 0)
+            {
+                var ranges = this.collection.GetRanges(index, this.collection.TotalRangeCount - index);
+                foreach (var m in ranges.Where(m => m.hilight != HilightType.None))
+                    yield return (Marker)m;
+            }
+        }
+
+        public IEnumerable<Marker> GetRanges(long start, long length)
+        {
+            if (this.collection.Count > 0)
+            {
+                var ranges = this.collection.GetRanges(start, length);
+                foreach (var m in ranges.Where(m => m.hilight != HilightType.None))
+                    yield return (Marker)m;
+            }
+        }
+
+        public void Insert(Marker m)
+        {
+            this.AddOrInsert(m);
+        }
+
+        public IEnumerator<Marker> GetEnumerator()
+        {
+            foreach (var m in this.collection.Where(m => m.hilight != HilightType.None))
+                yield return (Marker)m;
+        }
+
+        public void Clear()
+        {
+            this.RemoveRange(0, this.collection.TotalRangeCount);
+        }
+
+        public void RemoveRange(long start, long length)
+        {
+            if (length == 0)
+                return;
+
+            if (collection.Count > 0)
+            {
+                collection.UpdateRange(start, Marker.Create(start, length, HilightType.None));
+            }
+        }
+
+        public void RemoveAt(long startRow)
+        {
+            this.RemoveRange(startRow, 1);
+        }
+
+        public void UpdateMarkers(long startIndex, long insertLength, long removeLength)
+        {
+            if (insertLength == removeLength || collection.Count == 0)
+                return;
+
+            if (removeLength > 0)
+                collection.RemoveRange(startIndex, removeLength);
+
+            //削除した結果、マーカーが存在しないとまずいので、空のマーカーを追加しておく
+            if (collection.Count == 0)
+                collection.AddRange(Marker.Create(0, 0, HilightType.None));
+
+            if (insertLength > 0)
+            {
+                var index = 0L;
+                var item = this.collection.Get(startIndex, out index);
+                var new_item = Marker.Create(item.start, item.length + insertLength, item.hilight, item.color, item.isBoldLine);
+                this.collection.SetAt(index, new_item);
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 
     public class MarkerRangeCollection : RangeCollectionBase<Marker>
@@ -210,6 +354,27 @@ namespace FooEditEngine
         /// </summary>
         public event EventHandler Updated;
 
+        internal void Initalize(int id)
+        {
+#if USE_RLE_MAERKER_ON_IME
+            var markers = new MarkerRleCollection();
+            markers.AddOrInsert(Marker.Create(0, 0, HilightType.None));
+            this.collection.Add(id, markers);
+#else
+            if(id == MarkerIDs.IME)
+            {
+                var markers = new MarkerRangeCollection();
+                this.collection.Add(id, markers);
+            }
+            else
+            {
+                var markers = new MarkerRleCollection();
+                markers.AddOrInsert(Marker.Create(0, 0, HilightType.None));
+                this.collection.Add(id, markers);
+            }
+#endif
+        }
+
         internal void Add(int id,Marker m)
         {
             this.AddImpl(id, m);
@@ -226,9 +391,7 @@ namespace FooEditEngine
             }
             else
             {
-                markers = new MarkerRangeCollection();
-                markers.AddOrInsert(m);
-                this.collection.Add(id, markers);
+                throw new InvalidOperationException("makers is empty");
             }
         }
 
@@ -246,6 +409,10 @@ namespace FooEditEngine
             {
                 markers.Clear();
             }
+            else
+            {
+                throw new InvalidOperationException("makers is empty");
+            }
             this.Updated(this, null);
         }
 
@@ -255,6 +422,10 @@ namespace FooEditEngine
             if (this.collection.TryGetValue(id, out markers))
             {
                 markers.RemoveRange(start, length);
+            }
+            else
+            {
+                throw new InvalidOperationException("makers is empty");
             }
             this.Updated(this, null);
         }
@@ -269,6 +440,10 @@ namespace FooEditEngine
                     if (markers.GetAt(i).hilight == type)
                         markers.RemoveAt(i);
                 }
+            }
+            else
+            {
+                throw new InvalidOperationException("makers is empty");
             }
             this.Updated(this, null);
         }
@@ -329,6 +504,7 @@ namespace FooEditEngine
         /// <summary>
         /// マーカーをすべて削除します
         /// </summary>
+        /// <remarks>Initaizeメソッドを呼び出す必要があります</remarks>
         public void Clear()
         {
             this.collection.Clear();

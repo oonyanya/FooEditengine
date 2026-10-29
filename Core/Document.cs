@@ -246,6 +246,9 @@ namespace FooEditEngine
             this.PropertyChanged += new PropertyChangedEventHandler((s, e) => { });
             this.NewLine = Environment.NewLine;
             this.Markers = new MarkerCollection();
+            this.Markers.Initalize(MarkerIDs.Defalut);
+            this.Markers.Initalize(MarkerIDs.URL);
+            this.Markers.Initalize(MarkerIDs.IME);
             this.UndoManager = new UndoManager();
             this._SyntanInfoCollecton = new RangeCollection<SyntaxInfo>();
             this._LayoutLines = new LineToIndexTable(this, this.buffer);
@@ -1327,9 +1330,6 @@ namespace FooEditEngine
                 throw new ArgumentOutOfRangeException();
             if (length == 0 && (s == string.Empty || s == null))
                 return;
-
-            foreach(int id in this.Markers.IDs)
-                this.RemoveMarker(id,index, length);
 
             ReplaceCommand cmd = new ReplaceCommand(this.buffer, index, length, s);
             this.UndoManager.push(cmd);
