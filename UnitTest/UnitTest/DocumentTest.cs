@@ -1283,7 +1283,9 @@ namespace UnitTest
 
             doc.Insert(6, "a");
             markers = doc.Markers.Get(MarkerIDs.Defalut, 0);
-            Assert.AreEqual(0, markers.Count());
+            Assert.AreEqual(1, markers.Count());
+            // wordだとマーカーそのものは破壊されないが、破壊する仕様に変わったときは残しておく
+            // Assert.AreEqual(0, markers.Count());
 
             doc.SetMarker(MarkerIDs.URL, Marker.Create(0, 4, HilightType.Sold));
             doc.Markers.Clear(MarkerIDs.Defalut);
