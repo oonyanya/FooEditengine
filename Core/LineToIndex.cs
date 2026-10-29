@@ -1440,13 +1440,13 @@ namespace FooEditEngine
                 caret = this.MoveCaretVertical(caret, false);
                 new_col = this.GetLengthFromLineNumber(caret.row) - 1; //最終行以外は改行コードがつくはず
 
-                long newColIndexInDocument = this.GetLongIndexFromLineNumber(caret.row) + caret.col;
+                long newColIndexInDocument = this.GetLongIndexFromLineNumber(caret.row) + new_col;
 
                 if (this.Document[newColIndexInDocument] == Document.LF_CHAR)
                 {
-                    if (caret.col > 1 && this.Document[newColIndexInDocument - 1] == Document.CR_CHAR)
+                    if (new_col > 1 && this.Document[newColIndexInDocument - 1] == Document.CR_CHAR)
                     {
-                        new_col = this.GetLayout(caret.row).AlignIndexToNearestCluster(caret.col - 1, AlignDirection.Back);
+                        new_col = this.GetLayout(caret.row).AlignIndexToNearestCluster(new_col - 1, AlignDirection.Back);
                     }
                 }
             }
