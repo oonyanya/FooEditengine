@@ -410,6 +410,7 @@ namespace FooEditEngine
         /// <param name="isSelected">選択状態にするかどうか</param>
         public void JumpToLineEnd(int row, bool isSelected)
         {
+            this.Document.LayoutLines.FetchAllLine();
             this.Document.SetCaretPostionWithoutEvent(row, this.View.LayoutLines.GetLengthFromLineNumber(row) - 1);
             this.View.AdjustCaretAndSrc();
             this.SelectWithMoveCaret(isSelected);

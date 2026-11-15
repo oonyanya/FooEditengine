@@ -914,6 +914,21 @@ namespace FooEditEngine
         /// 指定された行までレイアウト行を構築します
         /// </summary>
         /// <param name="row">行</param>
+        public void FetchAllLine()
+        {
+            long startIndex = this.GetLongIndexFromLineNumber(this.collection.Count - 1);
+            long totalAnayzedLength = FetchLineWithoutEventFromAlreadyLoaded(this.Document.TotalLineCount);
+            this.Document.FireUpdate(
+                new DocumentUpdateEventArgs(UpdateType.BuildLayout,
+                startIndex,
+                0,
+                totalAnayzedLength));
+        }
+
+        /// <summary>
+        /// 指定された行までレイアウト行を構築します
+        /// </summary>
+        /// <param name="row">行</param>
         public void FetchLine(int row)
         {
             long startIndex = this.GetLongIndexFromLineNumber(this.collection.Count - 1);
