@@ -410,7 +410,6 @@ namespace FooEditEngine
         /// <param name="isSelected">選択状態にするかどうか</param>
         public void JumpToLineEnd(int row, bool isSelected)
         {
-            this.Document.LayoutLines.FetchAllLine();
             this.Document.SetCaretPostionWithoutEvent(row, this.View.LayoutLines.GetLengthFromLineNumber(row) - 1);
             this.View.AdjustCaretAndSrc();
             this.SelectWithMoveCaret(isSelected);
@@ -440,7 +439,7 @@ namespace FooEditEngine
                 srcRow = 0;
             if (this.View.TryScroll(0, srcRow))
                 return;
-            this.Document.LayoutLines.FetchLine(this.Document.TotalLineCount);
+            this.Document.LayoutLines.FetchAllLine();
             this.Document.SetCaretPostionWithoutEvent(this.View.LayoutLines.Count - 1, 0);
             this.View.AdjustCaretAndSrc();
             this.SelectWithMoveCaret(isSelected);

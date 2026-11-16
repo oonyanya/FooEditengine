@@ -417,7 +417,7 @@ namespace FooEditEngine.WPF
                 this.TextStoreHelper.GetNotifyTextChageArea(new DocumentUpdateEventArgs(UpdateType.Replace,0,0,Document.Length), out oldStart, out oldEnd, out newStart, out newEnd);
                 this.textStore.NotifyTextChanged(oldStart, oldEnd, newEnd);
                 if (this.verticalScrollBar != null)
-                    this.verticalScrollBar.Maximum = this.Document.TotalLineCount;
+                    this.verticalScrollBar.Maximum = this.Document.LayoutLines.Count - 1;
                 this._View.CalculateWhloeViewPort();
                 int need_line_count = (int)(this.View.render.TextArea.Height / this.View.render.emSize.Height);
                 this.Document.LayoutLines.FetchLine(need_line_count);
@@ -1200,10 +1200,10 @@ namespace FooEditEngine.WPF
                 this.TextStoreHelper.GetNotifyTextChageArea(new DocumentUpdateEventArgs(UpdateType.Replace, 0, 0, Document.Length), out oldStart, out oldEnd, out newStart, out newEnd);
                 this.textStore.NotifyTextChanged(oldStart, oldEnd, newEnd);
             }
-            else if (e.type == UpdateType.RebuildLayout || e.type == UpdateType.RebuildLayout)
+            else if (e.type == UpdateType.RebuildLayout || e.type == UpdateType.BuildLayout)
             {
                 if(this.verticalScrollBar != null)
-                    this.verticalScrollBar.Maximum = this.Document.TotalLineCount;
+                    this.verticalScrollBar.Maximum = this.Document.LayoutLines.Count - 1;
             }
             if (this.peer != null)
                 this.peer.OnNotifyTextChanged();

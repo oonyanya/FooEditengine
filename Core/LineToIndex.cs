@@ -613,9 +613,16 @@ namespace FooEditEngine
                 generator.Update(this.Document, this.GetLineHeadLongIndex(row), insertedLength, removedLength);
         }
 
-        internal int UpdateLayoutLine(long index, long removedLength, long insertedLength,bool setdirtyflag)
+        internal int UpdateLayoutLine(long index, long removedLength, long insertedLength, bool setdirtyflag)
+        {
+            return this.UpdateLayoutLine(index,removedLength,insertedLength,setdirtyflag, out _);
+        }
+
+        internal int UpdateLayoutLine(long index, long removedLength, long insertedLength,bool setdirtyflag,out string newlinetype)
         {
             DebugLog.WriteLine("Replaced Index:{0} RemoveLength:{1} InsertLength:{2}", index, removedLength, insertedLength);
+
+            newlinetype = Environment.NewLine;
 
             int startRow, endRow;
             GetRemoveRange(index, removedLength, out startRow, out endRow);
@@ -632,7 +639,7 @@ namespace FooEditEngine
 
             //挿入範囲内のドキュメントから行を生成する
             SpilitStringEventArgs e = new SpilitStringEventArgs(this.Document, HeadIndex, analyzeLength, startRow);
-            IList<LineToIndexTableData> newLines = this.CreateLineList(e.index, e.length, setdirtyflag, Document.MaximumLineLength);
+            IList<LineToIndexTableData> newLines = this.CreateLineList(e.index, e.length, out newlinetype, setdirtyflag, Document.MaximumLineLength);
 
             int removeCount = endRow - startRow + 1;
             for (int i = startRow; i < startRow + removeCount; i++)
@@ -703,11 +710,12 @@ namespace FooEditEngine
                 yield return new Tuple<long, long,string>(currentLineHeadIndex, currentLineLength,linefeed);
         }
 
-        IList<LineToIndexTableData> CreateLineList(long index, long length,bool setdirtyflag = false, int lineLimitLength = -1)
+        IList<LineToIndexTableData> CreateLineList(long index, long length, out string linefeedtype, bool setdirtyflag = false, int lineLimitLength = -1)
         {
             long startIndex = index;
             long endIndex = index + length - 1;
             List<LineToIndexTableData> output = new List<LineToIndexTableData>();
+            linefeedtype = string.Empty;
 
             foreach (var range in this.ForEachLines(startIndex, endIndex, lineLimitLength))
             {
@@ -715,6 +723,8 @@ namespace FooEditEngine
                 long lineLength = range.Item2;
                 char c = this.Document[lineHeadIndex + lineLength - 1];
                 bool hasNewLine = range.Item3 != string.Empty;
+                if (hasNewLine)
+                    linefeedtype = range.Item3;
                 LineToIndexTableData result = new LineToIndexTableData(lineHeadIndex, lineLength, hasNewLine, setdirtyflag, null);
                 output.Add(result);
             }
@@ -914,10 +924,10 @@ namespace FooEditEngine
         /// 指定された行までレイアウト行を構築します
         /// </summary>
         /// <param name="row">行</param>
-        public void FetchAllLine()
+        public void FetchLine(int row)
         {
             long startIndex = this.GetLongIndexFromLineNumber(this.collection.Count - 1);
-            long totalAnayzedLength = FetchLineWithoutEventFromAlreadyLoaded(this.Document.TotalLineCount);
+            long totalAnayzedLength = FetchLineWithoutEventFromAlreadyLoaded(row);
             this.Document.FireUpdate(
                 new DocumentUpdateEventArgs(UpdateType.BuildLayout,
                 startIndex,
@@ -926,16 +936,23 @@ namespace FooEditEngine
         }
 
         /// <summary>
-        /// 指定された行までレイアウト行を構築します
+        /// ドキュメントの終わりまでレイアウト行を構築する
         /// </summary>
-        /// <param name="row">行</param>
-        public void FetchLine(int row)
+        public void FetchAllLine()
         {
-            long startIndex = this.GetLongIndexFromLineNumber(this.collection.Count - 1);
-            long totalAnayzedLength = FetchLineWithoutEventFromAlreadyLoaded(row);
+            int lastRow = this.collection.Count - 1;
+            long LineHeadIndex = this.GetLongIndexFromLineNumber(lastRow);
+            long Length = this.GetLengthFromLineNumber(lastRow);
+            if (LineHeadIndex + Length >= this.Document.Length)
+            {
+                return;
+            }
+            long analyzeStartIndex = LineHeadIndex + Length;
+            long analyzeLength = Document.Length - analyzeStartIndex;
+            var totalAnayzedLength = this.UpdateLayoutLine(analyzeStartIndex, 0, analyzeLength, false);
             this.Document.FireUpdate(
                 new DocumentUpdateEventArgs(UpdateType.BuildLayout,
-                startIndex,
+                LineHeadIndex,
                 0,
                 totalAnayzedLength));
         }

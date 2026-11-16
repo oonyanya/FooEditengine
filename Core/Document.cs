@@ -583,15 +583,6 @@ namespace FooEditEngine
         }
 
 
-        /// <summary>
-        /// ドキュメントの行数
-        /// </summary>
-        public int TotalLineCount
-        {
-            get;
-            private set;
-        }
-
         public void RaiseCaretPostionChanged()
         {
             this.CaretChanged(this, null);
@@ -1396,7 +1387,11 @@ namespace FooEditEngine
                 long analyzeLength = PreloadLength;
                 if (analyzeLength > this.Length)
                     analyzeLength = this.Length;
-                this._LayoutLines.UpdateLayoutLine(0, 0, analyzeLength, false);
+
+                string linefeed;
+                this._LayoutLines.UpdateLayoutLine(0, 0, analyzeLength, false, out linefeed);
+
+                this.NewLine = linefeed;
 
                 if (this.LoadProgress != null)
                 {
@@ -1411,48 +1406,7 @@ namespace FooEditEngine
             if (file_size > 0)
                 this.buffer.Allocate(file_size);
 
-            int totalLineCount = 1; //ファイル全体の行数。LineToIndexTableData.UpdateLayoutLine()によると常に１行は存在するので、１から始める。
-            bool hasCR = false;
-            string lineFeedType = Environment.NewLine;
-
             await this.StringBuffer.LoadAsync(fs, encoding, async (str) => {
-                //行の数をカウントする
-                int j = 0;
-                for (int i = 0; i < str.Count; i++)
-                {
-                    var c = str[i];
-                    if (c != '\0')
-                    {
-                        if (hasCR == true)
-                        {
-                            if (c == Document.LF_CHAR)
-                            {
-                                lineFeedType = CRLF_STR;
-                                totalLineCount++;
-                            }
-                            else
-                            {
-                                lineFeedType = CR_STR;
-                                totalLineCount++;
-                            }
-                            hasCR = false;
-                        }
-                        else
-                        {
-                            if (c == Document.CR_CHAR)
-                                hasCR = true;
-                            if (c == Document.LF_CHAR)
-                            {
-                                lineFeedType = LF_STR;
-                                totalLineCount++;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
                 if (tokenSource != null)
                     tokenSource.Token.ThrowIfCancellationRequested();
 
@@ -1464,9 +1418,6 @@ namespace FooEditEngine
 #endif
                 return true;
             },buffer_size);
-
-            this.NewLine = lineFeedType;
-            this.TotalLineCount = totalLineCount;
         }
 
         /// <summary>
@@ -1696,31 +1647,11 @@ namespace FooEditEngine
                         if (analyzeLength > this.Length)
                             analyzeLength = this.Length;
 
-                        this._LayoutLines.UpdateLayoutLine(0, 0, analyzeLength, false);
+                        string linefeed;
+                        this._LayoutLines.UpdateLayoutLine(0, 0, analyzeLength, false, out linefeed);
+                        this.NewLine = linefeed;
                         long fetchedLength = this._LayoutLines.FetchLineWithoutEventFromAlreadyLoaded(CaretPostion.row);
 
-                        int totalLineCount = this._LayoutLines.Count - 1;
-                        bool hasCR = false;
-                        foreach (var c in this.buffer.GetEnumerator(analyzeLength, this.Length - analyzeLength - fetchedLength))
-                        {
-                            if(hasCR == true)
-                            {
-                                if(c == Document.LF_CHAR)
-                                    totalLineCount++;
-                                else
-                                    totalLineCount++;
-                                hasCR = false;
-                            }
-                            else
-                            {
-                                if (c == Document.CR_CHAR)
-                                    hasCR = true;
-                                if( c == Document.LF_CHAR)
-                                    totalLineCount++;
-                            }
-                        }
-            ;
-                        this.TotalLineCount = totalLineCount;
                         break;
                     }
                 case UpdateType.BuildLayout:
@@ -1730,9 +1661,8 @@ namespace FooEditEngine
                 case UpdateType.Replace:
                     if (e.row == null)
                     {
-                        var updateLineCount = this._LayoutLines.UpdateLayoutLine(e.startIndex, e.removeLength, e.insertLength, true);
+                        this._LayoutLines.UpdateLayoutLine(e.startIndex, e.removeLength, e.insertLength, true);
                         this.Markers.UpdateMarkers(e.startIndex, e.insertLength, e.removeLength);
-                        this.TotalLineCount += updateLineCount;
                     }
                     else
                     {
@@ -1742,7 +1672,6 @@ namespace FooEditEngine
                     this.Dirty = true;
                     break;
                 case UpdateType.Clear:
-                    this.TotalLineCount = 0;
                     this._LayoutLines.Clear();
                     this.Dirty = true;
                     break;

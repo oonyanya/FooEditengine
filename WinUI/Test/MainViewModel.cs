@@ -90,7 +90,7 @@ namespace Test
 
         void JumpToRow(int row)
         {
-            if (row > this.CurrentDocument.TotalLineCount)
+            if (row > this.CurrentDocument.LayoutLines.Count - 1)
                 return;
             this.CurrentDocument.LayoutLines.FetchLine(row);
             this.CurrentDocument.CaretPostion = new TextPoint(row, 0);
@@ -192,7 +192,7 @@ namespace Test
                 doc.RequestRedraw();
                 _list.Add(doc);
                 this.CurrentDocument = _list.Last();
-                System.Diagnostics.Debug.WriteLine("Loaded TotalLine:" + this.CurrentDocument.TotalLineCount);
+                System.Diagnostics.Debug.WriteLine("Loaded TotalLine:" + this.CurrentDocument.LayoutLines.Count);
             }
         }
 

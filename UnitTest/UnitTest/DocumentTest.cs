@@ -935,7 +935,6 @@ namespace UnitTest
             }
 
             Assert.IsTrue(doc.LayoutLines.Count > ADD_COUNT);
-            Assert.AreEqual(ADD_COUNT, doc.TotalLineCount);
             Assert.AreEqual(ADD_COUNT - 1, doc.CaretPostion.row);
             Assert.AreEqual(0, doc.CaretPostion.col);
 
@@ -1457,9 +1456,11 @@ namespace UnitTest
                 ms = new System.IO.MemoryStream(store);
                 System.IO.StreamReader sr = new System.IO.StreamReader(ms);
                 await doc.LoadAsync(sr.BaseStream,sr.CurrentEncoding,null,-1, BUFFER_SIZE);
+                doc.LayoutLines.FetchAllLine();
                 sr.Close();
 
-                Assert.AreEqual(lineCount, doc.TotalLineCount);
+                //Document.MaximumLineLengthを超えてる行が二つある
+                Assert.AreEqual(lineCount + 2, doc.LayoutLines.Count);
                 Assert.AreEqual(linefeed, doc.NewLine);
                 Assert.AreEqual(str, doc.ToString(0));
             }
