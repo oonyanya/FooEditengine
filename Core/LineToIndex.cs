@@ -8,9 +8,8 @@
 
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-using FooProject.Collection;
-using FooProject.Collection.DataStore;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -19,6 +18,9 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Core;
+using FooProject.Collection;
+using FooProject.Collection.DataStore;
 
 namespace FooEditEngine
 {
@@ -668,50 +670,72 @@ namespace FooEditEngine
              * それ以外は改行ごとかmaxCharCountに達するごとに列挙する
              */
 
+            if (startIndex > endIndex)
+                yield break;
+
             long currentLineHeadIndex = startIndex;
             long currentLineLength = 0;
             string linefeed = string.Empty;
-
-            long i = startIndex;
-            while (true)
+            if (startIndex == endIndex)
             {
-                if (i > endIndex)
-                    break;
-                currentLineLength++;
-                char c = this.Document.StringBuffer[i];
-                if (c == Document.LF_CHAR)
-                {
-                    linefeed = Document.LF_STR;
-                }else if (c == Document.CR_CHAR){
-                    if (i + 1 <= endIndex && this.Document[i + 1] == Document.LF_CHAR)
-                    {
-                        currentLineLength++;
-                        i++;
-                        linefeed = Document.CRLF_STR;
-                    }
-                    else
-                    {
-                        linefeed = Document.CR_STR;
-                    }
-                }
-                if (linefeed != string.Empty || (maxCharCount != -1 && currentLineLength >= maxCharCount))
-                {
-                    UnicodeCategory uc = CharUnicodeInfo.GetUnicodeCategory(c);
-                    if (uc != UnicodeCategory.NonSpacingMark &&
-                    uc != UnicodeCategory.SpacingCombiningMark &&
-                    uc != UnicodeCategory.EnclosingMark &&
-                    uc != UnicodeCategory.Surrogate)
-                    {
-                        if (currentLineLength > Int32.MaxValue - 1)
-                            throw new InvalidOperationException("Line length is too large. It must be within Int32.MaxValue - 1");
-                        yield return new Tuple<long, long,string>(currentLineHeadIndex, currentLineLength,linefeed);
-                        currentLineHeadIndex += currentLineLength;
-                        currentLineLength = 0;
-                        linefeed = string.Empty;
-                    }
-                }
-                i++;
+                yield return new Tuple<long, long, string>(currentLineHeadIndex, 1, linefeed);
+                yield break;
             }
+
+            var seqs = this.Document.StringBuffer.GetRanges(startIndex, endIndex - startIndex + 1);
+            foreach(var seq in seqs)
+            {
+                var reader = new MySequenceReader<char>(seq);
+
+                while(!reader.End)
+                {
+                    currentLineLength++;
+
+                    char c;
+                    if (!reader.TryPeek(out c))
+                    {
+                        throw new InvalidOperationException("somthing wrong in readline");
+                    }
+
+                    if (c == Document.LF_CHAR)
+                    {
+                        linefeed = Document.LF_STR;
+                    }
+                    else if (c == Document.CR_CHAR)
+                    {
+                        char next_c;
+                        bool result = reader.TryPeek(1, out next_c);
+                        if (result && next_c == Document.LF_CHAR)
+                        {
+                            currentLineLength++;
+                            reader.Advance(1);
+                            linefeed = Document.CRLF_STR;
+                        }
+                        else
+                        {
+                            linefeed = Document.CR_STR;
+                        }
+                    }
+                    if (linefeed != string.Empty || (maxCharCount != -1 && currentLineLength >= maxCharCount))
+                    {
+                        UnicodeCategory uc = CharUnicodeInfo.GetUnicodeCategory(c);
+                        if (uc != UnicodeCategory.NonSpacingMark &&
+                        uc != UnicodeCategory.SpacingCombiningMark &&
+                        uc != UnicodeCategory.EnclosingMark &&
+                        uc != UnicodeCategory.Surrogate)
+                        {
+                            if (currentLineLength > Int32.MaxValue - 1)
+                                throw new InvalidOperationException("Line length is too large. It must be within Int32.MaxValue - 1");
+                            yield return new Tuple<long, long, string>(currentLineHeadIndex, currentLineLength, linefeed);
+                            currentLineHeadIndex += currentLineLength;
+                            currentLineLength = 0;
+                            linefeed = string.Empty;
+                        }
+                    }
+                    reader.Advance(1);
+                }
+            }
+
             if (currentLineLength > 0)
                 yield return new Tuple<long, long,string>(currentLineHeadIndex, currentLineLength,linefeed);
         }

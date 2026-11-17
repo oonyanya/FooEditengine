@@ -33,6 +33,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)LineToIndex.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MarkerCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MarkerFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)MySequenceReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PrintableView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Range.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RangeCollection.cs" />
