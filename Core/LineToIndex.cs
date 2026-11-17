@@ -662,6 +662,12 @@ namespace FooEditEngine
 
         internal IEnumerable<Tuple<long, long,string>> ForEachLines(long startIndex, long endIndex, int maxCharCount = -1)
         {
+            /*
+             * startIndex>EndIndexならなにも返さない
+             * startIndex==EndIndexならcurrentLineLengthは1として扱う
+             * それ以外は改行ごとかmaxCharCountに達するごとに列挙する
+             */
+
             long currentLineHeadIndex = startIndex;
             long currentLineLength = 0;
             string linefeed = string.Empty;
