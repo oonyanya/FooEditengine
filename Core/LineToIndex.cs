@@ -15,9 +15,14 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
+using System.Windows.Documents;
 using Core;
 using FooProject.Collection;
 using FooProject.Collection.DataStore;
@@ -662,6 +667,31 @@ namespace FooEditEngine
             return (addedDummyLine ? 1 : 0) + newLines.Count - removeCount;
         }
 
+        public const int REQUIRE_BLUK_CHECK_CHAR_LEN = 16;
+
+        private int MoveNextCharIfHasNotCRLF(ReadOnlySpan<char> span)
+        {
+            if (Vector256.IsHardwareAccelerated == false)
+                return 0;
+
+            var _CR_VECTOR = Vector256.Create((byte)'\r');
+            var _LF_VECTOR = Vector256.Create((byte)'\n');
+
+            //VECTOR256なので
+
+            if (span.Length < REQUIRE_BLUK_CHECK_CHAR_LEN)
+                return 0;
+
+            var memory_chunk = span;
+            var vector_chunk = Vector256.Create(MemoryMarshal.Cast<char, byte>(memory_chunk));
+            var vec_mask_cr = Avx2.MoveMask(Avx2.CompareEqual(vector_chunk, _CR_VECTOR));
+            var vec_mask_lf = Avx2.MoveMask(Avx2.CompareEqual(vector_chunk, _LF_VECTOR));
+            if ((vec_mask_cr | vec_mask_lf) == 0)
+                return REQUIRE_BLUK_CHECK_CHAR_LEN;
+
+            return 0;
+        }
+
         internal IEnumerable<Tuple<long, long,string>> ForEachLines(long startIndex, long endIndex, int maxCharCount = -1)
         {
             /*
@@ -687,8 +717,44 @@ namespace FooEditEngine
             {
                 var reader = new MySequenceReader<char>(seq);
 
-                while(!reader.End)
+
+                //AVXなどサポートしているCPUかつどの文字にも改行コードがなければスキップする
+                while (!reader.End)
                 {
+                    var move_count = MoveNextCharIfHasNotCRLF(reader.CurrentMemory.Span.Slice(reader.CurrentMemoryIndex));
+                    if (move_count > 0 && move_count < reader.Remaining)
+                    {
+                        var left_count = maxCharCount - currentLineLength;
+                        if (maxCharCount == -1 || left_count > move_count)
+                        {
+                            currentLineLength += move_count;
+                            reader.Advance(move_count);
+                            continue;
+                        }
+                        else
+                        {
+                            var clamped_move_count = 0L;
+                            if (left_count < move_count)
+                                clamped_move_count = left_count;
+                            else
+                                clamped_move_count = move_count;
+
+                            currentLineLength += clamped_move_count;
+
+                            if (currentLineLength > Int32.MaxValue - 1)
+                                throw new InvalidOperationException("Line length is too large. It must be within Int32.MaxValue - 1");
+
+                            yield return new Tuple<long, long, string>(currentLineHeadIndex, currentLineLength, linefeed);
+
+                            currentLineHeadIndex += currentLineLength;
+                            currentLineLength = 0;
+                            linefeed = string.Empty;
+
+                            reader.Advance(clamped_move_count);
+                            continue;
+                        }
+                    }
+
                     currentLineLength++;
 
                     char c;

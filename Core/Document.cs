@@ -177,8 +177,8 @@ namespace FooEditEngine
         /// <summary>
         /// 一行当たりの最大文字数
         /// </summary>
-        /// <remarks>値を反映させるためにはレイアウト行すべてを削除する必要があります</remarks>
-        public static int MaximumLineLength = 1000;
+        /// <remarks>値を反映させるためにはレイアウト行すべてを削除する必要があります。また、値はREQUIRE_BLUK_CHECK_CHAR_LENで割り切れる値である必要があります</remarks>
+        public static int MaximumLineLength = 1008;
 
         /// <summary>
         /// 事前読み込みを行う長さ

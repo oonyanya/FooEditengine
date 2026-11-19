@@ -1226,7 +1226,7 @@ namespace UnitTest
             Assert.AreEqual(0, p.Y);
 
             p = layout.GetPostionFromIndex(Document.MaximumLineLength);
-            Assert.AreEqual(20000, p.X);    //0のほうが違和感ないかも
+            Assert.AreEqual(Document.MaximumLineLength * DummyTextLayout.TestCharWidth , p.X);    //0のほうが違和感ないかも
             Assert.AreEqual(0, p.Y);   //20のほうが違和感ないかも
 
             Assert.AreEqual(0, layout.GetIndexFromPostion(0, 0));
