@@ -177,7 +177,7 @@ namespace FooEditEngine
         /// <summary>
         /// 一行当たりの最大文字数
         /// </summary>
-        /// <remarks>値を反映させるためにはレイアウト行すべてを削除する必要があります。また、値はREQUIRE_BLUK_CHECK_CHAR_LENで割り切れる値である必要があります</remarks>
+        /// <remarks>値を反映させるためにはレイアウト行すべてを削除する必要があります。また、値はREQUIRE_BLUK_SCAN_CHAR_LENで割り切れる値である必要があります</remarks>
         public static int MaximumLineLength = 1008;
 
         /// <summary>
@@ -1258,7 +1258,7 @@ namespace FooEditEngine
         /// </summary>
         /// <param name="startIndex">開始インデックス</param>
         /// <param name="endIndex">終了インデックス</param>
-        /// <param name="maxCharCount">最大長</param>
+        /// <param name="maxCharCount">最大長。REQUIRE_BLUK_SCAN_CHAR_LENで割り切れる値を指定する必要があります</param>
         /// <returns>行イテレーターが返される</returns>
         public IEnumerable<string> GetLines(long startIndex, long endIndex, int maxCharCount = -1)
         {

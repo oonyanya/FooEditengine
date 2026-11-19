@@ -667,9 +667,13 @@ namespace FooEditEngine
             return (addedDummyLine ? 1 : 0) + newLines.Count - removeCount;
         }
 
-        public const int REQUIRE_BLUK_CHECK_CHAR_LEN = 16;
+        /// <summary>
+        /// まとめて読み取るときに必要な長さ
+        /// </summary>
+        /// VECTOR256かつC#のchar型はUTF16なので、256bit/8/2の値を指定する
+        public const int REQUIRE_BLUK_SCAN_CHAR_LEN = 16;
 
-        private int MoveNextCharIfHasNotCRLF(ReadOnlySpan<char> span)
+        private int GetMoveNextCountIfHasNotCRLF(ReadOnlySpan<char> span)
         {
             if (Vector256.IsHardwareAccelerated == false)
                 return 0;
@@ -677,9 +681,7 @@ namespace FooEditEngine
             var _CR_VECTOR = Vector256.Create((byte)'\r');
             var _LF_VECTOR = Vector256.Create((byte)'\n');
 
-            //VECTOR256なので
-
-            if (span.Length < REQUIRE_BLUK_CHECK_CHAR_LEN)
+            if (span.Length < REQUIRE_BLUK_SCAN_CHAR_LEN)
                 return 0;
 
             var memory_chunk = span;
@@ -687,7 +689,7 @@ namespace FooEditEngine
             var vec_mask_cr = Avx2.MoveMask(Avx2.CompareEqual(vector_chunk, _CR_VECTOR));
             var vec_mask_lf = Avx2.MoveMask(Avx2.CompareEqual(vector_chunk, _LF_VECTOR));
             if ((vec_mask_cr | vec_mask_lf) == 0)
-                return REQUIRE_BLUK_CHECK_CHAR_LEN;
+                return REQUIRE_BLUK_SCAN_CHAR_LEN;
 
             return 0;
         }
@@ -721,7 +723,7 @@ namespace FooEditEngine
                 //AVXなどサポートしているCPUかつどの文字にも改行コードがなければスキップする
                 while (!reader.End)
                 {
-                    var move_count = MoveNextCharIfHasNotCRLF(reader.CurrentMemory.Span.Slice(reader.CurrentMemoryIndex));
+                    var move_count = GetMoveNextCountIfHasNotCRLF(reader.CurrentMemory.Span.Slice(reader.CurrentMemoryIndex));
                     if (move_count > 0 && move_count < reader.Remaining)
                     {
                         var left_count = maxCharCount - currentLineLength;
