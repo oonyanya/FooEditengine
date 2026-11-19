@@ -158,10 +158,10 @@ namespace UnitTest
             }
             else
             {
-                foreach (var touple in doc.LayoutLines.ForEachLines(index, index + length - 1, this.MaximumLineLength))
+                foreach (var touple in doc.ForEachLines(index, index + length - 1, this.MaximumLineLength))
                 {
-                    long indexSublayout = touple.Item1;
-                    long lengthSublayout = touple.Item2;
+                    long indexSublayout = touple.LineHeadIndex;
+                    long lengthSublayout = touple.Length;
                     var str = doc.ToString(indexSublayout, lengthSublayout);
                     var sublayout = this.CreateLaytout(str, syntaxCollection, MarkerRanges, SelectRanges, WrapWidth);
                     layout.Add(sublayout, indexSublayout, lengthSublayout);

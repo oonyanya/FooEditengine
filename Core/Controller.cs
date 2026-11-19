@@ -1214,7 +1214,7 @@ namespace FooEditEngine
                 {
                     Selection sel = Util.NormalizeIMaker<Selection>(Selections[i]);
 
-                    string str = Util.NormalizeLineFeed(this.Document.ToString(sel.start, sel.length), Environment.NewLine);
+                    string str = Util.NormalizeLineFeed(new DocumentSegment(this.Document.StringBuffer, sel.start, sel.length), Environment.NewLine);
                     if (str.IndexOf(Environment.NewLine) == -1)
                         temp.AppendLine(str);
                     else

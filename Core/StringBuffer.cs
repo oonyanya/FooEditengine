@@ -74,7 +74,7 @@ namespace FooEditEngine
     abstract class StringBufferBase : IEnumerable<char>, IRandomEnumrator<char>, IDisposable
     {
         //LOHの都合上、このくらいの値がちょうどいい
-        const int BUF_BLOCKSIZE = 32768;
+        internal const int BUF_BLOCKSIZE = 32768;
 
         const int MaxSemaphoreCount = 1;
         AsyncReaderWriterLock rwlock = new AsyncReaderWriterLock();
@@ -273,20 +273,11 @@ namespace FooEditEngine
             this.Reader = reader;
         }
 
-        internal IEnumerable<ReadOnlySequence<char>> GetRanges(long start,long length)
+        internal ReadOnlySequence<char> GetRanges(long start,long length)
         {
             if (buf == null)
                 throw new InvalidOperationException("must be call Init");
-            foreach (var info in this.buf.GetContainer(start, length))
-            {
-                using(var pinned = this.buf.CustomBuilder.DataStore.Get(info.PinableContainer))
-                {
-                    checked
-                    {
-                        yield return pinned.Content.Slice((int)info.RelativeIndex, (int)info.Count);
-                    }
-                }
-            }
+            return this.buf.GetSeqence(start, length);
         }
 
         internal IEnumerable<char> GetEnumerator(long start, long length)

@@ -9,12 +9,19 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Linq;
+using System.Buffers;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
+using System.Linq;
 using System.Reflection;
-using System.Collections;
+using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
+#if !WINDOWS_UWP
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
+using System.Text;
 using Microsoft.VisualBasic;
 #if WINUI
 using Windows.Foundation.Diagnostics;
@@ -59,193 +66,213 @@ namespace FooEditEngine
     }
     public class Util
     {
-        public static string NormalizeLineFeed(IReadOnlyList<char> s, string linefeed)
+        public static string NormalizeLineFeed(DocumentSegment s, string linefeed)
         {
-            //NormalizeLineFeed()のstringバージョンからコピペ。無理やり一つにまとめると無駄なコピーが発生してしまう
-            //TODO：コピーせずに済む方法があれば、一つにまとめる
             StringBuilder result = new StringBuilder();
-            int i = 0;
-            while (true)
+            ReadOnlySequence<char> seq;
+            while (s.Read(out seq) > 0)
             {
-                if (i >= s.Count)
-                    break;
-                if (s[i] == Document.LF_CHAR)
-                {
-                    result.Append(linefeed);
-                    i++;
-                }
-                else if (s[i] == Document.CR_CHAR)
-                {
-                    if (i + 1 < s.Count && s[i + 1] == Document.LF_CHAR)
-                    {
-                        result.Append(linefeed);
-                        i += 2;
-                    }
-                    else
-                    {
-                        result.Append(linefeed);
-                        i++;
-                    }
-                }
-                else
-                {
-                    result.Append(s[i]);
-                    i++;
-                }
+                var reader = new SequenceReader<char>(seq);
+                result.Append(Util.NormalizeLineFeed(reader, linefeed));
             }
             return result.ToString();
         }
 
         public static string NormalizeLineFeed(string s, string linefeed)
         {
-            StringBuilder result = new StringBuilder(); 
-            int i = 0;
-            while (true)
+            var reader = new SequenceReader<char>(new ReadOnlySequence<char>(s.AsMemory()));
+            return Util.NormalizeLineFeed(reader, linefeed);
+        }
+
+        public static string NormalizeLineFeed(SequenceReader<char> reader, string linefeed)
+        {
+            StringBuilder result = new StringBuilder();
+            while (!reader.End)
             {
-                if (i >= s.Length)
-                    break;
-                if (s[i] == Document.LF_CHAR)
+                var move_count = Util.GetMoveNextCountIfHasNotCRLF(reader.CurrentSpan.Slice(reader.CurrentSpanIndex));
+                if (move_count > 0 && move_count < reader.Remaining)
+                {
+                    result.Append(reader.CurrentSpan.Slice(reader.CurrentSpanIndex, move_count));
+                    reader.Advance(move_count);
+                    continue;
+                }
+
+                char c;
+                if (!reader.TryPeek(out c))
+                {
+                    throw new InvalidOperationException("somthing wrong in readline");
+                }
+
+                if (c == Document.LF_CHAR)
                 {
                     result.Append(linefeed);
-                    i++;
+                    reader.Advance(1);
                 }
-                else if (s[i] == Document.CR_CHAR)
+                else if (c == Document.CR_CHAR)
                 {
-                    if (i + 1 < s.Length && s[i + 1] == Document.LF_CHAR)
+                    char next_c;
+                    bool peek_result = reader.TryPeek(1, out next_c);
+                    if (peek_result && next_c == Document.LF_CHAR)
                     {
                         result.Append(linefeed);
-                        i += 2;
+                        reader.Advance(2);
                     }
                     else
                     {
                         result.Append(linefeed);
-                        i++;
+                        reader.Advance(1);
                     }
                 }
                 else
                 {
-                    result.Append(s[i]);
-                    i++;
+                    result.Append(c);
+                    reader.Advance(1);
                 }
             }
+
             return result.ToString();
         }
 
-        public static IEnumerable<(string str, string linefeed)> EnumrateLine(IReadOnlyList<char> s)
+        public static IEnumerable<(string str, string linefeed)> EnumrateLine(DocumentSegment s)
         {
-            //EnumrateLine()のstringバージョンからコピペ。無理やり一つにまとめると無駄なコピーが発生してしまう
-            //TODO：コピーせずに済む方法があれば、一つにまとめる
             StringBuilder result = new StringBuilder();
-            int i = 0;
-            while (true)
+            ReadOnlySequence<char> seq;
+            while (s.Read(out seq) > 0)
             {
-                if (i >= s.Count)
+                var reader = new MySequenceReader<char>(seq);
+                while (!reader.End)
                 {
-                    if (result.Length > 0)
+                    var move_count = Util.GetMoveNextCountIfHasNotCRLF(reader.CurrentMemory.Span.Slice(reader.CurrentMemoryIndex));
+                    if (move_count > 0 && move_count < reader.Remaining)
                     {
-                        yield return (result.ToString(), string.Empty);
-                        result.Clear();
+                        result.Append(reader.CurrentMemory.Slice(reader.CurrentMemoryIndex, move_count));
+                        reader.Advance(move_count);
+                        continue;
                     }
-                    break;
+
+                    char c;
+                    if (!reader.TryPeek(out c))
+                    {
+                        throw new InvalidOperationException("somthing wrong in readline");
+                    }
+
+                    if (c == Document.LF_CHAR)
+                    {
+                        yield return (result.ToString(), Document.LF_STR);
+                        result.Clear();
+                        reader.Advance(1);
+                    }
+                    else if (c == Document.CR_CHAR)
+                    {
+                        char next_c;
+                        bool peek_result = reader.TryPeek(1, out next_c);
+                        if (peek_result && next_c == Document.LF_CHAR)
+                        {
+                            yield return (result.ToString(), Document.CRLF_STR);
+                            result.Clear();
+                            reader.Advance(2);
+                        }
+                        else
+                        {
+                            yield return (result.ToString(), Document.CR_STR);
+                            result.Clear();
+                            reader.Advance(1);
+                        }
+                    }
+                    else
+                    {
+                        result.Append(c);
+                        reader.Advance(1);
+                    }
                 }
-                if (s[i] == Document.LF_CHAR)
+            }
+            if (result.Length > 0)
+            {
+                yield return (result.ToString(), string.Empty);
+                result.Clear();
+            }
+        }
+
+
+        public static IEnumerable<(string str, string linefeed)> EnumrateLine(string s)
+        {
+            StringBuilder result = new StringBuilder();
+            var reader = new MySequenceReader<char>(new ReadOnlySequence<char>(s.AsMemory()));
+            while (!reader.End)
+            {
+                var move_count = Util.GetMoveNextCountIfHasNotCRLF(reader.CurrentMemory.Span.Slice(reader.CurrentMemoryIndex));
+                if (move_count > 0 && move_count < reader.Remaining)
+                {
+                    result.Append(reader.CurrentMemory.Slice(reader.CurrentMemoryIndex, move_count));
+                    reader.Advance(move_count);
+                    continue;
+                }
+
+                char c;
+                if (!reader.TryPeek(out c))
+                {
+                    throw new InvalidOperationException("somthing wrong in readline");
+                }
+
+                if (c == Document.LF_CHAR)
                 {
                     yield return (result.ToString(), Document.LF_STR);
                     result.Clear();
-                    i++;
+                    reader.Advance(1);
                 }
-                else if (s[i] == Document.CR_CHAR)
+                else if (c == Document.CR_CHAR)
                 {
-                    if (i + 1 < s.Count && s[i + 1] == Document.LF_CHAR)
+                    char next_c;
+                    bool peek_result = reader.TryPeek(1, out next_c);
+                    if (peek_result && next_c == Document.LF_CHAR)
                     {
                         yield return (result.ToString(), Document.CRLF_STR);
                         result.Clear();
-                        i += 2;
+                        reader.Advance(2);
                     }
                     else
                     {
                         yield return (result.ToString(), Document.CR_STR);
                         result.Clear();
-                        i++;
+                        reader.Advance(1);
                     }
                 }
                 else
                 {
-                    result.Append(s[i]);
-                    i++;
+                    result.Append(c);
+                    reader.Advance(1);
                 }
             }
-        }
 
-        public static IEnumerable<(string str,string linefeed)> EnumrateLine(string s)
-        {
-            StringBuilder result = new StringBuilder();
-            int i = 0;
-            while (true)
+            if (result.Length > 0)
             {
-                if (i >= s.Length)
-                {
-                    if(result.Length > 0)
-                    {
-                        yield return (result.ToString(), string.Empty);
-                        result.Clear();
-                    }
-                    break;
-                }
-                if (s[i] == Document.LF_CHAR)
-                {
-                    yield return (result.ToString(), Document.LF_STR);
-                    result.Clear();
-                    i++;
-                }
-                else if (s[i] == Document.CR_CHAR)
-                {
-                    if (i + 1 < s.Length && s[i + 1] == Document.LF_CHAR)
-                    {
-                        yield return (result.ToString(), Document.CRLF_STR);
-                        result.Clear();
-                        i += 2;
-                    }
-                    else
-                    {
-                        yield return (result.ToString(), Document.CR_STR);
-                        result.Clear();
-                        i++;
-                    }
-                }else {
-                    result.Append(s[i]);
-                    i++;
-                }
+                yield return (result.ToString(), string.Empty);
+                result.Clear();
             }
         }
 
-        public static bool IsHasNewLine(IList<char> s)
-        {
-            //IsHasNewLine()のstringバージョンからコピペ。無理やり一つにまとめると無駄なコピーが発生してしまう
-            //TODO：コピーせずに済む方法があれば、一つにまとめる
-            return GetNewLineLengthInTail(s) > 0;
-        }
-        public static bool IsHasNewLine(string s)
+        public static bool IsHasNewLine(IEnumerable<char> s)
         {
             return GetNewLineLengthInTail(s) > 0;
         }
-        public static int GetNewLineLengthInTail(IList<char> s)
+
+        public static int GetNewLineLengthInTail(IEnumerable<char> s)
         {
-            //GetNewLineLengthInTail()のstringバージョンからコピペ。無理やり一つにまとめると無駄なコピーが発生してしまう
-            //TODO：コピーせずに済む方法があれば、一つにまとめる
             var (len,type) =GetNewLineLengthInTailWithType(s);
             return len;
         }
-        public static int GetNewLineLengthInTail(string s)
+
+        public static (int linefeedlen,string linefeedtype) GetNewLineLengthInTailWithType(IEnumerable<char> s)
         {
-            var (len, type) = GetNewLineLengthInTailWithType(s);
-            return len;
-        }
-        public static (int linefeedlen,string linefeedtype) GetNewLineLengthInTailWithType(IList<char> s)
-        {
-            //GetNewLineLengthInTailWithType()のstringバージョンからコピペ。無理やり一つにまとめると無駄なコピーが発生してしまう
-            //TODO：コピーせずに済む方法があれば、一つにまとめる
-            int count = s.Count;
+            int count = 0;
+#if WINDOWS_UWP
+            count = s.Count();
+#else
+            if (s.TryGetNonEnumeratedCount(out count) == false)
+            {
+                count = s.Count();
+            }
+#endif
 
             if (s == null || count == 0)
                 return (0,null);
@@ -270,34 +297,6 @@ namespace FooEditEngine
             }
             return (0,null);
         }
-        public static (int linefeedlen, string linefeedtype) GetNewLineLengthInTailWithType(string s)
-        {
-            int count = s.Length;
-
-            if (s == null || count == 0)
-                return (0, null);
-            int lastIndex = count - 2;
-            if (lastIndex >= 0)
-            {
-                if (s.ElementAt(lastIndex) == Document.CR_CHAR)
-                {
-                    if (lastIndex + 1 < count && s.ElementAt(lastIndex + 1) == Document.LF_CHAR)
-                        return (2, Document.CRLF_STR);
-                    else
-                        return (1, Document.LF_STR);
-                }
-            }
-            lastIndex = count - 1;
-            if (lastIndex >= 0)
-            {
-                char lastChar = s.ElementAt(lastIndex);
-                if (lastChar == Document.LF_CHAR)
-                    return (1, Document.LF_STR);
-                if (lastChar == Document.CR_CHAR)
-                    return (1, Document.CR_STR);
-            }
-            return (0, null);
-        }
 
         public static string[] SpilitByLineFeed(string s)
         {
@@ -313,6 +312,41 @@ namespace FooEditEngine
         {
             return s.Trim(Document.LF_CHAR).Trim(Document.CR_CHAR);
         }
+
+        /// <summary>
+        /// まとめて読み取るときに必要な長さ
+        /// </summary>
+        /// VECTOR256かつC#のchar型はUTF16なので、256bit/8/2の値を指定する
+        public const int REQUIRE_BLUK_SCAN_CHAR_LEN = 16;
+
+        /// <summary>
+        /// 改行コードの有無に応じて移動量を返す
+        /// </summary>
+        /// <param name="span"></param>
+        /// <returns>移動できなければ0を返し、改行コードが全く存在しなければ、REQUIRE_BLUK_SCAN_CHAR_LENを返す</returns>
+        public static int GetMoveNextCountIfHasNotCRLF(ReadOnlySpan<char> span)
+        {
+#if WINDOWS_UWP
+#else
+            if (Vector256.IsHardwareAccelerated == false)
+                return 0;
+
+            var _CR_VECTOR = Vector256.Create((byte)'\r');
+            var _LF_VECTOR = Vector256.Create((byte)'\n');
+
+            if (span.Length < REQUIRE_BLUK_SCAN_CHAR_LEN)
+                return 0;
+
+            var memory_chunk = span;
+            var vector_chunk = Vector256.Create(MemoryMarshal.Cast<char, byte>(memory_chunk));
+            var vec_mask_cr = Avx2.MoveMask(Avx2.CompareEqual(vector_chunk, _CR_VECTOR));
+            var vec_mask_lf = Avx2.MoveMask(Avx2.CompareEqual(vector_chunk, _LF_VECTOR));
+            if ((vec_mask_cr | vec_mask_lf) == 0)
+                return REQUIRE_BLUK_SCAN_CHAR_LEN;
+#endif
+            return 0;
+        }
+
 
 #if METRO || WINDOWS_UWP
         static float? _LogicalDpi;

@@ -83,20 +83,20 @@ namespace UnitTest
         [TestMethod]
         public void SpilitLineFeedTest()
         {
-            string str = "test\r\ntest\r\n";
+            string str = "testtesttesttesttest\r\ntesttesttesttesttest\r\n";
             foreach (var line in Util.SpilitByLineFeed(str))
             {
-                Assert.AreEqual("test", line);
+                Assert.AreEqual("testtesttesttesttest", line);
             }
-            str = "test\rtest\r";
+            str = "testtesttesttesttest\rtesttesttesttesttest\r";
             foreach (var line in Util.SpilitByLineFeed(str))
             {
-                Assert.AreEqual("test", line);
+                Assert.AreEqual("testtesttesttesttest", line);
             }
-            str = "test\ntest\n";
+            str = "testtesttesttesttest\ntesttesttesttesttest\n";
             foreach (var line in Util.SpilitByLineFeed(str))
             {
-                Assert.AreEqual("test", line);
+                Assert.AreEqual("testtesttesttesttest", line);
             }
         }
     }
@@ -924,11 +924,11 @@ namespace UnitTest
 
             doc.ReplaceAll2("is", "aaa");
 
-            var lines = doc.LayoutLines.ForEachLines(0, doc.Count - 1);
+            var lines = doc.ForEachLines(0, doc.Count - 1);
             foreach(var line in lines)
             {
-                var actual =  doc.ToString(line.Item1, line.Item2);
-                if(line.Item1 < doc.Count)
+                var actual =  doc.ToString(line.LineHeadIndex, line.Length);
+                if(line.LineHeadIndex < doc.Count)
                 {
                     Assert.AreEqual("thaaa aaa a pen\n", actual);
                 }
@@ -939,11 +939,11 @@ namespace UnitTest
             Assert.AreEqual(0, doc.CaretPostion.col);
 
             doc.UndoManager.undo();
-            var lines2 = doc.LayoutLines.ForEachLines(0, doc.Count - 1);
+            var lines2 = doc.ForEachLines(0, doc.Count - 1);
             foreach (var line in lines2)
             {
-                var actual = doc.ToString(line.Item1, line.Item2);
-                if (line.Item1 < doc.Count)
+                var actual = doc.ToString(line.LineHeadIndex, line.Length);
+                if (line.LineHeadIndex < doc.Count)
                 {
                     Assert.AreEqual("this is a pen\n", actual);
                 }
@@ -986,11 +986,11 @@ namespace UnitTest
 
             var replacedText = text.Replace("pen", "ratking");
             doc.ReplaceAll2("pen", "ratking");
-            var lines = doc.LayoutLines.ForEachLines(0, doc.Count - 1);
+            var lines = doc.ForEachLines(0, doc.Count - 1);
             foreach (var line in lines)
             {
-                var actual = doc.ToString(line.Item1, line.Item2);
-                if (line.Item1 < doc.Count)
+                var actual = doc.ToString(line.LineHeadIndex, line.Length);
+                if (line.LineHeadIndex < doc.Count)
                 {
                     Assert.AreEqual(replacedText, actual);
                 }
@@ -998,11 +998,11 @@ namespace UnitTest
 
             var undedText = text.Replace("ratking", "pen");
             doc.UndoManager.undo();
-            var lines2 = doc.LayoutLines.ForEachLines(0, doc.Count - 1);
+            var lines2 = doc.ForEachLines(0, doc.Count - 1);
             foreach (var line in lines2)
             {
-                var actual = doc.ToString(line.Item1, line.Item2);
-                if (line.Item1 < doc.Count)
+                var actual = doc.ToString(line.LineHeadIndex, line.Length);
+                if (line.LineHeadIndex < doc.Count)
                 {
                     Assert.AreEqual(undedText, actual);
                 }
@@ -1226,7 +1226,7 @@ namespace UnitTest
             Assert.AreEqual(0, p.Y);
 
             p = layout.GetPostionFromIndex(Document.MaximumLineLength);
-            Assert.AreEqual(20000, p.X);    //0のほうが違和感ないかも
+            Assert.AreEqual(Document.MaximumLineLength * DummyTextLayout.TestCharWidth , p.X);    //0のほうが違和感ないかも
             Assert.AreEqual(0, p.Y);   //20のほうが違和感ないかも
 
             Assert.AreEqual(0, layout.GetIndexFromPostion(0, 0));

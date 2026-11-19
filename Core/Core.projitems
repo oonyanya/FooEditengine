@@ -22,6 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Direct2D\D2DMarkerFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Direct2D\MyTextLayout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Document.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DocumentSegment.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DummyRender.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)EditView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)FoldingCollection.cs" />

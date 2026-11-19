@@ -12,13 +12,9 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
-using System.Runtime.CompilerServices;
 using System.Text;
-using Core;
 using FooProject.Collection;
 using FooProject.Collection.DataStore;
 
@@ -662,84 +658,6 @@ namespace FooEditEngine
             return (addedDummyLine ? 1 : 0) + newLines.Count - removeCount;
         }
 
-        internal IEnumerable<Tuple<long, long,string>> ForEachLines(long startIndex, long endIndex, int maxCharCount = -1)
-        {
-            /*
-             * startIndex>EndIndexならなにも返さない
-             * startIndex==EndIndexならcurrentLineLengthは1として扱う
-             * それ以外は改行ごとかmaxCharCountに達するごとに列挙する
-             */
-
-            if (startIndex > endIndex)
-                yield break;
-
-            long currentLineHeadIndex = startIndex;
-            long currentLineLength = 0;
-            string linefeed = string.Empty;
-            if (startIndex == endIndex)
-            {
-                yield return new Tuple<long, long, string>(currentLineHeadIndex, 1, linefeed);
-                yield break;
-            }
-
-            var seqs = this.Document.StringBuffer.GetRanges(startIndex, endIndex - startIndex + 1);
-            foreach(var seq in seqs)
-            {
-                var reader = new MySequenceReader<char>(seq);
-
-                while(!reader.End)
-                {
-                    currentLineLength++;
-
-                    char c;
-                    if (!reader.TryPeek(out c))
-                    {
-                        throw new InvalidOperationException("somthing wrong in readline");
-                    }
-
-                    if (c == Document.LF_CHAR)
-                    {
-                        linefeed = Document.LF_STR;
-                    }
-                    else if (c == Document.CR_CHAR)
-                    {
-                        char next_c;
-                        bool result = reader.TryPeek(1, out next_c);
-                        if (result && next_c == Document.LF_CHAR)
-                        {
-                            currentLineLength++;
-                            reader.Advance(1);
-                            linefeed = Document.CRLF_STR;
-                        }
-                        else
-                        {
-                            linefeed = Document.CR_STR;
-                        }
-                    }
-                    if (linefeed != string.Empty || (maxCharCount != -1 && currentLineLength >= maxCharCount))
-                    {
-                        UnicodeCategory uc = CharUnicodeInfo.GetUnicodeCategory(c);
-                        if (uc != UnicodeCategory.NonSpacingMark &&
-                        uc != UnicodeCategory.SpacingCombiningMark &&
-                        uc != UnicodeCategory.EnclosingMark &&
-                        uc != UnicodeCategory.Surrogate)
-                        {
-                            if (currentLineLength > Int32.MaxValue - 1)
-                                throw new InvalidOperationException("Line length is too large. It must be within Int32.MaxValue - 1");
-                            yield return new Tuple<long, long, string>(currentLineHeadIndex, currentLineLength, linefeed);
-                            currentLineHeadIndex += currentLineLength;
-                            currentLineLength = 0;
-                            linefeed = string.Empty;
-                        }
-                    }
-                    reader.Advance(1);
-                }
-            }
-
-            if (currentLineLength > 0)
-                yield return new Tuple<long, long,string>(currentLineHeadIndex, currentLineLength,linefeed);
-        }
-
         IList<LineToIndexTableData> CreateLineList(long index, long length, out string linefeedtype, bool setdirtyflag = false, int lineLimitLength = -1)
         {
             long startIndex = index;
@@ -747,14 +665,14 @@ namespace FooEditEngine
             List<LineToIndexTableData> output = new List<LineToIndexTableData>();
             linefeedtype = string.Empty;
 
-            foreach (var range in this.ForEachLines(startIndex, endIndex, lineLimitLength))
+            foreach (var range in this.Document.ForEachLines(startIndex, endIndex, lineLimitLength))
             {
-                long lineHeadIndex = range.Item1;
-                long lineLength = range.Item2;
+                long lineHeadIndex = range.LineHeadIndex;
+                long lineLength = range.Length;
                 char c = this.Document[lineHeadIndex + lineLength - 1];
-                bool hasNewLine = range.Item3 != string.Empty;
+                bool hasNewLine = range.LineFeed != string.Empty;
                 if (hasNewLine)
-                    linefeedtype = range.Item3;
+                    linefeedtype = range.LineFeed;
                 LineToIndexTableData result = new LineToIndexTableData(lineHeadIndex, lineLength, hasNewLine, setdirtyflag, null);
                 output.Add(result);
             }
