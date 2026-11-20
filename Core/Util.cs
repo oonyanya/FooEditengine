@@ -9,12 +9,15 @@
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 using System;
-using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
+using System.Linq;
 using System.Reflection;
-using System.Collections;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+using System.Text;
 using Microsoft.VisualBasic;
 #if WINUI
 using Windows.Foundation.Diagnostics;
@@ -313,6 +316,39 @@ namespace FooEditEngine
         {
             return s.Trim(Document.LF_CHAR).Trim(Document.CR_CHAR);
         }
+
+        /// <summary>
+        /// まとめて読み取るときに必要な長さ
+        /// </summary>
+        /// VECTOR256かつC#のchar型はUTF16なので、256bit/8/2の値を指定する
+        public const int REQUIRE_BLUK_SCAN_CHAR_LEN = 16;
+
+        /// <summary>
+        /// 改行コードの有無に応じて移動量を返す
+        /// </summary>
+        /// <param name="span"></param>
+        /// <returns>移動できなければ0を返し、改行コードが全く存在しなければ、REQUIRE_BLUK_SCAN_CHAR_LENを返す</returns>
+        public static int GetMoveNextCountIfHasNotCRLF(ReadOnlySpan<char> span)
+        {
+            if (Vector256.IsHardwareAccelerated == false)
+                return 0;
+
+            var _CR_VECTOR = Vector256.Create((byte)'\r');
+            var _LF_VECTOR = Vector256.Create((byte)'\n');
+
+            if (span.Length < REQUIRE_BLUK_SCAN_CHAR_LEN)
+                return 0;
+
+            var memory_chunk = span;
+            var vector_chunk = Vector256.Create(MemoryMarshal.Cast<char, byte>(memory_chunk));
+            var vec_mask_cr = Avx2.MoveMask(Avx2.CompareEqual(vector_chunk, _CR_VECTOR));
+            var vec_mask_lf = Avx2.MoveMask(Avx2.CompareEqual(vector_chunk, _LF_VECTOR));
+            if ((vec_mask_cr | vec_mask_lf) == 0)
+                return REQUIRE_BLUK_SCAN_CHAR_LEN;
+
+            return 0;
+        }
+
 
 #if METRO || WINDOWS_UWP
         static float? _LogicalDpi;
