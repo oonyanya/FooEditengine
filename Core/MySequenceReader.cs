@@ -11,7 +11,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Core
+namespace FooEditEngine
 {
     internal class MySequenceReader<T>
     {

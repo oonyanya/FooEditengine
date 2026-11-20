@@ -10,19 +10,16 @@ You should have received a copy of the GNU General Public License along with thi
  */
 
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using FooProject.Collection;
-using FooProject.Collection.DataStore;
 
 namespace FooEditEngine
 {
@@ -102,6 +99,18 @@ namespace FooEditEngine
         Memory = 0x1,
         Disk = 0x2,
         FileMapping = 0x4,
+    }
+
+    public readonly struct DocumentLineInfo
+    {
+        public readonly long LineHeadIndex;
+        public readonly long Length;
+        public readonly string LineFeed;
+
+        public DocumentLineInfo(long lineHeadIndex, long length, string linefeed)
+        {
+            (LineHeadIndex, Length, LineFeed) = (lineHeadIndex, length, linefeed);
+        }
     }
 
     /// <summary>
@@ -1253,6 +1262,120 @@ namespace FooEditEngine
             return new DocumentSegment(this.buffer, index, count);
         }
 
+        public IEnumerable<DocumentLineInfo> ForEachLines(long startIndex, long endIndex, int maxCharCount = -1)
+        {
+            /*
+             * startIndex>EndIndexならなにも返さない
+             * startIndex==EndIndexならcurrentLineLengthは1として扱う
+             * それ以外は改行ごとかmaxCharCountに達するごとに列挙する
+             */
+
+            if (startIndex > endIndex)
+                yield break;
+
+            long currentLineHeadIndex = startIndex;
+            long currentLineLength = 0;
+            string linefeed = string.Empty;
+            if (startIndex == endIndex)
+            {
+                yield return new DocumentLineInfo(currentLineHeadIndex, 1, linefeed);
+                yield break;
+            }
+
+            var seqs = this.StringBuffer.GetRanges(startIndex, endIndex - startIndex + 1);
+            foreach (var seq in seqs)
+            {
+                var reader = new MySequenceReader<char>(seq);
+
+
+                //AVXなどサポートしているCPUかつどの文字にも改行コードがなければスキップする
+                while (!reader.End)
+                {
+                    var move_count = Util.GetMoveNextCountIfHasNotCRLF(reader.CurrentMemory.Span.Slice(reader.CurrentMemoryIndex));
+                    if (move_count > 0 && move_count < reader.Remaining)
+                    {
+                        var left_count = maxCharCount - currentLineLength;
+                        if (maxCharCount == -1 || left_count > move_count)
+                        {
+                            currentLineLength += move_count;
+                            reader.Advance(move_count);
+                            continue;
+                        }
+                        else
+                        {
+                            var clamped_move_count = 0L;
+                            if (left_count < move_count)
+                                clamped_move_count = left_count;
+                            else
+                                clamped_move_count = move_count;
+
+                            currentLineLength += clamped_move_count;
+
+                            if (currentLineLength > Int32.MaxValue - 1)
+                                throw new InvalidOperationException("Line length is too large. It must be within Int32.MaxValue - 1");
+
+                            yield return new DocumentLineInfo(currentLineHeadIndex, currentLineLength, linefeed);
+
+                            currentLineHeadIndex += currentLineLength;
+                            currentLineLength = 0;
+                            linefeed = string.Empty;
+
+                            reader.Advance(clamped_move_count);
+                            continue;
+                        }
+                    }
+
+                    currentLineLength++;
+
+                    char c;
+                    if (!reader.TryPeek(out c))
+                    {
+                        throw new InvalidOperationException("somthing wrong in readline");
+                    }
+
+                    if (c == Document.LF_CHAR)
+                    {
+                        linefeed = Document.LF_STR;
+                    }
+                    else if (c == Document.CR_CHAR)
+                    {
+                        char next_c;
+                        bool result = reader.TryPeek(1, out next_c);
+                        if (result && next_c == Document.LF_CHAR)
+                        {
+                            currentLineLength++;
+                            reader.Advance(1);
+                            linefeed = Document.CRLF_STR;
+                        }
+                        else
+                        {
+                            linefeed = Document.CR_STR;
+                        }
+                    }
+                    if (linefeed != string.Empty || (maxCharCount != -1 && currentLineLength >= maxCharCount))
+                    {
+                        UnicodeCategory uc = CharUnicodeInfo.GetUnicodeCategory(c);
+                        if (uc != UnicodeCategory.NonSpacingMark &&
+                        uc != UnicodeCategory.SpacingCombiningMark &&
+                        uc != UnicodeCategory.EnclosingMark &&
+                        uc != UnicodeCategory.Surrogate)
+                        {
+                            if (currentLineLength > Int32.MaxValue - 1)
+                                throw new InvalidOperationException("Line length is too large. It must be within Int32.MaxValue - 1");
+                            yield return new DocumentLineInfo(currentLineHeadIndex, currentLineLength, linefeed);
+                            currentLineHeadIndex += currentLineLength;
+                            currentLineLength = 0;
+                            linefeed = string.Empty;
+                        }
+                    }
+                    reader.Advance(1);
+                }
+            }
+
+            if (currentLineLength > 0)
+                yield return new DocumentLineInfo(currentLineHeadIndex, currentLineLength, linefeed);
+        }
+
         /// <summary>
         /// 行を取得する
         /// </summary>
@@ -1262,14 +1385,14 @@ namespace FooEditEngine
         /// <returns>行イテレーターが返される</returns>
         public IEnumerable<string> GetLines(long startIndex, long endIndex, int maxCharCount = -1)
         {
-            foreach (var range in this.LayoutLines.ForEachLines(startIndex, endIndex, maxCharCount))
+            foreach (var range in this.ForEachLines(startIndex, endIndex, maxCharCount))
             {
                 StringBuilder temp = new StringBuilder();
                 temp.Clear();
-                long lineEndIndex = range.Item1;
-                if (range.Item2 > 0)
-                    lineEndIndex += range.Item2 - 1;
-                for (long i = range.Item1; i <= lineEndIndex; i++)
+                long lineEndIndex = range.LineHeadIndex;
+                if (range.Length > 0)
+                    lineEndIndex += range.Length - 1;
+                for (long i = range.LineHeadIndex; i <= lineEndIndex; i++)
                     temp.Append(this.buffer[i]);
                 yield return temp.ToString();
             }

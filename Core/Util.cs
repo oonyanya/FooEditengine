@@ -15,8 +15,10 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+#if !WINDOWS_UWP
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+#endif
 using System.Text;
 using Microsoft.VisualBasic;
 #if WINUI
@@ -67,10 +69,14 @@ namespace FooEditEngine
             StringBuilder result = new StringBuilder();
             int i = 0;
             var count = 0;
+#if WINDOWS_UWP
+            count = s.Count();
+#else
             if (s.TryGetNonEnumeratedCount(out count) == false)
             {
                 count = s.Count();
             }
+#endif
             while (true)
             {
                 if (i >= count)
@@ -106,10 +112,14 @@ namespace FooEditEngine
         {
             StringBuilder result = new StringBuilder();
             var count = 0;
-            if(s.TryGetNonEnumeratedCount(out count) == false)
+#if WINDOWS_UWP
+            count = s.Count();
+#else
+            if (s.TryGetNonEnumeratedCount(out count) == false)
             {
                 count = s.Count();
             }
+#endif
             int i = 0;
             while (true)
             {
@@ -165,10 +175,14 @@ namespace FooEditEngine
         public static (int linefeedlen,string linefeedtype) GetNewLineLengthInTailWithType(IEnumerable<char> s)
         {
             int count = 0;
+#if WINDOWS_UWP
+            count = s.Count();
+#else
             if (s.TryGetNonEnumeratedCount(out count) == false)
             {
                 count = s.Count();
             }
+#endif
 
             if (s == null || count == 0)
                 return (0,null);
@@ -222,6 +236,8 @@ namespace FooEditEngine
         /// <returns>移動できなければ0を返し、改行コードが全く存在しなければ、REQUIRE_BLUK_SCAN_CHAR_LENを返す</returns>
         public static int GetMoveNextCountIfHasNotCRLF(ReadOnlySpan<char> span)
         {
+#if WINDOWS_UWP
+#else
             if (Vector256.IsHardwareAccelerated == false)
                 return 0;
 
@@ -237,7 +253,7 @@ namespace FooEditEngine
             var vec_mask_lf = Avx2.MoveMask(Avx2.CompareEqual(vector_chunk, _LF_VECTOR));
             if ((vec_mask_cr | vec_mask_lf) == 0)
                 return REQUIRE_BLUK_SCAN_CHAR_LEN;
-
+#endif
             return 0;
         }
 
