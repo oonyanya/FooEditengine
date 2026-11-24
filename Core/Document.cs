@@ -1227,9 +1227,14 @@ namespace FooEditEngine
         /// <returns>Stringオブジェクト</returns>
         public string ToString(long index, long length)
         {
-            using(this.buffer.GetReaderLock())
+            if (index < 0 || index >= this.Count)
+                return string.Empty;
+            if (length < 0 || length > this.Count - index)
+                return string.Empty;
+            using (this.buffer.GetReaderLock())
             {
-                return this.buffer.ToString(index, length);
+                var seg = this.Slice(index, length);
+                return seg.ToString();
             }
         }
 

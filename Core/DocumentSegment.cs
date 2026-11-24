@@ -69,7 +69,18 @@ namespace FooEditEngine
         /// <returns></returns>
         public override string ToString()
         {
-            return _buffer.ToString(_index, _count);
+            StringBuilder sb = new StringBuilder();
+            ReadOnlySequence<char> seq;
+            while (this.Read(out seq) > 0)
+            {
+                var reader = new SequenceReader<char>(seq);
+                while(!reader.End)
+                {
+                    sb.Append(reader.CurrentSpan);
+                    reader.Advance(reader.CurrentSpan.Length);
+                }
+            }
+            return sb.ToString();
         }
 
         /// <summary>
