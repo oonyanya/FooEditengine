@@ -31,8 +31,8 @@ namespace FooEditEngine
             {
                 throw new InvalidOperationException();
             }
-            var (linefeedlen, linefeedtype) = Util.GetNewLineLengthInTailWithType(str);
-            str = Util.TrimLineFeed(str);   //取り除かないとキャレットの動きがおかしくなる
+            var (linefeedlen, linefeedtype) = LineAnalyzer.GetNewLineLengthInTailWithType(str);
+            str = LineAnalyzer.TrimLineFeed(str);   //取り除かないとキャレットの動きがおかしくなる
             if (showLineBreak)
             {
                 this.lineBreakIndex = str.Length;

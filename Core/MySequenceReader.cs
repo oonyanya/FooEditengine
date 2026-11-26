@@ -31,14 +31,24 @@ namespace FooEditEngine
         public ReadOnlySequence<T> Sequence { get; }
 
         /// <summary>
-        /// The current segment in the <see cref="Sequence"/> as a span.
+        /// The current segment in the <see cref="Sequence"/> as a memory.
         /// </summary>
         public ReadOnlyMemory<T> CurrentMemory { get; private set; }
+
+        /// <summary>
+        /// The current segment in the <see cref="Sequence"/> as a span.
+        /// </summary>
+        public ReadOnlySpan<T> CurrentSpan  => this.CurrentMemory.Span;
 
         /// <summary>
         /// The index in the <see cref="CurrentMemory"/>.
         /// </summary>
         public int CurrentMemoryIndex { get; private set; }
+
+        /// <summary>
+        /// The index in the <see cref="CurrentSpan"/>.
+        /// </summary>
+        public int CurrentSpanIndex => this.CurrentMemoryIndex;
 
         /// <summary>
         /// The total number of <typeparamref name="T"/>'s processed by the reader.

@@ -995,7 +995,7 @@ namespace FooEditEngine
                     int length = this.LayoutLines.GetLengthFromLineNumber(i);
                     int leftCol = rect.TopLeft.col, rightCol = rect.TopRight.col, lastCol = length;
                     var docSegment = this.Slice(index, length);
-                    int lineFeedLength = Util.GetNewLineLengthInTail(docSegment);
+                    int lineFeedLength = LineAnalyzer.GetNewLineLengthInTail(docSegment);
                     if (lineFeedLength > 0)
                         lastCol = length - lineFeedLength;
                     if (lastCol < 0)
@@ -1280,107 +1280,25 @@ namespace FooEditEngine
             if (startIndex > endIndex)
                 yield break;
 
-            long currentLineHeadIndex = startIndex;
-            long currentLineLength = 0;
-            string linefeed = string.Empty;
             if (startIndex == endIndex)
             {
-                yield return new DocumentLineInfo(currentLineHeadIndex, 1, linefeed);
+                yield return new DocumentLineInfo(startIndex, 1, string.Empty);
                 yield break;
             }
 
             var seg = this.Slice(startIndex, endIndex - startIndex + 1);
 
             ReadOnlySequence<char> seq;
-            while(seg.Read(out seq) >0)
+            LineAnalyzer analyzer = new LineAnalyzer();
+            while (seg.Read(out seq) > 0)
             {
-                var reader = new MySequenceReader<char>(seq);
-                //AVXなどサポートしているCPUかつどの文字にも改行コードがなければスキップする
-                while (!reader.End)
-                {
-                    var move_count = Util.GetMoveNextCountIfHasNotCRLF(reader.CurrentMemory.Span.Slice(reader.CurrentMemoryIndex));
-                    if (move_count > 0 && move_count < reader.Remaining)
-                    {
-                        var left_count = maxCharCount - currentLineLength;
-                        if (maxCharCount == -1 || left_count > move_count)
-                        {
-                            currentLineLength += move_count;
-                            reader.Advance(move_count);
-                            continue;
-                        }
-                        else
-                        {
-                            var clamped_move_count = 0L;
-                            if (left_count < move_count)
-                                clamped_move_count = left_count;
-                            else
-                                clamped_move_count = move_count;
-
-                            currentLineLength += clamped_move_count;
-
-                            if (currentLineLength > Int32.MaxValue - 1)
-                                throw new InvalidOperationException("Line length is too large. It must be within Int32.MaxValue - 1");
-
-                            yield return new DocumentLineInfo(currentLineHeadIndex, currentLineLength, linefeed);
-
-                            currentLineHeadIndex += currentLineLength;
-                            currentLineLength = 0;
-                            linefeed = string.Empty;
-
-                            reader.Advance(clamped_move_count);
-                            continue;
-                        }
-                    }
-
-                    currentLineLength++;
-
-                    char c;
-                    if (!reader.TryPeek(out c))
-                    {
-                        throw new InvalidOperationException("somthing wrong in readline");
-                    }
-
-                    if (c == Document.LF_CHAR)
-                    {
-                        linefeed = Document.LF_STR;
-                    }
-                    else if (c == Document.CR_CHAR)
-                    {
-                        char next_c;
-                        bool result = reader.TryPeek(1, out next_c);
-                        if (result && next_c == Document.LF_CHAR)
-                        {
-                            currentLineLength++;
-                            reader.Advance(1);
-                            linefeed = Document.CRLF_STR;
-                        }
-                        else
-                        {
-                            linefeed = Document.CR_STR;
-                        }
-                    }
-                    if (linefeed != string.Empty || (maxCharCount != -1 && currentLineLength >= maxCharCount))
-                    {
-                        UnicodeCategory uc = CharUnicodeInfo.GetUnicodeCategory(c);
-                        if (uc != UnicodeCategory.NonSpacingMark &&
-                        uc != UnicodeCategory.SpacingCombiningMark &&
-                        uc != UnicodeCategory.EnclosingMark &&
-                        uc != UnicodeCategory.Surrogate)
-                        {
-                            if (currentLineLength > Int32.MaxValue - 1)
-                                throw new InvalidOperationException("Line length is too large. It must be within Int32.MaxValue - 1");
-                            yield return new DocumentLineInfo(currentLineHeadIndex, currentLineLength, linefeed);
-                            currentLineHeadIndex += currentLineLength;
-                            currentLineLength = 0;
-                            linefeed = string.Empty;
-                        }
-                    }
-                    reader.Advance(1);
-                }
+               foreach(var item in analyzer.EnumrateLines(seq, startIndex, maxCharCount))
+                    yield return item;
             }
 
-            if (currentLineLength > 0)
-                yield return new DocumentLineInfo(currentLineHeadIndex, currentLineLength, linefeed);
+            var result = analyzer.Complate();
+            if (result != null)
+                yield return result.Value;
         }
 
         /// <summary>

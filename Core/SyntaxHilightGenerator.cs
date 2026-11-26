@@ -64,7 +64,7 @@ namespace FooEditEngine
             {
                 if (s.type == TokenType.None || s.type == TokenType.Control)
                     return;
-                var linFeedLength = Util.GetNewLineLengthInTail(doc.Slice(lineHeadIndex + s.index,s.length));
+                var linFeedLength = LineAnalyzer.GetNewLineLengthInTail(doc.Slice(lineHeadIndex + s.index,s.length));
                 if (linFeedLength > 0)
                     s.length -= linFeedLength;
                 doc.SyntaxInfoCollection.AddOrInsert(new SyntaxInfo(lineHeadIndex + s.index, s.length, s.type));

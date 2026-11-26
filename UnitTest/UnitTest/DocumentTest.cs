@@ -25,39 +25,39 @@ namespace UnitTest
         [TestMethod]
         public void IsHasLineFeedTest()
         {
-            Assert.AreEqual(true, Util.IsHasNewLine("test\r\n"));
-            Assert.AreEqual(true, Util.IsHasNewLine("test\n"));
-            Assert.AreEqual(true, Util.IsHasNewLine("test\r"));
-            Assert.AreEqual(true, Util.IsHasNewLine("\r"));
-            Assert.AreEqual(true, Util.IsHasNewLine("\n"));
-            Assert.AreEqual(true, Util.IsHasNewLine("\r\n"));
-            Assert.AreEqual(false, Util.IsHasNewLine("a"));
-            Assert.AreEqual(false, Util.IsHasNewLine(string.Empty));
+            Assert.AreEqual(true, LineAnalyzer.IsHasNewLine("test\r\n"));
+            Assert.AreEqual(true, LineAnalyzer.IsHasNewLine("test\n"));
+            Assert.AreEqual(true, LineAnalyzer.IsHasNewLine("test\r"));
+            Assert.AreEqual(true, LineAnalyzer.IsHasNewLine("\r"));
+            Assert.AreEqual(true, LineAnalyzer.IsHasNewLine("\n"));
+            Assert.AreEqual(true, LineAnalyzer.IsHasNewLine("\r\n"));
+            Assert.AreEqual(false, LineAnalyzer.IsHasNewLine("a"));
+            Assert.AreEqual(false, LineAnalyzer.IsHasNewLine(string.Empty));
         }
 
         [TestMethod]
         public void GetNewLineLengthInTailTest()
         {
-            Assert.AreEqual(2, Util.GetNewLineLengthInTail("test\r\n"));
-            Assert.AreEqual(1, Util.GetNewLineLengthInTail("test\n"));
-            Assert.AreEqual(1, Util.GetNewLineLengthInTail("test\r"));
-            Assert.AreEqual(1, Util.GetNewLineLengthInTail("\r"));
-            Assert.AreEqual(1, Util.GetNewLineLengthInTail("\n"));
-            Assert.AreEqual(2, Util.GetNewLineLengthInTail("\r\n"));
-            Assert.AreEqual(0, Util.GetNewLineLengthInTail("a"));
-            Assert.AreEqual(0, Util.GetNewLineLengthInTail(string.Empty));
+            Assert.AreEqual(2, LineAnalyzer.GetNewLineLengthInTail("test\r\n"));
+            Assert.AreEqual(1, LineAnalyzer.GetNewLineLengthInTail("test\n"));
+            Assert.AreEqual(1, LineAnalyzer.GetNewLineLengthInTail("test\r"));
+            Assert.AreEqual(1, LineAnalyzer.GetNewLineLengthInTail("\r"));
+            Assert.AreEqual(1, LineAnalyzer.GetNewLineLengthInTail("\n"));
+            Assert.AreEqual(2, LineAnalyzer.GetNewLineLengthInTail("\r\n"));
+            Assert.AreEqual(0, LineAnalyzer.GetNewLineLengthInTail("a"));
+            Assert.AreEqual(0, LineAnalyzer.GetNewLineLengthInTail(string.Empty));
         }
         [TestMethod]
         public void GetNewLineLengthInTailWithTypeTest()
         {
-            Assert.AreEqual((2, Document.CRLF_STR), Util.GetNewLineLengthInTailWithType("test\r\n"));
-            Assert.AreEqual((1, Document.LF_STR), Util.GetNewLineLengthInTailWithType("test\n"));
-            Assert.AreEqual((1, Document.CR_STR), Util.GetNewLineLengthInTailWithType("test\r"));
-            Assert.AreEqual((2, Document.CRLF_STR), Util.GetNewLineLengthInTailWithType("\r\n"));
-            Assert.AreEqual((1, Document.LF_STR), Util.GetNewLineLengthInTailWithType("\n"));
-            Assert.AreEqual((1, Document.CR_STR), Util.GetNewLineLengthInTailWithType("\r"));
-            Assert.AreEqual((0, null), Util.GetNewLineLengthInTailWithType("a"));
-            Assert.AreEqual((0, null), Util.GetNewLineLengthInTailWithType(string.Empty));
+            Assert.AreEqual((2, Document.CRLF_STR), LineAnalyzer.GetNewLineLengthInTailWithType("test\r\n"));
+            Assert.AreEqual((1, Document.LF_STR), LineAnalyzer.GetNewLineLengthInTailWithType("test\n"));
+            Assert.AreEqual((1, Document.CR_STR), LineAnalyzer.GetNewLineLengthInTailWithType("test\r"));
+            Assert.AreEqual((2, Document.CRLF_STR), LineAnalyzer.GetNewLineLengthInTailWithType("\r\n"));
+            Assert.AreEqual((1, Document.LF_STR), LineAnalyzer.GetNewLineLengthInTailWithType("\n"));
+            Assert.AreEqual((1, Document.CR_STR), LineAnalyzer.GetNewLineLengthInTailWithType("\r"));
+            Assert.AreEqual((0, null), LineAnalyzer.GetNewLineLengthInTailWithType("a"));
+            Assert.AreEqual((0, null), LineAnalyzer.GetNewLineLengthInTailWithType(string.Empty));
         }
 
         [TestMethod]
@@ -66,17 +66,17 @@ namespace UnitTest
             string str = "test\r\ntest\r\n";
             string expected = str.Replace("\r\n", "\n");
             string result = string.Empty;
-            result = Util.NormalizeLineFeed(str,"\n");
+            result = LineAnalyzer.NormalizeLineFeed(str,"\n");
             Assert.AreEqual(expected, result);
 
             str = "test\rtest\r";
             expected = str.Replace("\r", "\n");
-            result = Util.NormalizeLineFeed(str, "\n");
+            result = LineAnalyzer.NormalizeLineFeed(str, "\n");
             Assert.AreEqual(expected, result);
 
             str = "test\ntest\n";
             expected = str.Replace("\n", "\n");
-            result = Util.NormalizeLineFeed(str, "\n");
+            result = LineAnalyzer.NormalizeLineFeed(str, "\n");
             Assert.AreEqual(expected, result);
         }
 
@@ -84,17 +84,17 @@ namespace UnitTest
         public void SpilitLineFeedTest()
         {
             string str = "testtesttesttesttest\r\ntesttesttesttesttest\r\n";
-            foreach (var line in Util.SpilitByLineFeed(str))
+            foreach (var line in LineAnalyzer.SpilitByLineFeed(str))
             {
                 Assert.AreEqual("testtesttesttesttest", line);
             }
             str = "testtesttesttesttest\rtesttesttesttesttest\r";
-            foreach (var line in Util.SpilitByLineFeed(str))
+            foreach (var line in LineAnalyzer.SpilitByLineFeed(str))
             {
                 Assert.AreEqual("testtesttesttesttest", line);
             }
             str = "testtesttesttesttest\ntesttesttesttesttest\n";
-            foreach (var line in Util.SpilitByLineFeed(str))
+            foreach (var line in LineAnalyzer.SpilitByLineFeed(str))
             {
                 Assert.AreEqual("testtesttesttesttest", line);
             }

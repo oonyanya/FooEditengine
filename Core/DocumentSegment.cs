@@ -73,12 +73,21 @@ namespace FooEditEngine
             ReadOnlySequence<char> seq;
             while (this.Read(out seq) > 0)
             {
+#if !WINDOWS_UWP
                 var reader = new SequenceReader<char>(seq);
                 while(!reader.End)
                 {
                     sb.Append(reader.CurrentSpan);
                     reader.Advance(reader.CurrentSpan.Length);
                 }
+#else
+                var reader = new MySequenceReader<char>(seq);
+                while (!reader.End)
+                {
+                    sb.Append(reader.CurrentSpan.ToArray());
+                    reader.Advance(reader.CurrentSpan.Length);
+                }
+#endif
             }
             return sb.ToString();
         }

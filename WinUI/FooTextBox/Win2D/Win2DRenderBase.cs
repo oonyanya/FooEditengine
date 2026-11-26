@@ -561,7 +561,7 @@ namespace FooEditEngine.WinUI
                 this._format.WordWrapping = CanvasWordWrapping.NoWrap;
             }
 
-            bool hasNewLine = Util.IsHasNewLine(str);
+            bool hasNewLine = LineAnalyzer.IsHasNewLine(str);
             Win2DTextLayout newLayout = new Win2DTextLayout(this._factory, str, this._format, layoutWidth, this.TextArea.Height, dpiy, hasNewLine && this.ShowLineBreak, this.emSize.Height * this.LineEmHeight);
 
             newLayout.SetLineBreakBrush(this.ControlChar);

@@ -17,8 +17,8 @@ namespace FooEditEngine.WinUI
         int? _lineBreakIndex;
         public Win2DTextLayout(Win2DResourceFactory render, string str, CanvasTextFormat format, double width, double height, float dip, bool showLineBreak, double lineHeight)
         {
-            var (linefeedlen, linefeedtype) = Util.GetNewLineLengthInTailWithType(str);
-            str = Util.TrimLineFeed(str);   //取り除かないとキャレットの動きがおかしくなる
+            var (linefeedlen, linefeedtype) = LineAnalyzer.GetNewLineLengthInTailWithType(str);
+            str = LineAnalyzer.TrimLineFeed(str);   //取り除かないとキャレットの動きがおかしくなる
             if (showLineBreak)
             {
                 switch (linefeedtype)

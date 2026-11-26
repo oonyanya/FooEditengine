@@ -213,7 +213,7 @@ namespace FooEditEngine
                 if (this.RectSelection)
                     return GetTextFromRectangleSelectArea(this.View.Selections);
                 else
-                    return Util.NormalizeLineFeed(GetTextFromLineSelectArea(this.View.Selections), Environment.NewLine);
+                    return LineAnalyzer.NormalizeLineFeed(GetTextFromLineSelectArea(this.View.Selections), Environment.NewLine);
             }
             set
             {
@@ -991,7 +991,7 @@ namespace FooEditEngine
 
         string InsertLineHead(DocumentSegment s, string str)
         {
-            var lines = Util.EnumrateLine(s).ToArray();
+            var lines = LineAnalyzer.EnumrateLine(s).ToArray();
             StringBuilder output = new StringBuilder();
             for (int i = 0; i < lines.Length; i++)
             {
@@ -1005,7 +1005,7 @@ namespace FooEditEngine
 
         public string RemoveLineHead(DocumentSegment s, string str,int remove_count)
         {
-            var lines = Util.EnumrateLine(s).ToArray();
+            var lines = LineAnalyzer.EnumrateLine(s).ToArray();
             StringBuilder output = new StringBuilder();
             for (int i = 0; i < lines.Length; i++)
             {
@@ -1111,7 +1111,7 @@ namespace FooEditEngine
 
                 this.Document.FireUpdateEvent = false;
 
-                var line = Util.EnumrateLine(value).Where(item => item.str.Length > 0).ToArray();
+                var line = LineAnalyzer.EnumrateLine(value).Where(item => item.str.Length > 0).ToArray();
 
                 TextPoint Current = this.View.GetLayoutLineFromIndex(this.SelectionStart);
                 var current_row = Current.row;
@@ -1214,7 +1214,7 @@ namespace FooEditEngine
                 {
                     Selection sel = Util.NormalizeIMaker<Selection>(Selections[i]);
 
-                    string str = Util.NormalizeLineFeed(new DocumentSegment(this.Document.StringBuffer, sel.start, sel.length), Environment.NewLine);
+                    string str = LineAnalyzer.NormalizeLineFeed(new DocumentSegment(this.Document.StringBuffer, sel.start, sel.length), Environment.NewLine);
                     if (str.IndexOf(Environment.NewLine) == -1)
                         temp.AppendLine(str);
                     else

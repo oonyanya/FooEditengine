@@ -849,7 +849,7 @@ namespace FooEditEngine
                 this.format.WordWrapping = DW.WordWrapping.NoWrap;
             }
 
-            bool hasNewLine = Util.IsHasNewLine(str);
+            bool hasNewLine = LineAnalyzer.IsHasNewLine(str);
             MyTextLayout newLayout = this._factory.GetTextLayout(
                 str,
                 this.format,

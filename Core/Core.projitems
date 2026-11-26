@@ -31,6 +31,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)IFoldingStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IHilighter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ITextRender.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LineAnalyzer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LineToIndex.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MarkerCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MarkerFactory.cs" />
